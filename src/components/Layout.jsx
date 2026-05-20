@@ -3,8 +3,9 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
-  LogOut, Menu, X, Shield, Package, BarChart3
+  LogOut, Menu, X, Shield, Package, BarChart3, UserCircle
 } from 'lucide-react';
+import SetupPassword from '@/pages/SetupPassword';
 import { Badge } from '@/components/ui/badge';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
@@ -15,6 +16,7 @@ export default function Layout() {
   const [associate, setAssociate] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [needsPassword, setNeedsPassword] = useState(false);
   const location = useLocation();
 
   useEffect(() => { loadUser(); }, []);
@@ -24,10 +26,24 @@ export default function Layout() {
     setUser(me);
     if (me) {
       const associates = await base44.entities.Associate.filter({ user_id: me.id });
-      if (associates.length > 0) setAssociate(associates[0]);
+      if (associates.length > 0) {
+        const assoc = associates[0];
+        setAssociate(assoc);
+        // Check if user needs to set password (first login flag stored on associate)
+        if (!assoc.password_set) setNeedsPassword(true);
+      }
       const notifs = await base44.entities.Notification.filter({ associate_id: me.id, is_read: false });
       setUnreadCount(notifs.length);
     }
+  };
+
+  const handlePasswordDone = async () => {
+    // Mark password as set
+    if (associate?.id) {
+      await base44.entities.Associate.update(associate.id, { password_set: true });
+      setAssociate(prev => ({ ...prev, password_set: true }));
+    }
+    setNeedsPassword(false);
   };
 
   const isAdmin = user?.role === 'admin';
@@ -48,6 +64,7 @@ export default function Layout() {
     { path: '/network', label: 'Minha Rede', icon: Users },
     { path: '/wallet', label: 'Carteira', icon: Wallet },
     { path: '/notifications', label: 'Notificações', icon: Bell, badge: unreadCount },
+    { path: '/profile', label: 'Meu Perfil', icon: UserCircle },
   ];
 
   const navItems = isAdmin ? adminNav : userNav;
@@ -122,6 +139,10 @@ export default function Layout() {
       </div>
     </div>
   );
+
+  if (needsPassword) {
+    return <SetupPassword onDone={handlePasswordDone} />;
+  }
 
   return (
     <div className="min-h-screen flex" style={{ background: '#EEF2F7' }}>
