@@ -37,8 +37,8 @@ export default function Network() {
         <div
           className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
             member.id === associate?.id
-              ? 'border-primary/40 bg-primary/10'
-              : 'border-border bg-surface hover:border-border/80'
+              ? 'border-blue-300 bg-blue-50'
+              : 'border-slate-200 bg-white hover:border-slate-300'
           }`}
           onClick={() => hasChildren && setExpanded(!expanded)}
         >
@@ -48,8 +48,8 @@ export default function Network() {
             {member.id === associate?.id ? <Crown size={16} /> : member.full_name?.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{member.full_name}</p>
-            <p className="text-xs text-muted-foreground">Nível {level} · {directs.length} diretos</p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{member.full_name}</p>
+            <p className="text-xs text-slate-500">Nível {level} · {directs.length} diretos</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Badge className={member.status === 'active' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-secondary text-muted-foreground'}>

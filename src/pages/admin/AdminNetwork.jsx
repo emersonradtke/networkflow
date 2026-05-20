@@ -34,7 +34,7 @@ export default function AdminNetwork() {
     return (
       <div>
         <div
-          className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface hover:border-primary/30 transition-all cursor-pointer mb-1"
+          className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all cursor-pointer mb-1"
           onClick={() => hasChildren && setExpanded(!expanded)}
         >
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
@@ -43,8 +43,8 @@ export default function AdminNetwork() {
             {level === 1 ? <Crown size={14} /> : member.full_name?.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{member.full_name}</p>
-            <p className="text-xs text-muted-foreground">{children.length} diretos · Nível {level}</p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{member.full_name}</p>
+            <p className="text-xs text-slate-500">{children.length} diretos · Nível {level}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">Ativo</Badge>
