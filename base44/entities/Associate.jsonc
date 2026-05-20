@@ -79,11 +79,6 @@
     },
     "state": {
       "type": "string"
-    },
-    "password_set": {
-      "type": "boolean",
-      "default": false,
-      "description": "Indica se o associado j\u00e1 definiu sua senha de acesso"
     }
   },
   "required": [

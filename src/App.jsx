@@ -16,7 +16,6 @@ import Store from './pages/Store';
 import Network from './pages/Network';
 import Wallet from './pages/Wallet';
 import Notifications from './pages/Notifications';
-import Profile from './pages/Profile';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -63,7 +62,6 @@ const AuthenticatedApp = () => {
         <Route path="/network" element={<Network />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/profile" element={<Profile />} />
 
         {/* Admin */}
         <Route path="/admin" element={<AdminDashboard />} />
