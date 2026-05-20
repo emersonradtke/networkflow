@@ -6,30 +6,29 @@
 
 @layer base {
   :root {
-    --background: 222 47% 7%;
-    --foreground: 0 0% 95%;
-    --card: 222 40% 10%;
-    --card-foreground: 0 0% 95%;
-    --popover: 222 40% 10%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 43 65% 55%;
-    --primary-foreground: 222 47% 7%;
-    --secondary: 222 30% 15%;
-    --secondary-foreground: 0 0% 85%;
-    --muted: 222 30% 13%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 43 65% 55%;
-    --accent-foreground: 222 47% 7%;
+    --background: 214 40% 96%;
+    --foreground: 224 53% 23%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 53% 23%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 53% 23%;
+    --primary: 208 70% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 30% 90%;
+    --secondary-foreground: 224 53% 23%;
+    --muted: 214 30% 93%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 208 70% 56%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 222 25% 18%;
-    --input: 222 25% 18%;
-    --ring: 43 65% 55%;
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 208 70% 56%;
     --radius: 0.75rem;
-    --gold: 43 65% 55%;
-    --gold-light: 43 75% 68%;
-    --gold-dark: 43 55% 42%;
-    --surface: 222 35% 12%;
+    --navy: 224 53% 23%;
+    --cyan: 208 70% 56%;
+    --surface: 224 53% 23%;
   }
 }
 
@@ -42,21 +41,38 @@
   }
 }
 
-.gold-gradient {
-  background: linear-gradient(135deg, hsl(43, 75%, 65%) 0%, hsl(43, 55%, 42%) 100%);
+.boldlife-gradient {
+  background: linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%);
+}
+
+.boldlife-sidebar {
+  background: linear-gradient(180deg, #1B2A5E 0%, #2563a8 60%, #3B9EE2 100%);
+}
+
+.card-accent {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #3B9EE2;
+  box-shadow: 0 1px 6px rgba(59, 158, 226, 0.08);
 }
 
 .dark-card {
-  background: hsl(222, 35%, 12%);
-  border: 1px solid hsl(222, 25%, 18%);
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #3B9EE2;
+  box-shadow: 0 1px 6px rgba(59, 158, 226, 0.08);
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%);
 }
 
 .glow-gold {
-  box-shadow: 0 0 20px hsla(43, 65%, 55%, 0.15);
+  box-shadow: 0 0 20px rgba(59, 158, 226, 0.2);
 }
 
 .network-line {
-  stroke: hsl(43, 65%, 55%);
+  stroke: #3B9EE2;
   stroke-width: 1.5;
   stroke-dasharray: 4 4;
 }

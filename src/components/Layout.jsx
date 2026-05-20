@@ -3,10 +3,12 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
-  LogOut, Menu, X, ChevronRight, Shield, Package, BarChart3, UserCheck
+  LogOut, Menu, X, ChevronRight, Shield, Package, BarChart3
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/4bcff200f_BOLDLIFE01-LOGO1.png';
 
 export default function Layout() {
   const [user, setUser] = useState(null);
@@ -59,119 +61,127 @@ export default function Layout() {
       <Link
         to={item.path}
         onClick={() => setSidebarOpen(false)}
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+        className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group relative ${
           active
-            ? 'bg-primary/15 text-primary border border-primary/20'
-            : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
+            ? 'bg-white/20 text-white border-l-2 border-white'
+            : 'text-white/70 hover:text-white hover:bg-white/10'
         }`}
       >
-        <Icon size={18} className={active ? 'text-primary' : 'group-hover:text-foreground'} />
+        <Icon size={17} className={active ? 'text-white' : 'text-white/70 group-hover:text-white'} />
         <span className="font-medium text-sm">{item.label}</span>
         {item.badge > 0 && (
-          <Badge className="ml-auto bg-primary text-primary-foreground text-xs px-1.5 py-0.5 min-w-[20px] text-center">
+          <Badge className="ml-auto bg-white text-[#1B2A5E] text-xs px-1.5 py-0 min-w-[20px] text-center font-bold">
             {item.badge}
           </Badge>
         )}
-        {active && <ChevronRight size={14} className="ml-auto text-primary" />}
       </Link>
     );
   };
 
-  return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex flex-col w-64 border-r border-border bg-surface fixed inset-y-0 left-0 z-30">
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 gold-gradient rounded-lg flex items-center justify-center">
-              <span className="text-xs font-black text-background">BL</span>
-            </div>
-            <div>
-              <span className="font-black text-foreground text-lg tracking-tight">Bold Life</span>
-              {isAdmin && <div className="flex items-center gap-1"><Shield size={10} className="text-primary" /><span className="text-xs text-primary font-medium">Admin</span></div>}
-            </div>
+  const SidebarContent = () => (
+    <>
+      {/* Logo */}
+      <div className="px-5 py-6 border-b border-white/15">
+        <img
+          src={LOGO_URL}
+          alt="Bold Life"
+          className="h-8 w-auto object-contain"
+          style={{ filter: 'brightness(0) invert(1)' }}
+        />
+        {isAdmin && (
+          <div className="flex items-center gap-1 mt-2">
+            <Shield size={10} className="text-white/60" />
+            <span className="text-xs text-white/60 font-medium">Admin</span>
           </div>
-        </div>
+        )}
+      </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map(item => <NavLink key={item.path} item={item} />)}
-        </nav>
+      {/* Nav */}
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {navItems.map(item => <NavLink key={item.path} item={item} />)}
+      </nav>
 
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 gold-gradient rounded-full flex items-center justify-center text-sm font-bold text-background">
-              {user?.full_name?.charAt(0) || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">{user?.full_name}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start text-muted-foreground hover:text-foreground gap-2"
-            onClick={() => base44.auth.logout()}
+      {/* User Footer */}
+      <div className="p-4 border-t border-white/15">
+        <div className="flex items-center gap-3 mb-3">
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+            style={{ background: 'rgba(255,255,255,0.2)' }}
           >
-            <LogOut size={14} /> Sair
-          </Button>
+            {user?.full_name?.charAt(0) || 'U'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{user?.full_name}</p>
+            <p className="text-xs text-white/60 truncate">{user?.email}</p>
+          </div>
         </div>
+        <button
+          className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors w-full"
+          onClick={() => base44.auth.logout()}
+        >
+          <LogOut size={14} /> Sair
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="min-h-screen flex" style={{ background: '#F0F4FA' }}>
+      {/* Sidebar Desktop */}
+      <aside
+        className="hidden lg:flex flex-col w-56 fixed inset-y-0 left-0 z-30"
+        style={{ background: 'linear-gradient(180deg, #1B2A5E 0%, #2563a8 60%, #3B9EE2 100%)' }}
+      >
+        <SidebarContent />
       </aside>
 
       {/* Mobile Sidebar */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-72 bg-surface border-r border-border flex flex-col h-full">
-            <div className="p-6 border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 gold-gradient rounded-lg flex items-center justify-center">
-                  <span className="text-xs font-black text-background">BL</span>
-                </div>
-                <span className="font-black text-foreground text-lg">Bold Life</span>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
+          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <aside
+            className="relative w-64 flex flex-col h-full z-10"
+            style={{ background: 'linear-gradient(180deg, #1B2A5E 0%, #2563a8 60%, #3B9EE2 100%)' }}
+          >
+            <div className="absolute top-4 right-4">
+              <button onClick={() => setSidebarOpen(false)} className="text-white/70 hover:text-white">
                 <X size={18} />
-              </Button>
+              </button>
             </div>
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-              {navItems.map(item => <NavLink key={item.path} item={item} />)}
-            </nav>
-            <div className="p-4 border-t border-border">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-muted-foreground gap-2"
-                onClick={() => base44.auth.logout()}
-              >
-                <LogOut size={14} /> Sair
-              </Button>
-            </div>
+            <SidebarContent />
           </aside>
         </div>
       )}
 
       {/* Main */}
-      <main className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+      <main className="flex-1 lg:ml-56 flex flex-col min-h-screen">
         {/* Mobile Header */}
-        <header className="lg:hidden sticky top-0 z-20 bg-surface/90 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
+        <header
+          className="lg:hidden sticky top-0 z-20 px-4 py-3 flex items-center justify-between"
+          style={{ background: 'linear-gradient(90deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+        >
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+            <button onClick={() => setSidebarOpen(true)} className="text-white">
               <Menu size={20} />
-            </Button>
-            <span className="font-black text-foreground">Bold Life</span>
+            </button>
+            <img
+              src={LOGO_URL}
+              alt="Bold Life"
+              className="h-7 w-auto object-contain"
+              style={{ filter: 'brightness(0) invert(1)' }}
+            />
           </div>
           <Link to="/notifications" className="relative">
-            <Bell size={20} className="text-muted-foreground" />
+            <Bell size={20} className="text-white" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full text-xs text-primary-foreground flex items-center justify-center font-bold">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full text-xs text-[#1B2A5E] flex items-center justify-center font-bold">
                 {unreadCount}
               </span>
             )}
           </Link>
         </header>
 
-        <div className="flex-1 p-4 lg:p-8">
+        <div className="flex-1 p-4 lg:p-6">
           <Outlet context={{ user, associate, reloadUser: loadUser }} />
         </div>
       </main>
