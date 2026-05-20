@@ -8,7 +8,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/4bcff200f_BOLDLIFE01-LOGO1.png';
+const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
+const ICON_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/fa8c43cb9_BOLDLIFE-ICON1.png';
 
 export default function Layout() {
   const [user, setUser] = useState(null);
@@ -81,13 +82,21 @@ export default function Layout() {
   const SidebarContent = () => (
     <>
       {/* Logo */}
-      <div className="px-5 py-6 border-b border-white/15">
-        <img
-          src={LOGO_URL}
-          alt="Bold Life"
-          className="h-8 w-auto object-contain"
-          style={{ filter: 'brightness(0) invert(1)' }}
-        />
+      <div className="px-4 py-5 border-b border-white/15">
+        <div className="flex items-center gap-2">
+          <img
+            src={ICON_URL}
+            alt="Bold Life Icon"
+            className="h-8 w-8 object-contain flex-shrink-0"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
+          <img
+            src={LOGO_URL}
+            alt="Bold Life"
+            className="h-6 w-auto object-contain"
+            style={{ filter: 'brightness(0) invert(1)' }}
+          />
+        </div>
         {isAdmin && (
           <div className="flex items-center gap-1 mt-2">
             <Shield size={10} className="text-white/60" />
@@ -165,9 +174,9 @@ export default function Layout() {
               <Menu size={20} />
             </button>
             <img
-              src={LOGO_URL}
+              src={ICON_URL}
               alt="Bold Life"
-              className="h-7 w-auto object-contain"
+              className="h-7 w-7 object-contain"
               style={{ filter: 'brightness(0) invert(1)' }}
             />
           </div>
