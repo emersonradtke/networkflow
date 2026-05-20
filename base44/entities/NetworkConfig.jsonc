@@ -1,0 +1,37 @@
+{
+  "name": "NetworkConfig",
+  "type": "object",
+  "properties": {
+    "max_levels": {
+      "type": "number",
+      "default": 5,
+      "description": "N\u00famero m\u00e1ximo de n\u00edveis da rede"
+    },
+    "adhesion_price": {
+      "type": "number",
+      "default": 100,
+      "description": "Valor da taxa de ades\u00e3o"
+    },
+    "adhesion_description": {
+      "type": "string"
+    },
+    "app_name": {
+      "type": "string",
+      "default": "Bold Life"
+    },
+    "app_logo": {
+      "type": "string"
+    },
+    "stripe_adhesion_price_id": {
+      "type": "string"
+    },
+    "withdrawal_min_amount": {
+      "type": "number",
+      "default": 50
+    },
+    "welcome_message": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

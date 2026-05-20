@@ -1,0 +1,56 @@
+{
+  "name": "Commission",
+  "type": "object",
+  "properties": {
+    "order_id": {
+      "type": "string"
+    },
+    "beneficiary_id": {
+      "type": "string",
+      "description": "ID do associado que recebe a comiss\u00e3o"
+    },
+    "beneficiary_name": {
+      "type": "string"
+    },
+    "originator_id": {
+      "type": "string",
+      "description": "ID do associado que gerou a venda"
+    },
+    "originator_name": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "network_level": {
+      "type": "number",
+      "description": "N\u00edvel da rede onde foi gerada"
+    },
+    "order_amount": {
+      "type": "number"
+    },
+    "commission_percent": {
+      "type": "number"
+    },
+    "commission_amount": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "credited",
+        "cancelled"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "order_id",
+    "beneficiary_id",
+    "commission_amount"
+  ]
+}

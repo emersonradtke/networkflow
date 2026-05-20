@@ -1,0 +1,58 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "associate_id": {
+      "type": "string"
+    },
+    "associate_name": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "product_type": {
+      "type": "string",
+      "enum": [
+        "direct_sale",
+        "external_link"
+      ]
+    },
+    "amount": {
+      "type": "number"
+    },
+    "commission_percent": {
+      "type": "number"
+    },
+    "total_commission": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "cancelled",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "payment_id": {
+      "type": "string"
+    },
+    "payment_method": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "associate_id",
+    "product_id",
+    "amount"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "WithdrawalRequest",
+  "type": "object",
+  "properties": {
+    "associate_id": {
+      "type": "string"
+    },
+    "associate_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "pix_key": {
+      "type": "string"
+    },
+    "bank_info": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "paid"
+      ],
+      "default": "pending"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "paid_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "associate_id",
+    "amount"
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "name": "Associate",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio vinculado"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "cpf": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "active",
+        "inactive",
+        "blocked"
+      ],
+      "default": "pending"
+    },
+    "sponsor_id": {
+      "type": "string",
+      "description": "ID do associado que fez o convite"
+    },
+    "sponsor_name": {
+      "type": "string"
+    },
+    "level_in_network": {
+      "type": "number",
+      "description": "N\u00edvel na rede do patrocinador"
+    },
+    "invite_code": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico de convite"
+    },
+    "wallet_balance": {
+      "type": "number",
+      "default": 0
+    },
+    "total_earned": {
+      "type": "number",
+      "default": 0
+    },
+    "total_withdrawn": {
+      "type": "number",
+      "default": 0
+    },
+    "adhesion_paid": {
+      "type": "boolean",
+      "default": false
+    },
+    "adhesion_payment_id": {
+      "type": "string"
+    },
+    "pix_key": {
+      "type": "string"
+    },
+    "bank_info": {
+      "type": "string"
+    },
+    "profile_image": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name",
+    "email"
+  ]
+}

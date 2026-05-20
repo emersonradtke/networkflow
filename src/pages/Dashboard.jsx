@@ -1,0 +1,158 @@
+import { useState, useEffect } from 'react';
+import { useOutletContext, Link } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, ExternalLink, Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
+import StatCard from '@/components/StatCard';
+
+export default function Dashboard() {
+  const { user, associate } = useOutletContext();
+  const [recentCommissions, setRecentCommissions] = useState([]);
+  const [networkCount, setNetworkCount] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    if (associate?.id) loadData();
+  }, [associate]);
+
+  const loadData = async () => {
+    const [commissions, networkMembers, notifs] = await Promise.all([
+      base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 5),
+      base44.entities.Associate.filter({ sponsor_id: associate.id }),
+      base44.entities.Notification.filter({ associate_id: associate.id, is_read: false }, '-created_date', 3),
+    ]);
+    setRecentCommissions(commissions);
+    setNetworkCount(networkMembers.length);
+    setNotifications(notifs);
+  };
+
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}/register?ref=${associate?.invite_code}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  if (!associate) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (associate.status === 'pending') {
+    return (
+      <div className="max-w-lg mx-auto text-center py-16">
+        <div className="w-20 h-20 mx-auto mb-6 bg-secondary rounded-full flex items-center justify-center">
+          <Clock size={36} className="text-primary" />
+        </div>
+        <h2 className="text-2xl font-black text-foreground mb-2">Conta Pendente</h2>
+        <p className="text-muted-foreground mb-6">Sua adesão está aguardando confirmação de pagamento. Assim que confirmado, você terá acesso completo.</p>
+        <div className="dark-card rounded-xl p-5 text-left">
+          <p className="text-sm font-bold text-primary mb-2">Informações de Pagamento</p>
+          <p className="text-sm text-muted-foreground">Entre em contato com seu patrocinador ou com o suporte para realizar o pagamento da adesão.</p>
+          {associate.sponsor_name && (
+            <p className="text-sm text-foreground mt-2">Patrocinador: <span className="font-semibold text-primary">{associate.sponsor_name}</span></p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-up">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-black text-foreground">
+          Olá, {associate.full_name?.split(' ')[0]} 👋
+        </h1>
+        <p className="text-muted-foreground text-sm mt-1">Aqui está o resumo da sua rede e ganhos</p>
+      </div>
+
+      {/* Notifications */}
+      {notifications.length > 0 && (
+        <div className="space-y-2">
+          {notifications.map(n => (
+            <div key={n.id} className="flex items-start gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+              <Bell size={16} className="text-primary mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">{n.title}</p>
+                <p className="text-xs text-muted-foreground">{n.message}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Saldo" value={`R$ ${(associate.wallet_balance || 0).toFixed(2)}`} icon={Wallet} color="gold" />
+        <StatCard title="Total Ganho" value={`R$ ${(associate.total_earned || 0).toFixed(2)}`} icon={TrendingUp} color="green" />
+        <StatCard title="Diretos" value={networkCount} icon={Users} color="blue" />
+        <StatCard title="Pedidos" value="Ver loja" icon={ShoppingBag} color="purple" link="/store" />
+      </div>
+
+      {/* Invite Link */}
+      <div className="dark-card rounded-2xl p-5 glow-gold">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-3">Seu Link de Convite</p>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-secondary rounded-lg px-3 py-2.5 text-sm text-muted-foreground truncate border border-border">
+            {window.location.origin}/register?ref={associate.invite_code}
+          </div>
+          <Button size="sm" className="gold-gradient text-background font-bold gap-1.5 shrink-0" onClick={copyInviteLink}>
+            {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
+            {copied ? 'Copiado!' : 'Copiar'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Recent Commissions */}
+      <div className="dark-card rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-foreground">Últimas Comissões</h3>
+          <Link to="/wallet" className="text-xs text-primary hover:underline">Ver todas</Link>
+        </div>
+        {recentCommissions.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-4">Nenhuma comissão ainda. Compartilhe seu link!</p>
+        ) : (
+          <div className="space-y-3">
+            {recentCommissions.map(c => (
+              <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{c.product_name}</p>
+                  <p className="text-xs text-muted-foreground">Nível {c.network_level} · {c.originator_name}</p>
+                </div>
+                <span className="text-sm font-bold text-green-400">+R$ {c.commission_amount?.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-4">
+        <Link to="/store">
+          <div className="dark-card rounded-xl p-4 hover:border-primary/40 transition-colors cursor-pointer group">
+            <ShoppingBag size={22} className="text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <p className="font-semibold text-foreground text-sm">Loja Virtual</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Compre e ganhe</p>
+          </div>
+        </Link>
+        <Link to="/network">
+          <div className="dark-card rounded-xl p-4 hover:border-primary/40 transition-colors cursor-pointer group">
+            <Users size={22} className="text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <p className="font-semibold text-foreground text-sm">Minha Rede</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Ver estrutura</p>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+}
