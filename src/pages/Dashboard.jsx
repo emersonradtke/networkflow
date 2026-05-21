@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import StatCard from '@/components/StatCard';
+import MyOrders from '@/components/MyOrders';
 
 export default function Dashboard() {
   const { user, associate } = useOutletContext();
@@ -135,6 +136,9 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* My Orders */}
+      <MyOrders associateId={associate?.id} />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4">
