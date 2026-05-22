@@ -50,20 +50,27 @@ export default function Landing() {
       // Chama o backend function para validar credenciais
       const response = await base44.functions.invoke('loginWithCredentials', { username, password });
       
+      console.log('Login response:', response.data);
+      
       if (response.data?.success && response.data?.user) {
         // Salva o usuário em sessionStorage
         sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
-        // Redireciona direto para dashboard/admin
-        if (response.data.user.role === 'admin') {
-          navigate('/admin', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+        console.log('User saved, redirecting to', response.data.user.role === 'admin' ? '/admin' : '/dashboard');
+        
+        // Aguarda um pouco para garantir que o sessionStorage foi atualizado
+        setTimeout(() => {
+          if (response.data.user.role === 'admin') {
+            navigate('/admin', { replace: true });
+          } else {
+            navigate('/dashboard', { replace: true });
+          }
+        }, 100);
       } else {
         setError(response.data?.error || 'Usuário ou senha inválidos');
         setLoading(false);
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Usuário ou senha inválidos');
       setLoading(false);
     }
