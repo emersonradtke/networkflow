@@ -97,7 +97,37 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       
-      // Verificar se há usuário direto em sessionStorage (login customizado)
+      // PRIORITY 1: Try Base44 native auth first
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        setIsAuthenticated(true);
+        
+        // Apply pending user setups (role assignment, associate linking)
+        try {
+          await base44.functions.invoke('applyAllPendingSetups', {});
+        } catch (setupError) {
+          console.warn('Failed to apply pending setups:', setupError);
+        }
+        
+        // Carregar Associate vinculado (se existir)
+        try {
+          const associates = await base44.asServiceRole.entities.Associate.filter({ user_id: currentUser.id });
+          if (associates.length > 0) {
+            setAssociate(associates[0]);
+          }
+        } catch (assocError) {
+          console.warn('Failed to load associate:', assocError);
+        }
+        
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return;
+      } catch (nativeAuthError) {
+        // Continues to PRIORITY 2
+      }
+      
+      // PRIORITY 2: Fall back to legacy DirectUser (for migration period)
       const directUserData = sessionStorage.getItem('directUser');
       if (directUserData) {
         const directUser = JSON.parse(directUserData);
@@ -130,26 +160,11 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       
-      // Fallback para autenticação nativa do Base44
-      try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
-        setIsAuthenticated(true);
-        
-        // Apply pending user setups (role assignment, associate linking)
-        try {
-          await base44.functions.invoke('applyAllPendingSetups', {});
-        } catch (setupError) {
-          console.warn('Failed to apply pending setups:', setupError);
-        }
-        
-        setIsLoadingAuth(false);
-        setAuthChecked(true);
-      } catch (nativeAuthError) {
-        setIsLoadingAuth(false);
-        setIsAuthenticated(false);
-        setAuthChecked(true);
-      }
+      // No auth found
+      setIsLoadingAuth(false);
+      setIsAuthenticated(false);
+      setAuthChecked(true);
+      
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);

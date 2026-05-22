@@ -12,6 +12,7 @@ import BannerManager from '@/components/admin/BannerManager';
 import RolePermissionManager from '@/components/admin/RolePermissionManager';
 import UserManagement from '@/components/admin/UserManagement';
 import TermsManager from '@/components/admin/TermsManager';
+import AuthMigrationTool from '@/components/admin/AuthMigrationTool';
 
 export default function AdminSettings() {
   const [config, setConfig] = useState(null);
@@ -60,13 +61,14 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
           <TabsTrigger value="banners">Banners</TabsTrigger>
           <TabsTrigger value="terms">Termos</TabsTrigger>
+          <TabsTrigger value="auth-migration">Auth Migração</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -197,6 +199,10 @@ export default function AdminSettings() {
 
         <TabsContent value="terms">
           <TermsManager />
+        </TabsContent>
+
+        <TabsContent value="auth-migration">
+          <AuthMigrationTool />
         </TabsContent>
       </Tabs>
     </div>
