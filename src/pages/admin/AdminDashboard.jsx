@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, AlertTriangle, PackagePlus, CheckCircle, XCircle, Package } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import OrderStatusModal from '@/components/OrderStatusModal';
+import CommissionsModal from '@/components/CommissionsModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -11,7 +12,9 @@ export default function AdminDashboard() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [ordersByStatus, setOrdersByStatus] = useState({ pending: [], paid: [], cancelled: [], refunded: [] });
+  const [allCommissions, setAllCommissions] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState(null);
+  const [showCommissions, setShowCommissions] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadData(); }, []);
@@ -44,6 +47,7 @@ export default function AdminDashboard() {
       withdrawals: withdrawals.length,
     });
     setOrdersByStatus(grouped);
+    setAllCommissions(commissions);
     setRecentActivity(allOrders.slice(0, 5));
     setLowStockProducts(products.filter(p => p.type === 'direct_sale' && p.stock_min != null && p.stock != null && p.stock <= p.stock_min));
     setLoading(false);
@@ -60,7 +64,9 @@ export default function AdminDashboard() {
         <StatCard title="Associados" value={stats.total} icon={Users} color="blue" />
         <StatCard title="Ativos" value={stats.active} icon={UserCheck} color="green" />
         <StatCard title="Pendentes" value={stats.pending} icon={Clock} color="gold" />
-        <StatCard title="Comissões Totais" value={`R$ ${stats.commissions.toFixed(2)}`} icon={TrendingUp} color="purple" />
+        <button onClick={() => setShowCommissions(true)} className="w-full">
+          <StatCard title="Comissões Totais" value={`R$ ${stats.commissions.toFixed(2)}`} icon={TrendingUp} color="purple" />
+        </button>
         <StatCard title="Saques Pendentes" value={stats.withdrawals} icon={Wallet} color="gold" />
         <StatCard title="Últimos Pedidos" value={stats.orders} icon={ShoppingBag} color="blue" />
       </div>
@@ -192,6 +198,12 @@ export default function AdminDashboard() {
         orders={selectedStatus ? ordersByStatus[selectedStatus] : []}
         open={selectedStatus !== null}
         onClose={() => setSelectedStatus(null)}
+      />
+
+      <CommissionsModal
+        commissions={allCommissions}
+        open={showCommissions}
+        onClose={() => setShowCommissions(false)}
       />
     </div>
   );
