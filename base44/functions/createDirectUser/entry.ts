@@ -33,44 +33,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Convidar usuário com email gerado ou fornecido
-    const userEmail = email || `${cpf}@boldlife.local`;
+    // Gerar email se não fornecido
+    const userEmail = email || `cpf_${cpf}@boldlife.local`;
+
+    // Verificar se email já está em uso
+    const existingPending = await base44.asServiceRole.entities.PendingUserSetup.filter({ email: userEmail });
+    if (existingPending.length > 0) {
+      return Response.json({ error: 'Email já tem um convite pendente' }, { status: 400 });
+    }
+
+    // Convidar usuário
     await base44.users.inviteUser(userEmail, baseRole);
 
-    // Aguardar um pouco para o usuário ser criado no sistema
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Buscar o usuário criado com retry
-    let createdUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
-    
-    if (!createdUsers || createdUsers.length === 0) {
-      // Tentar novamente após um pouco mais de espera
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      createdUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
-    }
-
-    if (!createdUsers || createdUsers.length === 0) {
-      return Response.json({ error: 'Erro ao criar usuário - não encontrado após criação' }, { status: 500 });
-    }
-
-    const newUser = createdUsers[0];
-
-    // Atualizar nome e role customizado
-    const updates = { full_name };
-    if (role !== baseRole) {
-      updates.role = role;
-    }
-    
-    await base44.asServiceRole.entities.User.update(newUser.id, updates);
+    // Criar PendingUserSetup com role customizado
+    await base44.asServiceRole.entities.PendingUserSetup.create({
+      email: userEmail,
+      full_name,
+      role,
+      applied: false,
+    });
 
     return Response.json({ 
       success: true, 
-      user: {
-        id: newUser.id,
-        full_name,
-        email: userEmail,
-        role
-      }
+      message: 'Convite enviado para ' + userEmail + '. O role será aplicado automaticamente quando o usuário fizer o primeiro acesso.',
+      pending: true
     });
   } catch (error) {
     console.error('Erro ao criar usuário:', error);

@@ -5,35 +5,45 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Acesso negado' }, { status: 403 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Buscar todos os setups pendentes
-    const pendings = await base44.asServiceRole.entities.PendingUserSetup.filter({ applied: false });
+    // Buscar PendingUserSetup para o email do usuário logado
+    const pendings = await base44.asServiceRole.entities.PendingUserSetup.filter({ email: user.email, applied: false });
     
-    let appliedCount = 0;
-    
-    for (const pending of pendings) {
-      // Buscar o usuário pelo email
-      const users = await base44.asServiceRole.entities.User.filter({ email: pending.email });
-      
-      if (users && users.length > 0) {
-        const targetUser = users[0];
-        const updates = {};
-        if (pending.full_name) updates.full_name = pending.full_name;
-        if (pending.role) updates.role = pending.role;
-        if (pending.associate_id) updates.associate_id = pending.associate_id;
-
-        if (Object.keys(updates).length > 0) {
-          await base44.asServiceRole.entities.User.update(targetUser.id, updates);
-        }
-        await base44.asServiceRole.entities.PendingUserSetup.update(pending.id, { applied: true });
-        appliedCount++;
-      }
+    if (pendings.length === 0) {
+      return Response.json({ success: true, applied: 0, message: 'Nenhum setup pendente' });
     }
 
-    return Response.json({ success: true, applied: appliedCount, total_pending: pendings.length });
+    const pending = pendings[0];
+
+    // Atualizar Associate se existe
+    if (pending.associate_id) {
+      await base44.asServiceRole.entities.Associate.update(pending.associate_id, {
+        user_id: user.id,
+        status: 'active',
+      });
+    }
+
+    // Atualizar User com role e nome
+    const updates = {};
+    if (pending.full_name) updates.full_name = pending.full_name;
+    if (pending.role) updates.role = pending.role;
+
+    if (Object.keys(updates).length > 0) {
+      await base44.asServiceRole.entities.User.update(user.id, updates);
+    }
+
+    // Marcar como aplicado
+    await base44.asServiceRole.entities.PendingUserSetup.update(pending.id, { applied: true });
+
+    return Response.json({ 
+      success: true, 
+      applied: 1,
+      message: 'Configurações aplicadas com sucesso',
+      associate_id: pending.associate_id,
+    });
   } catch (error) {
     console.error('Erro:', error);
     return Response.json({ error: error.message }, { status: 500 });

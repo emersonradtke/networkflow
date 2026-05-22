@@ -96,6 +96,15 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
+      
+      // Apply pending user setups (role assignment, associate linking)
+      try {
+        await base44.functions.invoke('applyAllPendingSetups', {});
+      } catch (setupError) {
+        // Log but don't fail - the app should still work
+        console.warn('Failed to apply pending setups:', setupError);
+      }
+      
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {

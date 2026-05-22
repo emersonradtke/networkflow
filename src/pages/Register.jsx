@@ -103,7 +103,7 @@ export default function Register() {
   const validate = () => {
     const errs = {};
     if (!form.full_name.trim()) errs.full_name = 'Nome obrigatório';
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'E-mail inválido';
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'E-mail inválido';
     if (!form.phone.trim()) errs.phone = 'Telefone obrigatório';
     else if (!validatePhone(form.phone)) errs.phone = 'Telefone inválido';
 
@@ -125,47 +125,26 @@ export default function Register() {
 
     setLoading(true);
 
-    // Verificar CPF/CNPJ duplicado
-    const docRaw = personType === 'pf' ? form.cpf.replace(/\D/g, '') : form.cnpj.replace(/\D/g, '');
-    const existing = personType === 'pf'
-      ? await base44.entities.Associate.filter({ cpf: docRaw })
-      : await base44.entities.Associate.filter({ cnpj: docRaw });
+    try {
+      const res = await base44.functions.invoke('registerAssociateWithInvite', {
+        full_name: form.full_name,
+        email: form.email.trim() || '',
+        phone: form.phone,
+        cpf: personType === 'pf' ? form.cpf : '',
+        cnpj: personType === 'pj' ? form.cnpj : '',
+        company_name: personType === 'pj' ? form.company_name : '',
+        person_type: personType,
+        sponsor_id: sponsor?.id || null,
+        sponsor_name: sponsor?.full_name || null,
+      });
 
-    if (existing.length > 0) {
-      setErrors(personType === 'pf'
-        ? { cpf: 'CPF já cadastrado na plataforma' }
-        : { cnpj: 'CNPJ já cadastrado na plataforma' }
-      );
+      setNewAssociateId(res.data?.associate_id);
+      setStep('pending');
+    } catch (error) {
+      setErrors({ submit: error.response?.data?.error || 'Erro ao registrar' });
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const user = await base44.auth.me();
-    const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const params = new URLSearchParams(window.location.search);
-
-    const associate = await base44.entities.Associate.create({
-      user_id: user.id,
-      full_name: form.full_name,
-      email: form.email,
-      phone: form.phone.replace(/\D/g, ''),
-      cpf: personType === 'pf' ? form.cpf.replace(/\D/g, '') : '',
-      cnpj: personType === 'pj' ? form.cnpj.replace(/\D/g, '') : '',
-      company_name: personType === 'pj' ? form.company_name : '',
-      person_type: personType,
-      status: 'pending',
-      sponsor_id: sponsor?.id || null,
-      sponsor_name: sponsor?.full_name || null,
-      invite_code: inviteCode,
-      wallet_balance: 0,
-      total_earned: 0,
-      total_withdrawn: 0,
-      adhesion_paid: false,
-    });
-
-    setNewAssociateId(associate.id);
-    setStep('pending');
-    setLoading(false);
   };
 
   const fieldCls = (key) =>
@@ -188,7 +167,6 @@ export default function Register() {
           phone_number: form.phone.replace(/\D/g, ''),
         },
         redirect_url: `${window.location.origin}/dashboard`,
-        webhook_url: `${window.location.origin}/api/functions/infinitePayWebhook`,
       });
       const url = res.data?.url;
       if (url) window.open(url, '_blank');
@@ -316,10 +294,10 @@ export default function Register() {
               </div>
             )}
 
-            {/* Email */}
+            {/* Email (opcional) */}
             <div>
-              <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail</Label>
-              <Input className={fieldCls('email')} type="email" placeholder="seuemail@exemplo.com" value={form.email} onChange={e => setField('email', e.target.value)} />
+              <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail <span className="text-xs text-slate-400">(opcional)</span></Label>
+              <Input className={fieldCls('email')} type="email" placeholder="seuemail@exemplo.com (deixar em branco para gerar automaticamente)" value={form.email} onChange={e => setField('email', e.target.value)} />
               {errors.email && <FieldError msg={errors.email} />}
             </div>
 

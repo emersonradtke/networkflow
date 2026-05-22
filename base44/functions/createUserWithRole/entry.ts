@@ -27,6 +27,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Role não encontrado' }, { status: 400 });
     }
 
+    // Verificar se email já está em uso
+    const existingPending = await base44.asServiceRole.entities.PendingUserSetup.filter({ email });
+    if (existingPending.length > 0) {
+      return Response.json({ error: 'Email já tem um convite pendente' }, { status: 400 });
+    }
+
     // Convidar usuário
     try {
       await base44.users.inviteUser(email, 'user');
@@ -35,35 +41,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Erro ao convidar usuário: ' + (inviteErr.message || 'desconhecido') }, { status: 500 });
     }
 
-    // Polling rápido (até 3 segundos) para tentar atualizar o usuário se já foi criado
-    let createdUsers = [];
-    for (let i = 0; i < 3; i++) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      createdUsers = await base44.asServiceRole.entities.User.filter({ email });
-      if (createdUsers && createdUsers.length > 0) break;
-    }
-
-    // Se o usuário já existe (foi criado pelo invite), atualizar nome/role
-    if (createdUsers && createdUsers.length > 0) {
-      const newUser = createdUsers[0];
-      const updates = { full_name, role };
-      if (associate_id) {
-        updates.associate_id = associate_id;
-      }
-      await base44.asServiceRole.entities.User.update(newUser.id, updates);
-
-      return Response.json({ 
-        success: true, 
-        message: 'Usuário criado e configurado com sucesso',
-        user: { id: newUser.id, full_name, email, role }
-      });
-    }
-
-    // Convite enviado, mas o usuário ainda não aceitou.
-    // Salvar dados pendentes para aplicar automaticamente no primeiro acesso.
-    const existingPending = await base44.asServiceRole.entities.PendingUserSetup.filter({ email, applied: false });
-    if (existingPending.length > 0) {
-      await base44.asServiceRole.entities.PendingUserSetup.update(existingPending[0].id, {
+    // Criar ou atualizar PendingUserSetup
+    const existing = await base44.asServiceRole.entities.PendingUserSetup.filter({ email, applied: false });
+    if (existing.length > 0) {
+      await base44.asServiceRole.entities.PendingUserSetup.update(existing[0].id, {
         full_name, role, associate_id: associate_id || null
       });
     } else {
