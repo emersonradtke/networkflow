@@ -4,18 +4,20 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function RoleRedirect() {
   const navigate = useNavigate();
-  const { user, isLoadingAuth } = useAuth();
+  const { user, isLoadingAuth, role, associate } = useAuth();
 
   useEffect(() => {
-    if (!isLoadingAuth && user) {
+    if (!isLoadingAuth && user && role) {
       // Redirecionar baseado no role
-      if (user.role === 'admin') {
+      if (role.name === 'admin') {
         navigate('/admin', { replace: true });
-      } else {
+      } else if (associate) {
         navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
       }
     }
-  }, [user, isLoadingAuth, navigate]);
+  }, [user, isLoadingAuth, role, associate, navigate]);
 
   return null;
 }

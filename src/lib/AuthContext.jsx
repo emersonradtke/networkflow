@@ -7,6 +7,9 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [associate, setAssociate] = useState(null);
+  const [role, setRole] = useState(null);
+  const [permissions, setPermissions] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
@@ -100,6 +103,28 @@ export const AuthProvider = ({ children }) => {
         const directUser = JSON.parse(directUserData);
         setUser(directUser);
         setIsAuthenticated(true);
+        
+        // Carregar Associate vinculado
+        try {
+          const associates = await base44.asServiceRole.entities.Associate.filter({ user_id: directUser.id });
+          if (associates.length > 0) {
+            setAssociate(associates[0]);
+          }
+        } catch (assocError) {
+          console.warn('Failed to load associate:', assocError);
+        }
+        
+        // Carregar Role e permissões
+        try {
+          const roleObj = directUser.role ? await base44.asServiceRole.entities.Role.filter({ name: directUser.role }) : [];
+          if (roleObj.length > 0) {
+            setRole(roleObj[0]);
+            setPermissions(roleObj[0].permissions || []);
+          }
+        } catch (roleError) {
+          console.warn('Failed to load role:', roleError);
+        }
+        
         setIsLoadingAuth(false);
         setAuthChecked(true);
         return;
@@ -155,7 +180,10 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ 
-      user, 
+      user,
+      associate,
+      role,
+      permissions,
       isAuthenticated, 
       isLoadingAuth,
       isLoadingPublicSettings,
