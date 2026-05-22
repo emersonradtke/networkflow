@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -8,18 +8,6 @@ import { LogIn, UserPlus, Sparkles, Wallet, Users, ShoppingBag } from 'lucide-re
 export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings } = useAuth();
-  const [config, setConfig] = useState({ app_name: 'Bold Life', app_logo: '' });
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const list = await base44.entities.NetworkConfig.list();
-        if (list?.[0]) setConfig({ app_name: list[0].app_name || 'Bold Life', app_logo: list[0].app_logo || '' });
-      } catch {
-        // Landing is public — ignore auth errors when not logged in
-      }
-    })();
-  }, []);
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated) {
@@ -40,16 +28,10 @@ export default function Landing() {
       {/* Header */}
       <header className="px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {config.app_logo ? (
-            <img src={config.app_logo} alt={config.app_name} className="h-10 w-auto object-contain" />
-          ) : (
-            <>
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-white font-bold text-xl tracking-tight">{config.app_name}</span>
-            </>
-          )}
+          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-white font-bold text-xl tracking-tight">BOLD<span className="text-cyan-300">LIFE</span></span>
         </div>
         <Button
           onClick={handleLogin}
@@ -64,14 +46,6 @@ export default function Landing() {
       {/* Hero */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="max-w-2xl w-full text-center space-y-8 animate-fade-up">
-          {config.app_logo && (
-            <div className="flex justify-center mb-2">
-              <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl">
-                <img src={config.app_logo} alt={config.app_name} className="h-20 md:h-24 w-auto object-contain" />
-              </div>
-            </div>
-          )}
-
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
             <Sparkles size={14} className="text-cyan-300" />
             <span className="text-white/90 text-xs font-medium">Plataforma de associados</span>
@@ -80,7 +54,7 @@ export default function Landing() {
           <h1 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tight">
             Bem-vindo ao{' '}
             <span className="bg-gradient-to-r from-cyan-300 to-white bg-clip-text text-transparent">
-              {config.app_name}
+              Bold Life
             </span>
           </h1>
 
@@ -132,7 +106,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="px-6 py-6 text-center">
         <p className="text-white/50 text-xs">
-          © {new Date().getFullYear()} {config.app_name}. Todos os direitos reservados.
+          © {new Date().getFullYear()} Bold Life. Todos os direitos reservados.
         </p>
       </footer>
     </div>
