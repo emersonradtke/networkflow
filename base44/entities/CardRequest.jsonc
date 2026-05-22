@@ -1,0 +1,30 @@
+{
+  "name": "CardRequest",
+  "type": "object",
+  "properties": {
+    "associate_id": {
+      "type": "string",
+      "description": "ID do associado que solicitou o cart\u00e3o"
+    },
+    "associate_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status da solicita\u00e7\u00e3o"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do admin sobre a solicita\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "associate_id"
+  ]
+}

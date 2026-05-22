@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, AlertTriangle, PackagePlus, CheckCircle, XCircle, Package } from 'lucide-react';
+import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, AlertTriangle, PackagePlus, CheckCircle, XCircle, Package, CreditCard } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import OrderStatusModal from '@/components/OrderStatusModal';
 import CommissionsModal from '@/components/CommissionsModal';
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, orders: 0, commissions: 0, withdrawals: 0 });
+  const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, orders: 0, commissions: 0, withdrawals: 0, cardCount: 0, cardRequests: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [ordersByStatus, setOrdersByStatus] = useState({ pending: [], paid: [], cancelled: [], refunded: [] });
@@ -24,15 +24,17 @@ export default function AdminDashboard() {
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    const [associates, allOrders, commissions, withdrawals, products] = await Promise.all([
+    const [associates, allOrders, commissions, withdrawals, products, cardRequests] = await Promise.all([
       base44.entities.Associate.list(),
       base44.entities.Order.list(),
       base44.entities.Commission.list(),
       base44.entities.WithdrawalRequest.filter({ status: 'pending' }),
       base44.entities.Product.filter({ is_active: true }),
+      base44.entities.CardRequest.filter({ status: 'pending' }),
     ]);
 
     const totalCommissions = commissions.reduce((s, c) => s + (c.commission_amount || 0), 0);
+    const cardCount = associates.filter(a => a.has_boldlife_card).length;
     
     // Agrupar pedidos por status
     const grouped = {
@@ -49,6 +51,8 @@ export default function AdminDashboard() {
       orders: allOrders.length,
       commissions: totalCommissions,
       withdrawals: withdrawals.length,
+      cardCount: cardCount,
+      cardRequests: cardRequests.length,
     });
     setOrdersByStatus(grouped);
     setAllCommissions(commissions);
@@ -82,6 +86,8 @@ export default function AdminDashboard() {
         </button>
         <StatCard title="Saques Pendentes" value={stats.withdrawals} icon={Wallet} color="gold" />
         <StatCard title="Últimos Pedidos" value={stats.orders} icon={ShoppingBag} color="blue" />
+        <StatCard title="Com Cartão BoldLife" value={stats.cardCount} icon={CreditCard} color="green" />
+        <StatCard title="Solicitações de Cartão" value={stats.cardRequests} icon={CreditCard} color="gold" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

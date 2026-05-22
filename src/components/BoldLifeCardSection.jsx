@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Upload, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { CreditCard, Upload, CheckCircle, Clock, AlertCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BoldLifeCardSection({ associate, networkConfig, onUpdate }) {
@@ -10,6 +10,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
   const [spending, setSpending] = useState('');
   const [file, setFile] = useState(null);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [requestLoading, setRequestLoading] = useState(false);
 
   const minSpending = networkConfig?.card_min_spending || 500;
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -22,6 +23,41 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
         return;
       }
       setFile(f);
+    }
+  };
+
+  const handleRequestCard = async () => {
+    setRequestLoading(true);
+    try {
+      await base44.entities.CardRequest.create({
+        associate_id: associate.id,
+        associate_name: associate.full_name,
+        status: 'pending'
+      });
+      toast.success('Solicitação enviada! O administrador entrará em contato em breve.');
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Erro ao solicitar cartão');
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const handleAlreadyHaveCard = async () => {
+    setRequestLoading(true);
+    try {
+      const now = new Date();
+      await base44.entities.Associate.update(associate.id, {
+        has_boldlife_card: true,
+        card_activation_month: now.toISOString().slice(0, 7)
+      });
+      toast.success('Cartão registrado com sucesso!');
+      onUpdate?.();
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Erro ao registrar cartão');
+    } finally {
+      setRequestLoading(false);
     }
   };
 
@@ -76,6 +112,24 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
               <h3 className="font-bold text-foreground">Cartão BoldLife</h3>
               <p className="text-sm text-muted-foreground mt-1">Você ainda não solicitou o cartão BoldLife</p>
             </div>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <Button 
+              onClick={handleRequestCard}
+              disabled={requestLoading}
+              className="bg-primary hover:bg-primary/90 font-bold gap-2"
+            >
+              <Plus size={16} />
+              Solicitar
+            </Button>
+            <Button 
+              onClick={handleAlreadyHaveCard}
+              disabled={requestLoading}
+              variant="outline"
+              className="font-bold"
+            >
+              Já Tenho
+            </Button>
           </div>
         </div>
       </div>
