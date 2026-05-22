@@ -238,6 +238,7 @@ export default function AdminUsers() {
                           setEditPassword('');
                           setEditRole(user.role || '');
                           setShowDialog(true);
+                          if (roles.length === 0) loadRolesData();
                         }}
                       >
                         <Edit size={14} />
