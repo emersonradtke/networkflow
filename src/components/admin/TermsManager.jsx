@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Upload } from 'lucide-react';
 
 export default function TermsManager() {
   const [terms, setTerms] = useState([]);
@@ -31,6 +31,34 @@ export default function TermsManager() {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Upload do arquivo
+      const uploadRes = await base44.integrations.Core.UploadFile({ file });
+      
+      // Extrair conteúdo do arquivo
+      const extractRes = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: uploadRes.file_url,
+        json_schema: {
+          type: 'object',
+          properties: {
+            content: { type: 'string' }
+          }
+        }
+      });
+
+      if (extractRes.output?.content) {
+        setFormData({ ...formData, content: extractRes.output.content });
+      }
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      alert('Erro ao processar arquivo');
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.title || !formData.content) {
       alert('Título e conteúdo são obrigatórios');
@@ -50,7 +78,8 @@ export default function TermsManager() {
         const nextVersion = Math.max(...terms.map(t => t.version || 1), 0) + 1;
         await base44.asServiceRole.entities.TermsOfService.create({
           ...formData,
-          version: nextVersion
+          version: nextVersion,
+          is_active: true
         });
       }
 
@@ -159,6 +188,21 @@ export default function TermsManager() {
 
             <div>
               <Label className="font-semibold">Conteúdo (Markdown)</Label>
+              <div className="flex gap-2 mb-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".txt,.md,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" asChild>
+                    <span>
+                      <Upload size={16} /> Upload
+                    </span>
+                  </Button>
+                </label>
+              </div>
               <Textarea
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}

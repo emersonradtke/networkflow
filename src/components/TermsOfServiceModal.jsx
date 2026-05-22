@@ -40,12 +40,12 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
     try {
       setAccepting(true);
       
-      // Registrar aceite do termo
+      // Registrar aceite do termo com versionamento
       await base44.asServiceRole.entities.UserTermsAcceptance.create({
         user_id: user.id,
         user_email: user.email || user.username,
         terms_id: terms.id,
-        terms_version: terms.version,
+        terms_version: terms.version || 1,
         accepted_at: new Date().toISOString()
       });
 

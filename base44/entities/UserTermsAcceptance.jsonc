@@ -16,7 +16,7 @@
     },
     "terms_version": {
       "type": "number",
-      "description": "Vers\u00e3o do termo aceito"
+      "description": "Vers\u00e3o numerada do termo aceito"
     },
     "accepted_at": {
       "type": "string",
