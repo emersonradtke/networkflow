@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Clock, CheckCircle, AlertCircle, Building2, User } from 'lucide-react';
+import { UserPlus, Clock, CheckCircle, AlertCircle, Building2, User, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
@@ -73,6 +73,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [personType, setPersonType] = useState('pf'); // 'pf' | 'pj'
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     full_name: '', email: '', phone: '', cpf: '', cnpj: '', company_name: ''
   });

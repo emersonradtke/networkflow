@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Edit2, Save, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, Eye, EyeOff } from 'lucide-react';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     username: '',
@@ -145,14 +146,23 @@ export default function UserManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-foreground">Senha *</Label>
-                <Input
-                  className="mt-1.5 bg-secondary border-border"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={(e) => setForm({...form, password: e.target.value})}
-                  required
-                />
+                <div className="relative mt-1.5">
+                  <Input
+                    className="bg-secondary border-border pr-10"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={(e) => setForm({...form, password: e.target.value})}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div>
                 <Label className="text-foreground">Role</Label>
