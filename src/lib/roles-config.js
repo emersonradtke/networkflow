@@ -17,7 +17,6 @@ export const ROLE_CONFIG = {
     permissions: ['all'],
     menuItems: [
       { path: '/admin', label: 'Dashboard', icon: 'LayoutDashboard' },
-      { path: '/admin/users', label: 'Usuários', icon: 'Users' },
       { path: '/admin/associates', label: 'Associados', icon: 'User' },
       { path: '/admin/products', label: 'Produtos', icon: 'Package' },
       { path: '/admin/orders', label: 'Pedidos', icon: 'ShoppingBag' },
