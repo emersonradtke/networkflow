@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Bell, CheckCheck, Zap, Wallet, ShoppingBag, Shield } from 'lucide-react';
+import { Bell, CheckCheck, Zap, Wallet, ShoppingBag, Shield, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const iconMap = {
   activation: Shield,
@@ -35,6 +36,19 @@ export default function Notifications() {
     loadNotifications();
   };
 
+  const deleteNotification = async (id) => {
+    await base44.entities.Notification.delete(id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    toast.success('Notificação excluída');
+  };
+
+  const deleteAll = async () => {
+    if (!confirm('Excluir todas as notificações?')) return;
+    await Promise.all(notifications.map(n => base44.entities.Notification.delete(n.id)));
+    setNotifications([]);
+    toast.success('Todas as notificações foram excluídas');
+  };
+
   const colorMap = {
     activation: 'text-green-400 bg-green-400/10',
     commission: 'text-yellow-400 bg-yellow-400/10',
@@ -50,11 +64,18 @@ export default function Notifications() {
           <h1 className="text-2xl font-black text-foreground">Notificações</h1>
           <p className="text-muted-foreground text-sm mt-1">Suas atualizações recentes</p>
         </div>
-        {notifications.some(n => !n.is_read) && (
-          <Button variant="ghost" size="sm" className="text-primary gap-1.5" onClick={markAllRead}>
-            <CheckCheck size={14} /> Marcar todas como lidas
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {notifications.some(n => !n.is_read) && (
+            <Button variant="ghost" size="sm" className="text-primary gap-1.5" onClick={markAllRead}>
+              <CheckCheck size={14} /> Marcar todas como lidas
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button variant="ghost" size="sm" className="text-red-500 gap-1.5" onClick={deleteAll}>
+              <Trash2 size={14} /> Excluir todas
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -86,6 +107,13 @@ export default function Notifications() {
                   <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
                 </div>
                 {!n.is_read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />}
+                <button
+                  onClick={() => deleteNotification(n.id)}
+                  className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 p-1"
+                  title="Excluir notificação"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
             );
           })}
