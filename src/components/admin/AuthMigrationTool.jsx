@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, Users, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle, Users, RefreshCw, AlertTriangle } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export default function AuthMigrationTool() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [migrating, setMigrating] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   useEffect(() => {
     checkMigrationStatus();
@@ -20,8 +24,52 @@ export default function AuthMigrationTool() {
       setStatus(response.data?.migration_status);
     } catch (error) {
       console.error('Erro ao verificar status:', error);
+      setError('Erro ao carregar status de migração');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMigrateAll = async () => {
+    setMigrating(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Get all active DirectUsers
+      const directUsers = await base44.asServiceRole.entities.DirectUser.filter({ is_active: true });
+      
+      if (directUsers.length === 0) {
+        setSuccess('Nenhum usuário para migrar');
+        setMigrating(false);
+        return;
+      }
+
+      let migrated = 0;
+      let failed = 0;
+
+      for (const directUser of directUsers) {
+        try {
+          await base44.functions.invoke('migrateUserToBase44', {
+            directUserId: directUser.id,
+            email: directUser.email,
+            role: directUser.role
+          });
+          migrated++;
+        } catch (err) {
+          console.error(`Erro migrando ${directUser.email}:`, err);
+          failed++;
+        }
+      }
+
+      setSuccess(`Migração concluída: ${migrated} sucesso, ${failed} falharam`);
+      await checkMigrationStatus();
+    } catch (error) {
+      console.error('Erro na migração:', error);
+      setError('Erro ao processar migração: ' + error.message);
+    } finally {
+      setMigrating(false);
+      setShowConfirm(false);
     }
   };
 
@@ -122,24 +170,73 @@ export default function AuthMigrationTool() {
         </div>
       </div>
 
+      {/* Messages */}
+      {error && (
+        <div className="dark-card rounded-2xl p-4 bg-red-50 border-l-4 border-red-500 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red-900">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="dark-card rounded-2xl p-4 bg-green-50 border-l-4 border-green-500 flex items-start gap-3">
+          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-green-900">{success}</p>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex gap-3">
         <Button
           onClick={checkMigrationStatus}
           variant="outline"
           className="gap-2"
-          disabled={loading}
+          disabled={loading || migrating}
         >
           <RefreshCw size={18} /> Atualizar Status
         </Button>
         
         <Button
+          onClick={() => setShowConfirm(true)}
           className="bg-primary hover:bg-primary/90 gap-2"
-          disabled={status.still_on_legacy === 0}
+          disabled={status.still_on_legacy === 0 || migrating}
         >
-          <Users size={18} /> Migrar Todos ({status.still_on_legacy})
+          <Users size={18} /> {migrating ? 'Migrando...' : `Migrar Todos (${status.still_on_legacy})`}
         </Button>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Migração</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a migrar <strong>{status.still_on_legacy} usuários</strong> do sistema legacy para Base44 native auth. Esta ação:
+              <ul className="list-disc pl-5 mt-3 space-y-1 text-sm">
+                <li>Desativará login via DirectUser para esses usuários</li>
+                <li>Criará contas Base44 correspondentes</li>
+                <li>Enviará convites para os novos emails</li>
+                <li>Mantém histórico original para audit</li>
+              </ul>
+              <p className="mt-3 font-semibold text-red-600">Não é possível desfazer automaticamente. Prosseguir?</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-end gap-3 pt-4">
+            <AlertDialogCancel disabled={migrating}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMigrateAll}
+              disabled={migrating}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {migrating ? 'Migrando...' : 'Confirmar Migração'}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Phase Documentation */}
       <div className="dark-card rounded-2xl p-4">

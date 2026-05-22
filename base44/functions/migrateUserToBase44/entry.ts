@@ -6,53 +6,79 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
 
     if (!user || user.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
+      return Response.json({ error: 'Admin required' }, { status: 403 });
     }
 
     const { directUserId, email, role } = await req.json();
 
+    // Validations
     if (!directUserId || !email || !role) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+      return Response.json({ error: 'Missing: directUserId, email, role' }, { status: 400 });
     }
 
-    // Get existing DirectUser
+    if (!email.includes('@')) {
+      return Response.json({ error: 'Invalid email format' }, { status: 400 });
+    }
+
+    if (!['user', 'admin'].includes(role)) {
+      return Response.json({ error: 'Invalid role' }, { status: 400 });
+    }
+
+    // Get DirectUser
     const directUsers = await base44.asServiceRole.entities.DirectUser.filter({ id: directUserId });
     if (directUsers.length === 0) {
-      return Response.json({ error: 'DirectUser not found' }, { status: 404 });
+      return Response.json({ error: 'DirectUser not found', code: 'NOT_FOUND' }, { status: 404 });
     }
 
     const directUser = directUsers[0];
+
+    // Validate DirectUser is active and not already migrated
+    if (!directUser.is_active) {
+      return Response.json({ 
+        error: 'DirectUser is already inactive',
+        code: 'ALREADY_INACTIVE'
+      }, { status: 400 });
+    }
+
+    if (directUser._migrated_to_base44) {
+      return Response.json({ 
+        error: 'DirectUser already migrated',
+        code: 'ALREADY_MIGRATED'
+      }, { status: 400 });
+    }
 
     // Check if Base44 user already exists
     const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
     if (existingUsers.length > 0) {
       return Response.json({ 
-        success: false, 
-        message: 'User already exists in Base44',
+        error: 'User already exists in Base44',
+        code: 'USER_EXISTS',
         base44_user_id: existingUsers[0].id 
-      });
+      }, { status: 409 });
     }
 
-    // Invite user to Base44 (creates native User)
+    // Invite user to Base44
     const mappedRole = role === 'admin' ? 'admin' : 'user';
     await base44.users.inviteUser(email, mappedRole);
 
-    // Update DirectUser to mark as migrated
+    // Mark DirectUser as migrated
     await base44.asServiceRole.entities.DirectUser.update(directUserId, {
-      is_active: false, // Disable legacy login
-      _migrated_to_base44: true // Mark as migrated
+      is_active: false,
+      _migrated_to_base44: true
     });
 
     return Response.json({ 
-      success: true, 
-      message: 'User migrated successfully',
+      success: true,
       email,
       base44_role: mappedRole,
-      action: 'User invited to Base44 and legacy account disabled'
+      message: `User ${email} migrated successfully`
     });
 
   } catch (error) {
-    console.error('Error migrating user:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Migration error:', error);
+    return Response.json({ 
+      error: error.message,
+      code: 'MIGRATION_ERROR'
+    }, { status: 500 });
   }
 });
