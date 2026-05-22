@@ -17,6 +17,7 @@ export default function UserManagement() {
     username: '',
     email: '',
     password: '',
+    cpf: '',
     role: 'user',
   });
   const [error, setError] = useState('');
@@ -44,8 +45,8 @@ export default function UserManagement() {
     setSuccess('');
 
     try {
-      if (!form.username || !form.password) {
-        setError('Usuário e senha são obrigatórios');
+      if (!form.username || !form.password || !form.cpf) {
+        setError('Usuário, senha e CPF são obrigatórios');
         setLoading(false);
         return;
       }
@@ -55,12 +56,13 @@ export default function UserManagement() {
         username: form.username,
         email: form.email || '',
         password: form.password,
+        cpf: form.cpf,
         role: form.role,
       });
 
       if (res.data?.success) {
         setSuccess('Usuário criado com sucesso!');
-        setForm({ username: '', email: '', password: '', role: 'user' });
+        setForm({ username: '', email: '', password: '', cpf: '', role: 'user' });
         setShowForm(false);
         loadData();
       } else {
@@ -132,15 +134,26 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <Label className="text-foreground">E-mail (opcional)</Label>
+                <Label className="text-foreground">CPF *</Label>
                 <Input
                   className="mt-1.5 bg-secondary border-border"
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={form.email}
-                  onChange={(e) => setForm({...form, email: e.target.value})}
+                  placeholder="000.000.000-00"
+                  value={form.cpf}
+                  onChange={(e) => setForm({...form, cpf: e.target.value})}
+                  required
                 />
               </div>
+            </div>
+
+            <div>
+              <Label className="text-foreground">E-mail (opcional)</Label>
+              <Input
+                className="mt-1.5 bg-secondary border-border"
+                type="email"
+                placeholder="email@exemplo.com"
+                value={form.email}
+                onChange={(e) => setForm({...form, email: e.target.value})}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

@@ -9,10 +9,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
-    const { username, email, password, role } = await req.json();
+    const { username, email, password, cpf, role } = await req.json();
 
-    if (!username || !password || !role) {
-      return Response.json({ error: 'Usuário, senha e role são obrigatórios' }, { status: 400 });
+    if (!username || !password || !cpf || !role) {
+      return Response.json({ error: 'Usuário, senha, CPF e role são obrigatórios' }, { status: 400 });
     }
 
     // Validar role
@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
         password,
         full_name: username,
         role: baseRole,
+        cpf: cpf,
       })
     });
 
