@@ -2,10 +2,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    const { email, password } = await req.json();
+    const { username, password } = await req.json();
 
-    if (!email || !password) {
-      return Response.json({ error: 'Email e senha são obrigatórios' }, { status: 400 });
+    if (!username || !password) {
+      return Response.json({ error: 'Usuário e senha são obrigatórios' }, { status: 400 });
     }
 
     // Usa o SDK do Base44 para autenticar
@@ -17,11 +17,11 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${Deno.env.get('BASE44_SERVICE_TOKEN') || ''}`
       },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ username, password })
     });
 
     if (!response.ok) {
-      return Response.json({ error: 'Email ou senha inválidos' }, { status: 401 });
+      return Response.json({ error: 'Usuário ou senha inválidos' }, { status: 401 });
     }
 
     const data = await response.json();

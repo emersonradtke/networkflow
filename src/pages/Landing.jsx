@@ -15,7 +15,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings } = useAuth();
   const [showLoginForm, setShowLoginForm] = useState(false);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,17 +39,17 @@ export default function Landing() {
 
     try {
       // Chama o backend function para validar credenciais
-      const response = await base44.functions.invoke('loginWithCredentials', { email, password });
+      const response = await base44.functions.invoke('loginWithCredentials', { username, password });
       
       if (response.data?.token) {
         // Se conseguir um token, redireciona para role-redirect
         navigate('/role-redirect', { replace: true });
       } else {
-        setError('Email ou senha inválidos');
+        setError('Usuário ou senha inválidos');
         setLoading(false);
       }
     } catch (err) {
-      setError('Email ou senha inválidos');
+      setError('Usuário ou senha inválidos');
       setLoading(false);
     }
   };
@@ -92,12 +92,12 @@ export default function Landing() {
               )}
 
               <div>
-                <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail</Label>
+                <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Usuário</Label>
                 <Input
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  placeholder="seu usuário"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="mt-1.5 border-slate-200"
                   required
                 />
@@ -129,7 +129,7 @@ export default function Landing() {
                 onClick={() => {
                   setShowLoginForm(false);
                   setError('');
-                  setEmail('');
+                  setUsername('');
                   setPassword('');
                 }}
                 variant="ghost"
