@@ -3,9 +3,11 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
-  LogOut, Menu, X, Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck
+  LogOut, Menu, X, Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck,
+  ExternalLink, Briefcase, Eye
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { getAvailableMenuItems, getRoleLabel } from '@/lib/roles-config';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
 const ICON_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/fa8c43cb9_BOLDLIFE-ICON1.png';
@@ -30,29 +32,17 @@ export default function Layout() {
     }
   };
 
-  const isAdmin = user?.role === 'admin';
+  const iconMap = {
+    LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
+    Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck,
+    ExternalLink, Briefcase, Eye
+  };
 
-  const adminNav = [
-    { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/admin/associates', label: 'Associados', icon: Users },
-    { path: '/admin/products', label: 'Produtos', icon: Package },
-    { path: '/admin/orders', label: 'Pedidos', icon: ShoppingBag },
-    { path: '/admin/withdrawals', label: 'Saques', icon: Wallet },
-    { path: '/admin/network', label: 'Rede', icon: BarChart3 },
-    { path: '/admin/suppliers', label: 'Fornecedores', icon: Building2 },
-    { path: '/admin/shipping', label: 'Envio', icon: Truck },
-    { path: '/admin/settings', label: 'Configurações', icon: Settings },
-  ];
-
-  const userNav = [
-    { path: '/dashboard', label: 'Início', icon: LayoutDashboard },
-    { path: '/network', label: 'Minha Rede', icon: Users },
-    { path: '/orders', label: 'Meus Pedidos', icon: ShoppingBag },
-    { path: '/withdrawals', label: 'Saques', icon: ArrowUpCircle },
-    { path: '/notifications', label: 'Notificações', icon: Bell, badge: unreadCount },
-  ];
-
-  const navItems = isAdmin ? adminNav : userNav;
+  const navItems = getAvailableMenuItems(user?.role || 'guest').map(item => ({
+    ...item,
+    icon: iconMap[item.icon],
+    badge: item.path === '/notifications' ? unreadCount : 0
+  }));
 
   const NavLink = ({ item }) => {
     const Icon = item.icon;
@@ -87,10 +77,10 @@ export default function Layout() {
         <div className="flex items-center">
           <img src={LOGO_URL} alt="Bold Life" className="h-9 w-auto object-contain" />
         </div>
-        {isAdmin && (
+        {user?.role && user.role !== 'guest' && user.role !== 'associate' && (
           <div className="flex items-center gap-1 mt-2">
             <Shield size={10} className="text-slate-400" />
-            <span className="text-xs text-slate-400 font-medium">Admin</span>
+            <span className="text-xs text-slate-400 font-medium">{getRoleLabel(user.role)}</span>
           </div>
         )}
       </div>

@@ -1,0 +1,17 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "associate",
+        "employee",
+        "guest"
+      ],
+      "default": "associate",
+      "description": "Tipo de usu\u00e1rio no sistema"
+    }
+  }
+}
