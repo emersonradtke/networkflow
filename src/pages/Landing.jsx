@@ -38,11 +38,18 @@ export default function Landing() {
     setError('');
 
     try {
-      // Tenta fazer login com email e senha
-      await base44.auth.login(email, password);
-      navigate('/role-redirect', { replace: true });
+      // Chama o backend function para validar credenciais
+      const response = await base44.functions.invoke('loginWithCredentials', { email, password });
+      
+      if (response.data?.token) {
+        // Se conseguir um token, redireciona para role-redirect
+        navigate('/role-redirect', { replace: true });
+      } else {
+        setError('Email ou senha inválidos');
+        setLoading(false);
+      }
     } catch (err) {
-      setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      setError('Email ou senha inválidos');
       setLoading(false);
     }
   };
