@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ShoppingCart, Trash2, Plus, Minus, CheckCircle2, AlertCircle, MapPin, Truck, ChevronRight, ChevronLeft, Edit2, Store } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, CheckCircle2, AlertCircle, MapPin, Truck, ChevronRight, ChevronLeft, Edit2, Store, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -22,6 +22,8 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
   const [pickupType, setPickupType] = useState(null); // null | 'store' | 'franchise'
   const [franchises, setFranchises] = useState([]);
   const [selectedFranchise, setSelectedFranchise] = useState(null);
+  const [userCoords, setUserCoords] = useState(null);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => { setLocalAssociate(associate); }, [associate]);
 
@@ -37,6 +39,58 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
 
   const hasAddress = localAssociate?.shipping_street && localAssociate?.shipping_city;
   const isPickup = pickupType === 'store' || pickupType === 'franchise';
+
+  // Haversine distance in km
+  const haversine = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  };
+
+  const getFranchiseCoords = async (f) => {
+    const addr = [f.address_street, f.address_number, f.address_city, f.address_state, 'Brasil'].filter(Boolean).join(', ');
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+    const data = await res.json();
+    if (data[0]) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    return null;
+  };
+
+  const requestGeo = () => {
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        setUserCoords(coords);
+        // Geocodifica franquias que têm endereço mas sem coords
+        const enriched = await Promise.all(
+          franchises.map(async (f) => {
+            if (f._lat) return f;
+            const c = await getFranchiseCoords(f);
+            return c ? { ...f, _lat: c.lat, _lon: c.lon } : f;
+          })
+        );
+        setFranchises(enriched);
+        setGeoLoading(false);
+      },
+      () => setGeoLoading(false)
+    );
+  };
+
+  const sortedFranchises = userCoords
+    ? [...franchises].sort((a, b) => {
+        const da = (a._lat && a._lon) ? haversine(userCoords.lat, userCoords.lon, a._lat, a._lon) : Infinity;
+        const db = (b._lat && b._lon) ? haversine(userCoords.lat, userCoords.lon, b._lat, b._lon) : Infinity;
+        return da - db;
+      })
+    : franchises;
+
+  const nearestFranchiseId = userCoords && sortedFranchises.length > 0 && sortedFranchises[0]._lat
+    ? sortedFranchises[0].id
+    : null;
   const canProceed = isPickup
     ? (pickupType === 'store' || (pickupType === 'franchise' && selectedFranchise))
     : hasAddress;
@@ -264,19 +318,43 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
                   {/* Seleção de franquia */}
                   {pickupType === 'franchise' && (
                     <div className="mt-3 space-y-2">
+                      {/* Botão geolocalização */}
+                      <button
+                        onClick={requestGeo}
+                        disabled={geoLoading}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 transition-all disabled:opacity-60"
+                      >
+                        <Navigation size={13} />
+                        {geoLoading ? 'Localizando...' : userCoords ? 'Atualizar localização' : 'Usar minha localização para ordenar por proximidade'}
+                      </button>
+
                       {franchises.length === 0 ? (
                         <p className="text-sm text-muted-foreground bg-slate-50 rounded-xl p-3">Nenhuma franquia cadastrada.</p>
                       ) : (
-                        franchises.map(f => {
+                        sortedFranchises.map(f => {
                           const addr = [f.address_street, f.address_number].filter(Boolean).join(', ');
                           const city = [f.address_city, f.address_state].filter(Boolean).join('/');
+                          const dist = userCoords && f._lat && f._lon
+                            ? haversine(userCoords.lat, userCoords.lon, f._lat, f._lon)
+                            : null;
+                          const isNearest = f.id === nearestFranchiseId;
                           return (
                             <button
                               key={f.id}
                               onClick={() => setSelectedFranchise(f)}
                               className={`w-full text-left p-3 rounded-xl border transition-all ${selectedFranchise?.id === f.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
                             >
-                              <p className="text-sm font-semibold text-foreground">{f.trade_name || f.name}</p>
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-semibold text-foreground">{f.trade_name || f.name}</p>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {isNearest && (
+                                    <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Mais próxima</span>
+                                  )}
+                                  {dist !== null && (
+                                    <span className="text-[10px] text-muted-foreground font-medium">{dist < 1 ? `${Math.round(dist*1000)}m` : `${dist.toFixed(1)}km`}</span>
+                                  )}
+                                </div>
+                              </div>
                               {addr && <p className="text-xs text-muted-foreground mt-0.5">{addr}{city ? ` — ${city}` : ''}</p>}
                               {f.address_zip && <p className="text-xs text-muted-foreground">CEP {f.address_zip}</p>}
                               {f.phone && <p className="text-xs text-muted-foreground">{f.phone}</p>}
