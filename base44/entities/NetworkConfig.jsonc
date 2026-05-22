@@ -31,6 +31,11 @@
     },
     "welcome_message": {
       "type": "string"
+    },
+    "store_page_size": {
+      "type": "number",
+      "default": 24,
+      "description": "Quantidade de produtos por p\u00e1gina na loja"
     }
   },
   "required": []

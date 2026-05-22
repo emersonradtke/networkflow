@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ShoppingCart, ExternalLink, Tag, Percent, Search, Package, Hash } from 'lucide-react';
+import { ShoppingCart, ExternalLink, Percent, Search, Package, Hash, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -15,12 +15,20 @@ export default function Store() {
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
 
-  useEffect(() => { loadProducts(); }, []);
+  useEffect(() => { loadData(); }, []);
 
-  const loadProducts = async () => {
-    const prods = await base44.entities.Product.filter({ is_active: true });
+  const loadData = async () => {
+    const [prods, configs] = await Promise.all([
+      base44.entities.Product.filter({ is_active: true }),
+      base44.entities.NetworkConfig.list(),
+    ]);
     setProducts(prods);
+    if (configs.length > 0 && configs[0].store_page_size) {
+      setPageSize(configs[0].store_page_size);
+    }
     setLoading(false);
   };
 
@@ -43,7 +51,7 @@ export default function Store() {
 
   const onCheckout = () => {
     setCart([]);
-    loadProducts();
+    loadData();
   };
 
   if (associate?.status !== 'active') {
@@ -70,6 +78,25 @@ export default function Store() {
     return matchSearch && matchCat;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  // reset page when filter/search changes
+  const handleSearch = (v) => { setSearch(v); setPage(1); };
+  const handleCategory = (v) => { setCategory(v); setPage(1); };
+
+  // grid cols based on pageSize
+  const gridCols = pageSize <= 12
+    ? 'grid-cols-2 lg:grid-cols-3'
+    : pageSize <= 24
+    ? 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+    : pageSize <= 48
+    ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+    : 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8';
+
+  const cardCompact = pageSize >= 48;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -89,7 +116,7 @@ export default function Store() {
       {/* Busca */}
       <div className="relative">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Buscar por nome, código ou categoria..." value={search} onChange={e => setSearch(e.target.value)} />
+        <Input className="pl-9" placeholder="Buscar por nome, código ou categoria..." value={search} onChange={e => handleSearch(e.target.value)} />
       </div>
 
       {/* Categorias */}
@@ -98,7 +125,7 @@ export default function Store() {
           {categories.map(cat => (
             <button
               key={cat}
-              onClick={() => setCategory(cat)}
+              onClick={() => handleCategory(cat)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 category === cat ? 'gold-gradient text-background' : 'bg-secondary text-muted-foreground hover:text-foreground'
               }`}
@@ -110,7 +137,7 @@ export default function Store() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={`grid ${gridCols} gap-4`}>
           {[1,2,3,4,5,6].map(i => <div key={i} className="dark-card rounded-xl h-64 animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
@@ -119,23 +146,128 @@ export default function Store() {
           <p className="text-muted-foreground">Nenhum produto disponível no momento.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((product, i) => (
-            <motion.div key={product.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-              <ProductCard product={product} onAddToCart={addToCart} cart={cart} />
-            </motion.div>
-          ))}
-        </div>
+        <>
+          {/* Info da paginação */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              Mostrando {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} de {filtered.length} produtos
+            </span>
+            {totalPages > 1 && (
+              <span>Página {safePage} de {totalPages}</span>
+            )}
+          </div>
+
+          <div className={`grid ${gridCols} gap-3`}>
+            {paginated.map((product, i) => (
+              <motion.div key={product.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}>
+                <ProductCard product={product} onAddToCart={addToCart} cart={cart} compact={cardCompact} />
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+              >
+                <ChevronLeft size={15} />
+              </Button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 2)
+                  .reduce((acc, n, idx, arr) => {
+                    if (idx > 0 && n - arr[idx - 1] > 1) acc.push('...');
+                    acc.push(n);
+                    return acc;
+                  }, [])
+                  .map((n, idx) =>
+                    n === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="px-2 flex items-center text-muted-foreground text-sm">…</span>
+                    ) : (
+                      <button
+                        key={n}
+                        onClick={() => setPage(n)}
+                        className={`w-8 h-8 rounded-lg text-sm font-bold transition-all ${
+                          safePage === n
+                            ? 'text-white'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                        style={safePage === n ? { background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' } : {}}
+                      >
+                        {n}
+                      </button>
+                    )
+                  )}
+              </div>
+
+              <Button
+                variant="outline" size="sm"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+              >
+                <ChevronRight size={15} />
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-function ProductCard({ product, onAddToCart, cart }) {
+function ProductCard({ product, onAddToCart, cart, compact }) {
   const cartItem = cart.find(i => i.id === product.id);
   const outOfStock = product.type === 'direct_sale' && (product.stock == null || product.stock <= 0);
 
-  const handleExternalLink = () => window.open(product.external_url, '_blank');
+  if (compact) {
+    return (
+      <div className="dark-card rounded-xl overflow-hidden flex flex-col hover:border-primary/30 transition-all duration-200 group">
+        <div className="relative aspect-square bg-secondary overflow-hidden">
+          {product.image_url ? (
+            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingCart size={20} className="text-muted-foreground opacity-40" />
+            </div>
+          )}
+          <div className="absolute top-1 right-1">
+            <Badge className="bg-primary/90 text-primary-foreground text-xs px-1 py-0">
+              <Percent size={8} /> {product.commission_percent}%
+            </Badge>
+          </div>
+          {outOfStock && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <span className="text-white text-xs font-bold bg-red-600 px-1.5 py-0.5 rounded-full">Sem Estoque</span>
+            </div>
+          )}
+        </div>
+        <div className="p-2 flex flex-col gap-1">
+          <p className="font-bold text-foreground text-xs leading-tight line-clamp-2">{product.name}</p>
+          <p className="text-sm font-black text-primary">R$ {product.price?.toFixed(2)}</p>
+          {product.type === 'external_link' ? (
+            <Button size="sm" className="w-full text-xs h-7 gold-gradient text-background font-bold gap-1" onClick={() => window.open(product.external_url, '_blank')}>
+              <ExternalLink size={10} /> Ver
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="w-full text-xs h-7 font-bold gap-1"
+              style={cartItem ? { background: '#1B2A5E', color: '#fff' } : { background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)', color: '#fff' }}
+              onClick={() => onAddToCart(product)}
+              disabled={outOfStock}
+            >
+              <ShoppingCart size={10} />
+              {cartItem ? `(${cartItem.qty})` : 'Add'}
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dark-card rounded-xl overflow-hidden flex flex-col hover:border-primary/30 transition-all duration-200 group">
@@ -170,7 +302,7 @@ function ProductCard({ product, onAddToCart, cart }) {
             <Hash size={10} />#{product.code}
           </p>
         )}
-        {(product.brand) && (
+        {product.brand && (
           <p className="text-xs text-muted-foreground mt-0.5">{product.brand}</p>
         )}
         {product.description && (
@@ -184,7 +316,7 @@ function ProductCard({ product, onAddToCart, cart }) {
         <div className="mt-3">
           <p className="text-lg font-black text-primary">R$ {product.price?.toFixed(2)}</p>
           {product.type === 'external_link' ? (
-            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={handleExternalLink}>
+            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={() => window.open(product.external_url, '_blank')}>
               <ExternalLink size={13} /> Ver Produto
             </Button>
           ) : (

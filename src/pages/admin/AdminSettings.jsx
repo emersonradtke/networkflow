@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Settings, Save, Plus, Minus } from 'lucide-react';
+import { Settings, Save, Plus, Minus, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function AdminSettings() {
   const [config, setConfig] = useState(null);
@@ -15,6 +16,7 @@ export default function AdminSettings() {
     adhesion_description: '',
     withdrawal_min_amount: 50,
     welcome_message: '',
+    store_page_size: 24,
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -103,6 +105,34 @@ export default function AdminSettings() {
           <div>
             <Label className="text-foreground">Descrição da Adesão</Label>
             <Textarea className="mt-1.5 bg-secondary border-border text-foreground resize-none" rows={3} placeholder="Descreva o que está incluído na adesão..." value={form.adhesion_description} onChange={e => setForm({...form, adhesion_description: e.target.value})} />
+          </div>
+        </div>
+
+        {/* Store Config */}
+        <div className="dark-card rounded-2xl p-6 space-y-5">
+          <h3 className="font-bold text-foreground flex items-center gap-2">
+            <LayoutGrid size={16} className="text-primary" /> Configurações da Loja
+          </h3>
+          <div>
+            <Label className="text-foreground">Produtos por página</Label>
+            <p className="text-xs text-muted-foreground mb-2">Define quantos produtos são exibidos por página na loja</p>
+            <div className="flex gap-2 flex-wrap">
+              {[12, 24, 48, 96, 192].map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setForm({...form, store_page_size: n})}
+                  className={`px-5 py-2 rounded-xl font-bold text-sm border transition-all ${
+                    form.store_page_size === n
+                      ? 'text-white border-transparent'
+                      : 'bg-secondary text-muted-foreground border-border hover:text-foreground'
+                  }`}
+                  style={form.store_page_size === n ? { background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' } : {}}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
