@@ -24,6 +24,10 @@ export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed })
         if (w && !w.closed) {
           w.close();
         }
+        // Executar callback imediatamente após confirmação
+        setTimeout(() => {
+          onPaymentConfirmed?.();
+        }, 2000);
       }
     });
 
@@ -34,13 +38,6 @@ export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed })
   }, [cartId, paymentUrl]);
 
   if (status === 'paid') {
-    // Chamar callback e preparar transição
-    if (onPaymentConfirmed) {
-      setTimeout(() => {
-        onPaymentConfirmed();
-      }, 1500);
-    }
-    
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 p-8">
         <div className="w-20 h-20 rounded-full flex items-center justify-center animate-bounce" style={{ background: 'linear-gradient(135deg,#1B2A5E,#3B9EE2)' }}>
@@ -48,7 +45,7 @@ export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed })
         </div>
         <div>
           <h3 className="text-xl font-black text-foreground">Pagamento Confirmado!</h3>
-          <p className="text-sm text-muted-foreground mt-2">Seu pagamento foi processado com sucesso. Seu pedido está sendo preparado.</p>
+          <p className="text-sm text-muted-foreground mt-2">Seu pagamento foi processado com sucesso. Redirecionando...</p>
         </div>
       </div>
     );
