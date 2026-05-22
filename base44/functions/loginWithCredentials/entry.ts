@@ -2,14 +2,16 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
     const { username, password } = await req.json();
 
     if (!username || !password) {
       return Response.json({ error: 'Usuário e senha são obrigatórios' }, { status: 400 });
     }
 
-    // Busca o usuário pelo username
+    // Usar serviço direto sem autenticação (é uma função pública de login)
+    const base44 = createClientFromRequest(req);
+    
+    // Usar asServiceRole para acessar DirectUser sem autenticação do usuário
     const users = await base44.asServiceRole.entities.DirectUser.filter({ username });
     
     if (users.length === 0) {

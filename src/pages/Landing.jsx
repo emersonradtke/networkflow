@@ -42,11 +42,13 @@ export default function Landing() {
       // Chama o backend function para validar credenciais
       const response = await base44.functions.invoke('loginWithCredentials', { username, password });
       
-      if (response.data?.token) {
-        // Se conseguir um token, redireciona para role-redirect
+      if (response.data?.success && response.data?.user) {
+        // Salva o usuário em sessionStorage
+        sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
+        // Redireciona para role-redirect
         navigate('/role-redirect', { replace: true });
       } else {
-        setError('Usuário ou senha inválidos');
+        setError(response.data?.error || 'Usuário ou senha inválidos');
         setLoading(false);
       }
     } catch (err) {

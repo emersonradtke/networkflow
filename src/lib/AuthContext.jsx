@@ -93,39 +93,51 @@ export const AuthProvider = ({ children }) => {
     try {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setIsAuthenticated(true);
       
-      // Apply pending user setups (role assignment, associate linking)
-      try {
-        await base44.functions.invoke('applyAllPendingSetups', {});
-      } catch (setupError) {
-        // Log but don't fail - the app should still work
-        console.warn('Failed to apply pending setups:', setupError);
+      // Verificar se há usuário direto em sessionStorage (login customizado)
+      const directUserData = sessionStorage.getItem('directUser');
+      if (directUserData) {
+        const directUser = JSON.parse(directUserData);
+        setUser(directUser);
+        setIsAuthenticated(true);
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return;
       }
       
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
+      // Fallback para autenticação nativa do Base44
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        setIsAuthenticated(true);
+        
+        // Apply pending user setups (role assignment, associate linking)
+        try {
+          await base44.functions.invoke('applyAllPendingSetups', {});
+        } catch (setupError) {
+          console.warn('Failed to apply pending setups:', setupError);
+        }
+        
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+      } catch (nativeAuthError) {
+        setIsLoadingAuth(false);
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+      }
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
     }
   };
 
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    // Limpar sessionStorage do usuário direto
+    sessionStorage.removeItem('directUser');
     
     if (shouldRedirect) {
       // Use the SDK's logout method which handles token cleanup and redirect
