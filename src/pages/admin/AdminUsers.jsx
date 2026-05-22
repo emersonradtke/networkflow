@@ -65,15 +65,16 @@ export default function AdminUsers() {
   const handleSendPasswordReset = async () => {
     if (!selectedUser) return;
     try {
-      // Enviar email de reset de senha
-      await base44.integrations.Core.SendEmail({
-        to: selectedUser.email,
-        subject: 'Redefinir sua senha',
-        body: `Clique no link para redefinir sua senha: ${window.location.origin}/reset-password`
+      // Chamar função backend para enviar reset de senha
+      await base44.functions.invoke('sendPasswordReset', {
+        userId: selectedUser.id,
+        email: selectedUser.email,
+        userName: selectedUser.full_name
       });
       toast.success('Email de reset enviado para ' + selectedUser.email);
     } catch (error) {
-      toast.error('Erro ao enviar email');
+      console.error('Erro ao enviar reset:', error);
+      toast.error('Erro ao enviar email de reset');
     }
   };
 
