@@ -12,8 +12,12 @@ export default function Landing() {
 
   useEffect(() => {
     (async () => {
-      const list = await base44.entities.NetworkConfig.list();
-      if (list?.[0]) setConfig({ app_name: list[0].app_name || 'Bold Life', app_logo: list[0].app_logo || '' });
+      try {
+        const list = await base44.entities.NetworkConfig.list();
+        if (list?.[0]) setConfig({ app_name: list[0].app_name || 'Bold Life', app_logo: list[0].app_logo || '' });
+      } catch {
+        // Landing is public — ignore auth errors when not logged in
+      }
     })();
   }, []);
 
