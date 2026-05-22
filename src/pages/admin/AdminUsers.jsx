@@ -66,9 +66,14 @@ export default function AdminUsers() {
         setNewName(associate.full_name);
         setNewEmail(associate.email || '');
         toast.success(`Associado encontrado: ${associate.full_name}`);
+      } else {
+        toast.error('CPF não encontrado no cadastro de associados');
+        setNewName('');
+        setNewEmail('');
       }
     } catch (error) {
       console.error('Erro ao buscar associado:', error);
+      toast.error('Erro ao buscar associado');
     } finally {
       setLoadingAssociate(false);
     }
@@ -366,7 +371,11 @@ export default function AdminUsers() {
                       value={newCpf}
                       onChange={(e) => setNewCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
                       maxLength="11"
+                      disabled={loadingAssociate}
                     />
+                    {loadingAssociate && (
+                      <p className="text-xs text-muted-foreground mt-1">Buscando associado...</p>
+                    )}
                   </div>
                 )}
 
