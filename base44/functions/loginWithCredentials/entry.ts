@@ -9,22 +9,39 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Usuário e senha são obrigatórios' }, { status: 400 });
     }
 
-    // Busca o usuário pelo email/username
-    const users = await base44.asServiceRole.entities.User.filter({ email: username });
+    // Busca o usuário pelo username
+    const users = await base44.asServiceRole.entities.DirectUser.filter({ username });
     
     if (users.length === 0) {
       return Response.json({ error: 'Usuário ou senha inválidos' }, { status: 401 });
     }
 
-    // Valida a senha (nota: em produção, você precisaria armazenar hashes de senha)
-    // Por enquanto, retornamos sucesso para indicar que o usuário existe
+    const user = users[0];
+
+    if (!user.is_active) {
+      return Response.json({ error: 'Usuário desativado' }, { status: 401 });
+    }
+
+    // Validar senha
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    if (hashHex !== user.password_hash) {
+      return Response.json({ error: 'Usuário ou senha inválidos' }, { status: 401 });
+    }
+
     return Response.json({ 
       success: true,
       token: 'auth_token_validated',
       user: {
-        email: users[0].email,
-        role: users[0].role,
-        id: users[0].id
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        cpf: user.cpf
       }
     });
   } catch (error) {

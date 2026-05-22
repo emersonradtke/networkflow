@@ -11,50 +11,37 @@ Deno.serve(async (req) => {
 
     const { username, email, password, cpf, role } = await req.json();
 
-    if (!username || !password || !cpf || !role) {
-      return Response.json({ error: 'Usuário, senha, CPF e role são obrigatórios' }, { status: 400 });
+    if (!username || !password || !cpf) {
+      return Response.json({ error: 'Usuário, senha e CPF são obrigatórios' }, { status: 400 });
     }
 
-    // Validar role
-    let baseRole = role === 'admin' ? 'admin' : 'user';
-
-    // Gerar email se não fornecido
-    const userEmail = email || `${username}@boldlife.local`;
-
-    // Verificar se email já está em uso
-    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+    // Verificar se usuário já existe
+    const existingUsers = await base44.asServiceRole.entities.DirectUser.filter({ username });
     if (existingUsers.length > 0) {
-      return Response.json({ error: 'Email já cadastrado' }, { status: 400 });
+      return Response.json({ error: 'Usuário já existe' }, { status: 400 });
     }
 
-    // Criar usuário via API do Base44 com autenticação de serviço
-    const apiToken = Deno.env.get('BASE44_SERVICE_TOKEN') || '';
-    const createUserResponse = await fetch('https://api.base44.com/users/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiToken}`
-      },
-      body: JSON.stringify({
-        email: userEmail,
-        password,
-        full_name: username,
-        role: baseRole,
-        cpf: cpf,
-      })
+    // Criar hash simples da senha (em produção usar bcrypt)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Criar usuário na entidade DirectUser
+    const newUser = await base44.asServiceRole.entities.DirectUser.create({
+      username,
+      email: email || `${username}@boldlife.local`,
+      cpf,
+      password_hash: hashHex,
+      role: role === 'admin' ? 'admin' : 'user',
+      is_active: true
     });
-
-    if (!createUserResponse.ok) {
-      const errData = await createUserResponse.json();
-      return Response.json({ error: errData.error || 'Erro ao criar usuário' }, { status: 400 });
-    }
-
-    const createdUser = await createUserResponse.json();
 
     return Response.json({ 
       success: true, 
       message: 'Usuário criado com sucesso',
-      userId: createdUser.id || userEmail
+      userId: newUser.id
     });
   } catch (error) {
     console.error('Erro ao criar usuário:', error);

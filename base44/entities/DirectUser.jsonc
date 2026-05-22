@@ -1,0 +1,41 @@
+{
+  "name": "DirectUser",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "Nome de usu\u00e1rio \u00fanico"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio"
+    },
+    "cpf": {
+      "type": "string",
+      "description": "CPF do usu\u00e1rio"
+    },
+    "password_hash": {
+      "type": "string",
+      "description": "Hash da senha"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin"
+      ],
+      "default": "user",
+      "description": "Papel do usu\u00e1rio"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o usu\u00e1rio est\u00e1 ativo"
+    }
+  },
+  "required": [
+    "username",
+    "cpf",
+    "password_hash"
+  ]
+}
