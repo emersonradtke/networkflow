@@ -1,0 +1,93 @@
+{
+  "name": "Supplier",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "supplier",
+        "franchise"
+      ],
+      "default": "supplier",
+      "description": "Fornecedor ou Franquia"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nome / Raz\u00e3o Social"
+    },
+    "trade_name": {
+      "type": "string",
+      "description": "Nome Fantasia"
+    },
+    "cnpj": {
+      "type": "string"
+    },
+    "cpf": {
+      "type": "string"
+    },
+    "person_type": {
+      "type": "string",
+      "enum": [
+        "pj",
+        "pf"
+      ],
+      "default": "pj"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Nome do respons\u00e1vel"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "phone2": {
+      "type": "string",
+      "description": "Telefone secund\u00e1rio / WhatsApp"
+    },
+    "website": {
+      "type": "string"
+    },
+    "address_street": {
+      "type": "string",
+      "description": "Rua / Logradouro"
+    },
+    "address_number": {
+      "type": "string"
+    },
+    "address_complement": {
+      "type": "string"
+    },
+    "address_neighborhood": {
+      "type": "string",
+      "description": "Bairro"
+    },
+    "address_city": {
+      "type": "string"
+    },
+    "address_state": {
+      "type": "string"
+    },
+    "address_zip": {
+      "type": "string",
+      "description": "CEP"
+    },
+    "category": {
+      "type": "string",
+      "description": "Segmento / Categoria"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
