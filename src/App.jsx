@@ -57,8 +57,14 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirecionar para login interno, não Base44
-      return <Navigate to="/login" replace />;
+      // Mostrar apenas rotas públicas, não redirecionar para Base44
+      return (
+        <Routes>
+          <Route path="/login" element={<AssociateLogin />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      );
     }
   }
 
