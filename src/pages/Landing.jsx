@@ -13,7 +13,7 @@ const BRAIN_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29d
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings } = useAuth();
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, checkUserAuth } = useAuth();
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +23,16 @@ export default function Landing() {
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated) {
-      // Se autenticado, redireciona via role
-      navigate('/role-redirect', { replace: true });
+      // Se autenticado, redireciona baseado no role
+      const directUserData = sessionStorage.getItem('directUser');
+      if (directUserData) {
+        const directUser = JSON.parse(directUserData);
+        if (directUser.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      }
     }
   }, [isAuthenticated, isLoadingAuth, isLoadingPublicSettings, navigate]);
 
@@ -45,8 +53,12 @@ export default function Landing() {
       if (response.data?.success && response.data?.user) {
         // Salva o usuário em sessionStorage
         sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
-        // Redireciona para role-redirect
-        navigate('/role-redirect', { replace: true });
+        // Redireciona direto para dashboard/admin
+        if (response.data.user.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       } else {
         setError(response.data?.error || 'Usuário ou senha inválidos');
         setLoading(false);
