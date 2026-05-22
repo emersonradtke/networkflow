@@ -2,11 +2,23 @@
   "name": "Product",
   "type": "object",
   "properties": {
+    "code": {
+      "type": "string",
+      "description": "C\u00f3digo \u00fanico do produto"
+    },
     "name": {
       "type": "string"
     },
     "description": {
       "type": "string"
+    },
+    "brand": {
+      "type": "string",
+      "description": "Marca do produto"
+    },
+    "supplier": {
+      "type": "string",
+      "description": "Fornecedor do produto"
     },
     "price": {
       "type": "number"
@@ -38,7 +50,19 @@
       "type": "string"
     },
     "stock": {
-      "type": "number"
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade em estoque"
+    },
+    "stock_min": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade m\u00ednima em estoque"
+    },
+    "stock_max": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantidade m\u00e1xima em estoque"
     }
   },
   "required": [

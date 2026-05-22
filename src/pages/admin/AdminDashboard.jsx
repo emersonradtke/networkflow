@@ -1,22 +1,25 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle } from 'lucide-react';
+import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, AlertTriangle, PackagePlus } from 'lucide-react';
 import StatCard from '@/components/StatCard';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, orders: 0, commissions: 0, withdrawals: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
+  const [lowStockProducts, setLowStockProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    const [associates, orders, commissions, withdrawals] = await Promise.all([
+    const [associates, orders, commissions, withdrawals, products] = await Promise.all([
       base44.entities.Associate.list(),
       base44.entities.Order.list('-created_date', 5),
       base44.entities.Commission.list(),
       base44.entities.WithdrawalRequest.filter({ status: 'pending' }),
+      base44.entities.Product.filter({ is_active: true }),
     ]);
 
     const totalCommissions = commissions.reduce((s, c) => s + (c.commission_amount || 0), 0);
@@ -29,6 +32,7 @@ export default function AdminDashboard() {
       withdrawals: withdrawals.length,
     });
     setRecentActivity(orders);
+    setLowStockProducts(products.filter(p => p.type === 'direct_sale' && p.stock_min != null && p.stock != null && p.stock <= p.stock_min));
     setLoading(false);
   };
 
@@ -55,6 +59,38 @@ export default function AdminDashboard() {
             <span className="font-bold text-yellow-400">{stats.pending} associados</span> aguardando ativação.{' '}
             <a href="/admin/associates" className="text-primary hover:underline">Ver agora →</a>
           </p>
+        </div>
+      )}
+
+      {lowStockProducts.length > 0 && (
+        <div className="dark-card rounded-2xl p-5 border border-orange-200 bg-orange-50/40">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+              <AlertTriangle size={15} className="text-orange-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground text-sm">Estoque Abaixo do Mínimo</h3>
+              <p className="text-xs text-muted-foreground">{lowStockProducts.length} produto(s) precisam de reposição</p>
+            </div>
+            <a href="/admin/products" className="ml-auto text-xs text-primary hover:underline flex items-center gap-1">
+              <PackagePlus size={13} /> Gerenciar
+            </a>
+          </div>
+          <div className="space-y-2">
+            {lowStockProducts.map(p => (
+              <div key={p.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-orange-100">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium text-foreground truncate">{p.name}</span>
+                  {p.code && <span className="text-xs font-mono text-muted-foreground">#{p.code}</span>}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
+                    {p.stock} / mín {p.stock_min}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
