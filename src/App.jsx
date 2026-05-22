@@ -6,16 +6,26 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
-const RequireAuth = ({ children }) => {
-  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings } = useAuth();
+const RequireAuth = ({ children, requiredRole = null }) => {
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, user } = useAuth();
   const location = useLocation();
+  
   if (isLoadingAuth || isLoadingPublicSettings) return null;
   if (!isAuthenticated) return <Navigate to="/" replace state={{ from: location }} />;
+  
+  // Verificar role se requerido
+  if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+  
   return children;
 };
 
 // Layout
 import Layout from './components/Layout';
+
+// Components
+import RoleRedirect from './components/RoleRedirect';
 
 // User Pages
 import Landing from './pages/Landing';
@@ -67,6 +77,9 @@ const AuthenticatedApp = () => {
       {/* Public */}
       <Route path="/" element={<Landing />} />
       <Route path="/register" element={<Register />} />
+      
+      {/* Role-based redirect */}
+      <Route path="/role-redirect" element={<RoleRedirect />} />
 
       {/* User App (protected) */}
       <Route element={<RequireAuth><Layout /></RequireAuth>}>

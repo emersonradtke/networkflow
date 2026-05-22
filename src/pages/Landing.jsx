@@ -11,7 +11,8 @@ export default function Landing() {
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      // Se autenticado, redireciona via role
+      navigate('/role-redirect', { replace: true });
     }
   }, [isAuthenticated, isLoadingAuth, isLoadingPublicSettings, navigate]);
 
