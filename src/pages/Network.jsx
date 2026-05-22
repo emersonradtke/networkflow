@@ -48,7 +48,10 @@ export default function Network() {
             {member.id === associate?.id ? <Crown size={16} /> : member.full_name?.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">{member.full_name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-slate-800 truncate">{member.full_name}</p>
+              {member.invite_code && <span className="text-xs font-mono bg-secondary text-primary px-1.5 py-0.5 rounded shrink-0">#{member.invite_code}</span>}
+            </div>
             <p className="text-xs text-slate-500">Nível {level} · {directs.length} diretos</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">

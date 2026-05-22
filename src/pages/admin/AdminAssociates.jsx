@@ -204,7 +204,10 @@ export default function AdminAssociates() {
                   {a.full_name?.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{a.full_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">{a.full_name}</p>
+                    {a.invite_code && <span className="text-xs font-mono bg-secondary text-primary px-1.5 py-0.5 rounded">#{a.invite_code}</span>}
+                  </div>
                   <p className="text-xs text-muted-foreground">{a.email}</p>
                   <div className="flex items-center gap-3 mt-0.5">
                     {a.phone && <p className="text-xs text-muted-foreground">{maskPhone(a.phone)}</p>}

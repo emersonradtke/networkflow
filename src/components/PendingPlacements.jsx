@@ -84,7 +84,9 @@ export default function PendingPlacements({ associateId, onAccepted }) {
               {req.associate_name?.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">{req.associate_name}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-foreground">{req.associate_name}</p>
+              </div>
               {req.original_sponsor_name && (
                 <p className="text-xs text-muted-foreground">Indicado por: {req.original_sponsor_name}</p>
               )}

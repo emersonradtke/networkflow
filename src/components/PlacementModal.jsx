@@ -61,7 +61,8 @@ export default function PlacementModal({ associate, onClose, onPlaced }) {
           <DialogTitle className="font-black">Alocar Associado na Rede</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-slate-500 -mt-2">
-          Escolha um associado ativo para receber <span className="font-semibold text-[#1B2A5E]">{associate.full_name}</span> em sua rede.
+          Escolha um associado ativo para receber <span className="font-semibold text-[#1B2A5E]">{associate.full_name}</span>
+          {associate.invite_code && <span className="ml-1 font-mono bg-secondary text-primary text-xs px-1.5 py-0.5 rounded">#{associate.invite_code}</span>} em sua rede.
           O patrocinador escolhido receberá uma notificação para aceitar ou recusar.
         </p>
 
@@ -87,7 +88,10 @@ export default function PlacementModal({ associate, onClose, onPlaced }) {
                 {a.full_name?.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-800">{a.full_name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-800">{a.full_name}</p>
+                  {a.invite_code && <span className="text-xs font-mono bg-secondary text-primary px-1.5 py-0.5 rounded shrink-0">#{a.invite_code}</span>}
+                </div>
                 <p className="text-xs text-slate-400">{a.email}</p>
               </div>
               {done === a.id ? (
