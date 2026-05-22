@@ -23,7 +23,30 @@ export default function PurchaseIntentsCard({ associateId }) {
         { associate_id: associateId, status: 'intent' },
         '-created_date'
       );
-      setIntents(data);
+      
+      // Enriquecer dados com preço e comissão do produto/banner
+      const enrichedData = await Promise.all(data.map(async (intent) => {
+        if (intent.link_type === 'product' && intent.product_id) {
+          const product = await base44.entities.Product.get(intent.product_id);
+          return {
+            ...intent,
+            product_price: product?.price || 0,
+            product_commission_percent: product?.commission_percent || 0,
+            managed_commission: product ? (product.price * product.commission_percent) / 100 : 0
+          };
+        } else if (intent.link_type === 'banner' && intent.banner_id) {
+          const banner = await base44.entities.StoreBanner.get(intent.banner_id);
+          return {
+            ...intent,
+            banner_price: banner?.price || 0,
+            banner_commission_percent: banner?.commission_percent || 0,
+            managed_commission: 0
+          };
+        }
+        return intent;
+      }));
+      
+      setIntents(enrichedData);
     } catch (error) {
       console.error('Erro ao carregar intenções:', error);
     } finally {
@@ -81,6 +104,14 @@ export default function PurchaseIntentsCard({ associateId }) {
                 <p className="text-sm font-medium text-foreground truncate">
                   {intent.product_name || intent.banner_name}
                 </p>
+                <div className="flex items-center gap-3 mt-1 text-xs">
+                  <span className="text-muted-foreground">
+                    R$ {(intent.product_price || 0).toFixed(2)}
+                  </span>
+                  <span className="text-green-600 font-semibold">
+                    Comissão: R$ {(intent.managed_commission || 0).toFixed(2)}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {new Date(intent.created_date).toLocaleDateString('pt-BR', {
                     day: '2-digit',
@@ -120,32 +151,46 @@ export default function PurchaseIntentsCard({ associateId }) {
             <DialogTitle>Detalhes da Intenção</DialogTitle>
           </DialogHeader>
           {detailsModal && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Produto/Banner</p>
-                <p className="text-sm font-medium text-foreground mt-1">
-                  {detailsModal.product_name || detailsModal.banner_name}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Tipo</p>
-                <Badge className="mt-1" variant="outline">
-                  {detailsModal.link_type === 'product' ? 'Produto' : 'Banner'}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Data e Hora</p>
-                <p className="text-sm text-foreground mt-1">
-                  {new Date(detailsModal.created_date).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                  })}
-                </p>
-              </div>
+           <div className="space-y-4">
+             <div>
+               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Produto/Banner</p>
+               <p className="text-sm font-medium text-foreground mt-1">
+                 {detailsModal.product_name || detailsModal.banner_name}
+               </p>
+             </div>
+             <div>
+               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Tipo</p>
+               <Badge className="mt-1" variant="outline">
+                 {detailsModal.link_type === 'product' ? 'Produto' : 'Banner'}
+               </Badge>
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+               <div>
+                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor</p>
+                 <p className="text-sm font-semibold text-foreground mt-1">
+                   R$ {(detailsModal.product_price || 0).toFixed(2)}
+                 </p>
+               </div>
+               <div>
+                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Comissão</p>
+                 <p className="text-sm font-semibold text-green-600 mt-1">
+                   R$ {(detailsModal.managed_commission || 0).toFixed(2)}
+                 </p>
+               </div>
+             </div>
+             <div>
+               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Data e Hora</p>
+               <p className="text-sm text-foreground mt-1">
+                 {new Date(detailsModal.created_date).toLocaleDateString('pt-BR', {
+                   day: '2-digit',
+                   month: '2-digit',
+                   year: 'numeric',
+                   hour: '2-digit',
+                   minute: '2-digit',
+                   second: '2-digit'
+                 })}
+               </p>
+             </div>
               <Button
                 className="w-full gold-gradient text-background font-bold"
                 onClick={() => {
