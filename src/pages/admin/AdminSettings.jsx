@@ -11,6 +11,7 @@ import CategoryManager from '@/components/admin/CategoryManager';
 import BannerManager from '@/components/admin/BannerManager';
 import RolePermissionManager from '@/components/admin/RolePermissionManager';
 import UserManagement from '@/components/admin/UserManagement';
+import TermsManager from '@/components/admin/TermsManager';
 
 export default function AdminSettings() {
   const [config, setConfig] = useState(null);
@@ -59,12 +60,13 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
           <TabsTrigger value="banners">Banners</TabsTrigger>
+          <TabsTrigger value="terms">Termos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -191,6 +193,10 @@ export default function AdminSettings() {
 
         <TabsContent value="banners">
           <BannerManager />
+        </TabsContent>
+
+        <TabsContent value="terms">
+          <TermsManager />
         </TabsContent>
       </Tabs>
     </div>
