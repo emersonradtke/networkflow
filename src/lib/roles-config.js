@@ -3,7 +3,9 @@ export const ROLES = {
   ADMIN: 'admin',
   ASSOCIATE: 'associate',
   EMPLOYEE: 'employee',
-  GUEST: 'guest'
+  GUEST: 'guest',
+  FRANCHISE: 'franchise',
+  PARTNER: 'partner'
 };
 
 export const ROLE_CONFIG = {
@@ -63,6 +65,30 @@ export const ROLE_CONFIG = {
     permissions: ['view_store'],
     menuItems: [
       { path: '/store', label: 'Loja', icon: 'ShoppingBag' }
+    ]
+  },
+  [ROLES.FRANCHISE]: {
+    label: 'Franquia',
+    description: 'Gerenciamento de entregas e operações de franquia',
+    color: 'bg-purple-100 text-purple-800',
+    icon: 'Building',
+    permissions: ['manage_shipping', 'view_orders', 'view_products'],
+    menuItems: [
+      { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+      { path: '/admin/orders', label: 'Pedidos', icon: 'ShoppingBag' },
+      { path: '/admin/shipping', label: 'Gerenciar Entregas', icon: 'Truck' }
+    ]
+  },
+  [ROLES.PARTNER]: {
+    label: 'Parceiro',
+    description: 'Gerenciamento de entregas e operações de parceiro',
+    color: 'bg-orange-100 text-orange-800',
+    icon: 'Handshake',
+    permissions: ['manage_shipping', 'view_orders'],
+    menuItems: [
+      { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+      { path: '/admin/orders', label: 'Pedidos', icon: 'ShoppingBag' },
+      { path: '/admin/shipping', label: 'Gerenciar Entregas', icon: 'Truck' }
     ]
   }
 };

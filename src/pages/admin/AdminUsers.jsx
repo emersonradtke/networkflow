@@ -408,8 +408,12 @@ export default function AdminUsers() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="associate">Associado</SelectItem>
+                  <SelectItem value="employee">Funcionário</SelectItem>
+                  <SelectItem value="guest">Visitante</SelectItem>
+                  <SelectItem value="franchise">Franquia</SelectItem>
+                  <SelectItem value="partner">Parceiro</SelectItem>
                 </SelectContent>
               </Select>
             </div>

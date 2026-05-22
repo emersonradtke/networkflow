@@ -15,9 +15,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'CPF, nome e role são obrigatórios' }, { status: 400 });
     }
 
-    // Validar role (Base44 só aceita 'user' ou 'admin')
-    const validRoles = ['user', 'admin'];
-    const baseRole = validRoles.includes(role) ? role : 'user';
+    // Validar role (Base44 só aceita 'user' ou 'admin', mapeamos outros roles para 'user')
+    const validBaseRoles = ['user', 'admin'];
+    let baseRole = 'user';
+    
+    if (role === 'admin') {
+      baseRole = 'admin';
+    }
+    // Todos os outros roles (associate, employee, guest, franchise, partner) usam 'user' como base
+    // mas o custom role será armazenado no campo 'role' da entidade User
 
     // Verificar se usuário com esse email já existe
     if (email) {
@@ -35,13 +41,18 @@ Deno.serve(async (req) => {
     const createdUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
     const newUser = createdUsers[0];
 
+    // Se o role for diferente do baseRole, atualizar com o role customizado
+    if (role !== baseRole) {
+      await base44.asServiceRole.entities.User.update(newUser.id, { role });
+    }
+
     return Response.json({ 
       success: true, 
       user: {
         id: newUser.id,
         full_name: newUser.full_name,
         email: newUser.email,
-        role: newUser.role
+        role: role || newUser.role
       }
     });
   } catch (error) {
