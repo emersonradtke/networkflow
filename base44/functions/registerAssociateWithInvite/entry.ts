@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       cnpj: person_type === 'pj' ? docRaw : '',
       company_name: person_type === 'pj' ? company_name : '',
       person_type,
-      status: 'awaiting_activation',
+      status: 'pending',
       sponsor_id: sponsor_id || null,
       sponsor_name: sponsor_name || null,
       invite_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
