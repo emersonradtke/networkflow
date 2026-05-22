@@ -141,6 +141,9 @@ export default function Store() {
         />
       </div>
 
+      {/* Banners */}
+      <StoreBannerCarousel />
+
       {/* Busca */}
       <div className="relative">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
