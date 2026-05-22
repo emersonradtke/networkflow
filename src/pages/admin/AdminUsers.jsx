@@ -10,7 +10,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { ROLE_CONFIG, getRoleLabel, getRoleColor } from '@/lib/roles-config';
-import { Shield, Edit, Search, Plus } from 'lucide-react';
+import { Shield, Edit, Search, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -18,7 +19,10 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
+  const [dialogMode, setDialogMode] = useState('edit'); // 'edit' ou 'create'
   const [newRole, setNewRole] = useState('associate');
+  const [newEmail, setNewEmail] = useState('');
+  const [newName, setNewName] = useState('');
 
   useEffect(() => {
     loadUsers();
@@ -39,12 +43,42 @@ export default function AdminUsers() {
   const handleUpdateRole = async () => {
     if (!selectedUser) return;
     try {
-      await base44.auth.updateMe({ role: newRole });
+      await base44.entities.User.update(selectedUser.id, { role: newRole });
       await loadUsers();
       setShowDialog(false);
       setSelectedUser(null);
+      toast.success('Role atualizado com sucesso');
     } catch (error) {
-      alert('Erro ao atualizar role');
+      toast.error('Erro ao atualizar role');
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newEmail || !newName) {
+      toast.error('Preencha email e nome');
+      return;
+    }
+    try {
+      await base44.users.inviteUser(newEmail, newRole);
+      await loadUsers();
+      setShowDialog(false);
+      setNewEmail('');
+      setNewName('');
+      setNewRole('associate');
+      toast.success('Usuário convidado com sucesso');
+    } catch (error) {
+      toast.error('Erro ao convidar usuário');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Tem certeza que deseja remover este usuário?')) return;
+    try {
+      await base44.entities.User.delete(userId);
+      await loadUsers();
+      toast.success('Usuário removido');
+    } catch (error) {
+      toast.error('Erro ao remover usuário');
     }
   };
 
@@ -83,7 +117,7 @@ export default function AdminUsers() {
         ))}
       </div>
 
-      {/* Search */}
+      {/* Search and Add */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -94,6 +128,19 @@ export default function AdminUsers() {
             className="pl-10"
           />
         </div>
+        <Button
+          onClick={() => {
+            setDialogMode('create');
+            setNewEmail('');
+            setNewName('');
+            setNewRole('associate');
+            setShowDialog(true);
+          }}
+          className="bg-primary"
+        >
+          <Plus size={18} className="mr-2" />
+          Novo Usuário
+        </Button>
       </div>
 
       {/* Users List */}
@@ -107,8 +154,7 @@ export default function AdminUsers() {
             <table className="w-full text-sm">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">Usuário</th>
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">Email</th>
+                  <th className="px-6 py-3 text-left font-semibold text-foreground">Nome</th>
                   <th className="px-6 py-3 text-left font-semibold text-foreground">Role</th>
                   <th className="px-6 py-3 text-left font-semibold text-foreground">Data Criação</th>
                   <th className="px-6 py-3 text-right font-semibold text-foreground">Ações</th>
@@ -117,8 +163,12 @@ export default function AdminUsers() {
               <tbody className="divide-y divide-border">
                 {filteredUsers.map(user => (
                   <tr key={user.id} className="hover:bg-secondary/50 transition-colors">
-                    <td className="px-6 py-3 font-medium text-foreground">{user.full_name}</td>
-                    <td className="px-6 py-3 text-muted-foreground">{user.email}</td>
+                    <td className="px-6 py-3">
+                      <div>
+                        <p className="font-medium text-foreground">{user.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </td>
                     <td className="px-6 py-3">
                       <Badge className={getRoleColor(user.role)}>
                         {getRoleLabel(user.role)}
@@ -127,18 +177,26 @@ export default function AdminUsers() {
                     <td className="px-6 py-3 text-muted-foreground text-xs">
                       {new Date(user.created_date).toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="px-6 py-3 text-right">
+                    <td className="px-6 py-3 text-right flex items-center justify-end gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
+                          setDialogMode('edit');
                           setSelectedUser(user);
                           setNewRole(user.role || 'associate');
                           setShowDialog(true);
                         }}
                       >
-                        <Edit size={14} className="mr-1" />
-                        Editar
+                        <Edit size={14} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => handleDeleteUser(user.id)}
+                      >
+                        <Trash2 size={14} />
                       </Button>
                     </td>
                   </tr>
@@ -149,60 +207,83 @@ export default function AdminUsers() {
         </div>
       )}
 
-      {/* Edit Dialog */}
+      {/* Dialog - Edit or Create */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar Role do Usuário</DialogTitle>
+            <DialogTitle>
+              {dialogMode === 'edit' ? 'Editar Role do Usuário' : 'Convidar Novo Usuário'}
+            </DialogTitle>
           </DialogHeader>
 
-          {selectedUser && (
-            <div className="space-y-4">
+          <div className="space-y-4">
+            {dialogMode === 'create' ? (
+              <>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Nome</label>
+                  <Input
+                    placeholder="Nome completo"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
+                  <Input
+                    placeholder="email@example.com"
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                </div>
+              </>
+            ) : selectedUser ? (
               <div>
                 <p className="text-sm text-muted-foreground">Usuário</p>
                 <p className="font-semibold text-foreground">{selectedUser.full_name}</p>
                 <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
               </div>
+            ) : null}
 
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">Novo Role</label>
-                <Select value={newRole} onValueChange={setNewRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(ROLE_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className="flex items-center gap-2">
-                          {config.label} - {config.description}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {newRole && (
-                <div className="p-3 rounded-lg bg-secondary">
-                  <p className="text-xs font-semibold text-muted-foreground mb-2">Permissões:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {ROLE_CONFIG[newRole].permissions.map((perm, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">
-                        {perm === 'all' ? 'Acesso Total' : perm.replace('_', ' ')}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Role</label>
+              <Select value={newRole} onValueChange={setNewRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ROLE_CONFIG).map(([key, config]) => (
+                    <SelectItem key={key} value={key}>
+                      {config.label} - {config.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            {newRole && (
+              <div className="p-3 rounded-lg bg-secondary">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">Permissões:</p>
+                <div className="flex flex-wrap gap-1">
+                  {ROLE_CONFIG[newRole].permissions.map((perm, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {perm === 'all' ? 'Acesso Total' : perm.replace('_', ' ')}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleUpdateRole} className="bg-primary">
-              Salvar Alterações
+            <Button
+              onClick={dialogMode === 'edit' ? handleUpdateRole : handleCreateUser}
+              className="bg-primary"
+            >
+              {dialogMode === 'edit' ? 'Salvar Alterações' : 'Convidar Usuário'}
             </Button>
           </DialogFooter>
         </DialogContent>
