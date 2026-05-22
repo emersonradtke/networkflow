@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Edit2, Save, X, Eye, EyeOff } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Plus, Trash2, Edit2, Save, X, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -22,6 +23,14 @@ export default function UserManagement() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteAdminUsername, setDeleteAdminUsername] = useState('');
+  const [deleteAdminPassword, setDeleteAdminPassword] = useState('');
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
+  const [editForm, setEditForm] = useState({ username: '', email: '', cpf: '', role: 'user' });
 
   useEffect(() => {
     loadData();
@@ -75,15 +84,70 @@ export default function UserManagement() {
     }
   };
 
-  const handleDelete = async (userId) => {
-    if (!confirm('Tem certeza que deseja deletar este usuário?')) return;
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setShowDeleteDialog(true);
+    setDeleteAdminUsername('');
+    setDeleteAdminPassword('');
+    setDeleteError('');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteAdminUsername || !deleteAdminPassword) {
+      setDeleteError('Usuário e senha do admin são obrigatórios');
+      return;
+    }
 
     try {
-      await base44.entities.DirectUser.delete(userId);
+      // Validar credenciais do admin
+      const res = await base44.functions.invoke('loginWithCredentials', {
+        username: deleteAdminUsername,
+        password: deleteAdminPassword
+      });
+
+      if (!res.data?.success || res.data?.user?.role !== 'admin') {
+        setDeleteError('Credenciais de admin inválidas');
+        return;
+      }
+
+      // Se validado, deletar o usuário
+      await base44.entities.DirectUser.delete(userToDelete.id);
       setSuccess('Usuário deletado com sucesso!');
+      setShowDeleteDialog(false);
       loadData();
     } catch (err) {
-      setError('Erro ao deletar usuário');
+      setDeleteError('Erro ao validar credenciais');
+    }
+  };
+
+  const handleEditClick = (user) => {
+    setEditingUser(user);
+    setEditForm({
+      username: user.username,
+      email: user.email,
+      cpf: user.cpf,
+      role: user.role
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editForm.username || !editForm.cpf) {
+      setError('Usuário e CPF são obrigatórios');
+      return;
+    }
+
+    try {
+      await base44.entities.DirectUser.update(editingUser.id, {
+        username: editForm.username,
+        email: editForm.email,
+        cpf: editForm.cpf,
+        role: editForm.role
+      });
+      setSuccess('Usuário atualizado com sucesso!');
+      setEditingUser(null);
+      loadData();
+    } catch (err) {
+      setError('Erro ao atualizar usuário');
     }
   };
 
@@ -213,6 +277,117 @@ export default function UserManagement() {
         </div>
       )}
 
+      {/* Edit Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-foreground">Usuário *</Label>
+              <Input
+                className="mt-1.5 bg-secondary border-border"
+                placeholder="username"
+                value={editForm.username}
+                onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label className="text-foreground">E-mail</Label>
+              <Input
+                className="mt-1.5 bg-secondary border-border"
+                type="email"
+                placeholder="email@exemplo.com"
+                value={editForm.email}
+                onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label className="text-foreground">CPF *</Label>
+              <Input
+                className="mt-1.5 bg-secondary border-border"
+                placeholder="000.000.000-00"
+                value={editForm.cpf}
+                onChange={(e) => setEditForm({...editForm, cpf: e.target.value})}
+              />
+            </div>
+            <div>
+              <Label className="text-foreground">Role</Label>
+              <Select value={editForm.role} onValueChange={(val) => setEditForm({...editForm, role: val})}>
+                <SelectTrigger className="mt-1.5 bg-secondary border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} className="gold-gradient text-background">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle size={20} />
+              Confirmar Exclusão
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Para deletar o usuário <strong>{userToDelete?.username}</strong>, informe as credenciais de um administrador.
+            </p>
+            {deleteError && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                {deleteError}
+              </div>
+            )}
+            <div>
+              <Label className="text-foreground">Usuário Admin *</Label>
+              <Input
+                className="mt-1.5 bg-secondary border-border"
+                placeholder="username"
+                value={deleteAdminUsername}
+                onChange={(e) => setDeleteAdminUsername(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label className="text-foreground">Senha Admin *</Label>
+              <div className="relative mt-1.5">
+                <Input
+                  className="bg-secondary border-border pr-10"
+                  type={showDeletePassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={deleteAdminPassword}
+                  onChange={(e) => setDeleteAdminPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDeletePassword(!showDeletePassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showDeletePassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancelar</Button>
+            <Button onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90 text-white">
+              Deletar Usuário
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Users List */}
       <div className="dark-card rounded-2xl p-6">
         <h3 className="font-bold text-foreground mb-4">Usuários do Sistema</h3>
@@ -252,12 +427,21 @@ export default function UserManagement() {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="py-3 px-3 text-right">
+                    <td className="py-3 px-3 text-right flex gap-2 justify-end">
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(user.id)}
+                        onClick={() => handleEditClick(user)}
+                        className="text-accent hover:bg-accent/10 gap-2"
+                      >
+                        <Edit2 size={14} /> Editar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(user)}
                         className="text-destructive hover:bg-destructive/10 gap-2"
                       >
                         <Trash2 size={14} /> Deletar
