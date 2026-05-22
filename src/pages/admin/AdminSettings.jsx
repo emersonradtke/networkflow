@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CategoryManager from '@/components/admin/CategoryManager';
 import BannerManager from '@/components/admin/BannerManager';
+import RolePermissionManager from '@/components/admin/RolePermissionManager';
 
 export default function AdminSettings() {
   const [config, setConfig] = useState(null);
@@ -57,8 +58,9 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
           <TabsTrigger value="banners">Banners</TabsTrigger>
         </TabsList>
@@ -171,6 +173,10 @@ export default function AdminSettings() {
           <Save size={16} /> {saved ? 'Salvo!' : saving ? 'Salvando...' : 'Salvar Configurações'}
         </Button>
       </form>
+        </TabsContent>
+
+        <TabsContent value="roles">
+          <RolePermissionManager />
         </TabsContent>
 
         <TabsContent value="categories">
