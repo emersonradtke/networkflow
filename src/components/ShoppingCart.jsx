@@ -194,7 +194,6 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
         quantity: item.qty,
       }));
 
-      const appUrl = window.location.origin;
       const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
         order_nsu: `CART-${cartId}`,
         items: checkoutItems,
@@ -203,8 +202,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           email: localAssociate.email,
           phone_number: localAssociate.phone || '',
         },
-        redirect_url: `${appUrl}/orders`,
-        webhook_url: `${appUrl}/api/functions/infinitePayWebhook`,
+        redirect_url: `${window.location.origin}/orders`,
       });
 
       const paymentUrl = checkoutRes.data?.url;
