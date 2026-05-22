@@ -1,0 +1,33 @@
+{
+  "name": "UserTermsAcceptance",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio"
+    },
+    "terms_id": {
+      "type": "string",
+      "description": "ID do termo aceito"
+    },
+    "terms_version": {
+      "type": "number",
+      "description": "Vers\u00e3o do termo aceito"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora de aceite"
+    }
+  },
+  "required": [
+    "user_id",
+    "terms_id",
+    "terms_version",
+    "accepted_at"
+  ]
+}

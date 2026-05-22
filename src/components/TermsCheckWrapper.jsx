@@ -1,0 +1,47 @@
+import { useEffect, useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
+import TermsOfServiceModal from './TermsOfServiceModal';
+
+export default function TermsCheckWrapper({ children }) {
+  const { user, isAuthenticated, isLoadingAuth } = useAuth();
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsLoaded, setTermsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && user && !isLoadingAuth && !termsLoaded) {
+      checkTermsStatus();
+    }
+  }, [isAuthenticated, user, isLoadingAuth, termsLoaded]);
+
+  const checkTermsStatus = async () => {
+    try {
+      const response = await base44.functions.invoke('checkUserTermsStatus', {});
+      if (response.data?.needs_acceptance) {
+        setShowTermsModal(true);
+      }
+      setTermsLoaded(true);
+    } catch (error) {
+      console.error('Erro ao verificar termos:', error);
+      setTermsLoaded(true);
+    }
+  };
+
+  const handleAcceptTerms = () => {
+    setShowTermsModal(false);
+    setTermsLoaded(false); // Recarregar status
+  };
+
+  return (
+    <>
+      {children}
+      {user && (
+        <TermsOfServiceModal
+          open={showTermsModal}
+          onAccept={handleAcceptTerms}
+          user={user}
+        />
+      )}
+    </>
+  );
+}

@@ -26,6 +26,7 @@ import Layout from './components/Layout';
 
 // Components
 import RoleRedirect from './components/RoleRedirect';
+import TermsCheckWrapper from './components/TermsCheckWrapper';
 
 // User Pages
 import Landing from './pages/Landing';
@@ -114,9 +115,11 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
+        <TermsCheckWrapper>
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+        </TermsCheckWrapper>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

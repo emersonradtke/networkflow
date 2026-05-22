@@ -1,0 +1,28 @@
+{
+  "name": "TermsOfService",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo dos termos"
+    },
+    "content": {
+      "type": "string",
+      "description": "Conte\u00fado em markdown dos termos"
+    },
+    "version": {
+      "type": "number",
+      "default": 1,
+      "description": "Vers\u00e3o do termo"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se \u00e9 a vers\u00e3o ativa atualmente"
+    }
+  },
+  "required": [
+    "title",
+    "content"
+  ]
+}
