@@ -9,10 +9,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Acesso negado' }, { status: 403 });
     }
 
-    const { cpf, full_name, email, role } = await req.json();
+    const { username, email, password, role } = await req.json();
 
-    if (!cpf || !full_name || !role) {
-      return Response.json({ error: 'CPF, nome e role são obrigatórios' }, { status: 400 });
+    if (!username || !password || !role) {
+      return Response.json({ error: 'Usuário, senha e role são obrigatórios' }, { status: 400 });
     }
 
     // Validar role (Base44 só aceita 'user' ou 'admin', mapeamos outros roles para 'user')
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     }
 
     // Gerar email se não fornecido
-    const userEmail = email || `cpf_${cpf}@boldlife.local`;
+    const userEmail = email || `${username}@boldlife.local`;
 
     // Verificar se email já está em uso
     const existingPending = await base44.asServiceRole.entities.PendingUserSetup.filter({ email: userEmail });
@@ -45,17 +45,17 @@ Deno.serve(async (req) => {
     // Convidar usuário
     await base44.users.inviteUser(userEmail, baseRole);
 
-    // Criar PendingUserSetup com role customizado
+    // Criar PendingUserSetup com role customizado e username
     await base44.asServiceRole.entities.PendingUserSetup.create({
       email: userEmail,
-      full_name,
+      full_name: username,
       role,
       applied: false,
     });
 
     return Response.json({ 
       success: true, 
-      message: 'Convite enviado para ' + userEmail + '. O role será aplicado automaticamente quando o usuário fizer o primeiro acesso.',
+      message: 'Usuário ' + username + ' criado com sucesso. Ele poderá fazer login com suas credenciais.',
       pending: true
     });
   } catch (error) {

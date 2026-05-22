@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CategoryManager from '@/components/admin/CategoryManager';
 import BannerManager from '@/components/admin/BannerManager';
 import RolePermissionManager from '@/components/admin/RolePermissionManager';
+import UserManagement from '@/components/admin/UserManagement';
 
 export default function AdminSettings() {
   const [config, setConfig] = useState(null);
@@ -58,8 +59,9 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
           <TabsTrigger value="categories">Categorias</TabsTrigger>
           <TabsTrigger value="banners">Banners</TabsTrigger>
@@ -173,6 +175,10 @@ export default function AdminSettings() {
           <Save size={16} /> {saved ? 'Salvo!' : saving ? 'Salvando...' : 'Salvar Configurações'}
         </Button>
       </form>
+        </TabsContent>
+
+        <TabsContent value="usuarios">
+          <UserManagement />
         </TabsContent>
 
         <TabsContent value="roles">
