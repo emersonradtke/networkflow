@@ -69,7 +69,7 @@ export default function UserCreationForm({ open, onOpenChange, onSuccess }) {
       });
 
       if (result?.data?.success) {
-        toast.success('Usuário criado com sucesso');
+        toast.success(result.data.message || 'Usuário criado com sucesso');
         setEmail('');
         setFullName('');
         setSelectedRole('');

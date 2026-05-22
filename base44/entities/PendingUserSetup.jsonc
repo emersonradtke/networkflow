@@ -1,0 +1,27 @@
+{
+  "name": "PendingUserSetup",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Email do usu\u00e1rio convidado"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "associate_id": {
+      "type": "string"
+    },
+    "applied": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "email",
+    "role"
+  ]
+}

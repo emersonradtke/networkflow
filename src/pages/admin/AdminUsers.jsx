@@ -48,6 +48,14 @@ export default function AdminUsers() {
   const loadUsers = async () => {
     setLoading(true);
     try {
+      // Aplicar setups pendentes a usuários recém-criados
+      try {
+        await base44.functions.invoke('applyAllPendingSetups', {});
+      } catch (e) {
+        // Não bloqueia o carregamento se falhar
+        console.warn('Erro ao aplicar setups pendentes:', e);
+      }
+
       const allUsers = await base44.entities.User.list('-created_date', 100);
       setUsers(allUsers);
     } catch (error) {
