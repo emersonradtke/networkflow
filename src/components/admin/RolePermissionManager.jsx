@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Plus, Trash2, X } from 'lucide-react';
+import { Edit, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ROLE_CONFIG } from '@/lib/roles-config';
 
 const AVAILABLE_PERMISSIONS = [
   'all',
@@ -42,7 +43,27 @@ export default function RolePermissionManager() {
   const loadRoles = async () => {
     setLoading(true);
     try {
-      const allRoles = await base44.entities.Role.list('-created_date', 100);
+      // Carregar roles customizados da entidade
+      const customRoles = await base44.entities.Role.list('-created_date', 100);
+      
+      // Converter ROLE_CONFIG para formato de role
+      const systemRoles = Object.entries(ROLE_CONFIG).map(([key, config]) => ({
+        id: `system_${key}`,
+        name: key,
+        label: config.label,
+        description: config.description || '',
+        color: config.color || 'bg-blue-100 text-blue-800',
+        permissions: config.permissions || [],
+        is_system: true
+      }));
+
+      // Combinar roles do sistema com customizados (customizados sobrescrevem sistema)
+      const customRoleNames = new Set(customRoles.map(r => r.name));
+      const allRoles = [
+        ...systemRoles.filter(r => !customRoleNames.has(r.name)),
+        ...customRoles
+      ];
+
       setRoles(allRoles);
     } catch (error) {
       console.error('Erro ao carregar roles:', error);
@@ -83,7 +104,18 @@ export default function RolePermissionManager() {
 
     try {
       if (editingRole) {
-        await base44.entities.Role.update(editingRole.id, formData);
+        // Se é um role do sistema, criar uma override na entidade Role
+        if (editingRole.is_system && editingRole.id.startsWith('system_')) {
+          // Procurar se já existe uma override
+          const existing = await base44.entities.Role.filter({ name: editingRole.name });
+          if (existing.length > 0) {
+            await base44.entities.Role.update(existing[0].id, formData);
+          } else {
+            await base44.entities.Role.create(formData);
+          }
+        } else {
+          await base44.entities.Role.update(editingRole.id, formData);
+        }
         toast.success('Role atualizado');
       } else {
         await base44.entities.Role.create(formData);
@@ -108,7 +140,10 @@ export default function RolePermissionManager() {
     }
 
     try {
-      await base44.entities.Role.delete(role.id);
+      // Apenas deletar se tiver um ID real da entidade (não é sistema)
+      if (!role.id.startsWith('system_')) {
+        await base44.entities.Role.delete(role.id);
+      }
       await loadRoles();
       toast.success('Role deletado');
     } catch (error) {
