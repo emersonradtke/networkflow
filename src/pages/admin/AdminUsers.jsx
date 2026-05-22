@@ -38,7 +38,7 @@ export default function AdminUsers() {
 
   const loadRolesData = async () => {
     try {
-      const rolesData = await loadRoles();
+      const rolesData = await loadRoles(true);
       setRoles(rolesData);
     } catch (error) {
       console.error('Erro ao carregar roles:', error);
@@ -231,14 +231,16 @@ export default function AdminUsers() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                           setSelectedUser(user);
                           setEditName(user.full_name || '');
                           setEditEmail(user.email || '');
                           setEditPassword('');
                           setEditRole(user.role || '');
+                          if (roles.length === 0) {
+                            await loadRolesData();
+                          }
                           setShowDialog(true);
-                          if (roles.length === 0) loadRolesData();
                         }}
                       >
                         <Edit size={14} />
