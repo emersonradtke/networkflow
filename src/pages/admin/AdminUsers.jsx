@@ -25,6 +25,7 @@ export default function AdminUsers() {
   const [newName, setNewName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editName, setEditName] = useState('');
+  const [editPassword, setEditPassword] = useState('');
 
   useEffect(() => {
     loadUsers();
@@ -52,10 +53,21 @@ export default function AdminUsers() {
       if (editEmail && editEmail !== selectedUser.email) {
         updates.email = editEmail;
       }
+      
       await base44.entities.User.update(selectedUser.id, updates);
+      
+      // Se houver senha, enviar para função backend para atualizar
+      if (editPassword && editPassword.trim()) {
+        await base44.functions.invoke('updateUserPassword', {
+          userId: selectedUser.id,
+          newPassword: editPassword
+        });
+      }
+      
       await loadUsers();
       setShowDialog(false);
       setSelectedUser(null);
+      setEditPassword('');
       toast.success('Usuário atualizado com sucesso');
     } catch (error) {
       toast.error('Erro ao atualizar usuário');
@@ -211,6 +223,7 @@ export default function AdminUsers() {
                           setSelectedUser(user);
                           setEditName(user.full_name || '');
                           setEditEmail(user.email || '');
+                          setEditPassword('');
                           setNewRole(user.role || 'associate');
                           setShowDialog(true);
                         }}
@@ -283,14 +296,15 @@ export default function AdminUsers() {
                     type="email"
                   />
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSendPasswordReset}
-                  className="w-full text-sm"
-                >
-                  Enviar Reset de Senha
-                </Button>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Nova Senha (opcional)</label>
+                  <Input
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="Digite a nova senha"
+                    type="password"
+                  />
+                </div>
               </>
             ) : null}
 
