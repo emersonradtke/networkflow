@@ -4,40 +4,43 @@ import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed }) {
   const [status, setStatus] = useState('pending'); // pending | paid | error
-  const [popup, setPopup] = useState(null);
+  const [popupRef, setPopupRef] = useState(null);
 
   useEffect(() => {
     if (!cartId || !paymentUrl) return;
 
+    let unsubscribe = null;
+
+    // Abrir popup de pagamento ANTES de observar mudanças
+    const w = window.open(paymentUrl, 'InfinitePay', 'width=500,height=700');
+    setPopupRef(w);
+
     // Observar mudanças nos pedidos do carrinho
-    const sub = base44.entities.Order.subscribe((event) => {
+    unsubscribe = base44.entities.Order.subscribe((event) => {
+      // Aguardar o webhook atualizar qualquer pedido deste carrinho para 'paid'
       if (event.data?.cart_id === cartId && event.data?.status === 'paid') {
         setStatus('paid');
-        if (popup && !popup.closed) {
-          popup.close();
+        // Fechar popup após confirmação
+        if (w && !w.closed) {
+          w.close();
         }
-        onPaymentConfirmed?.();
       }
     });
 
-    // Abrir popup de pagamento
-    const w = window.open(paymentUrl, 'InfinitePay', 'width=500,height=700');
-    setPopup(w);
-
-    // Poll para verificar se a janela foi fechada
-    const pollInterval = setInterval(() => {
-      if (w && w.closed && status === 'pending') {
-        setStatus('pending'); // Apenas fecha se não foi pago
-      }
-    }, 500);
-
     return () => {
-      clearInterval(pollInterval);
-      sub?.();
+      if (unsubscribe) unsubscribe();
+      if (w && !w.closed) w.close();
     };
-  }, [cartId, paymentUrl, popup, status, onPaymentConfirmed]);
+  }, [cartId, paymentUrl]);
 
   if (status === 'paid') {
+    // Chamar callback e preparar transição
+    if (onPaymentConfirmed) {
+      setTimeout(() => {
+        onPaymentConfirmed();
+      }, 1500);
+    }
+    
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 p-8">
         <div className="w-20 h-20 rounded-full flex items-center justify-center animate-bounce" style={{ background: 'linear-gradient(135deg,#1B2A5E,#3B9EE2)' }}>
@@ -60,7 +63,7 @@ export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed })
       </div>
       <div>
         <h3 className="text-lg font-bold text-foreground">Processando Pagamento</h3>
-        <p className="text-sm text-muted-foreground mt-2">Uma janela de pagamento foi aberta. Complete o pagamento para continuar.</p>
+        <p className="text-sm text-muted-foreground mt-2">A janela de pagamento está aberta. Complete o pagamento para continuar aqui.</p>
       </div>
       <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 flex items-start gap-3">
         <AlertCircle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
