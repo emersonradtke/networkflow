@@ -15,31 +15,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Usuário, senha e role são obrigatórios' }, { status: 400 });
     }
 
-    // Validar role (Base44 só aceita 'user' ou 'admin', mapeamos outros roles para 'user')
-    const validBaseRoles = ['user', 'admin'];
-    let baseRole = 'user';
-    
-    if (role === 'admin') {
-      baseRole = 'admin';
-    }
-    // Todos os outros roles (associate, employee, guest, franchise, partner) usam 'user' como base
-    // mas o custom role será armazenado no campo 'role' da entidade User
-
-    // Verificar se usuário com esse email já existe
-    if (email) {
-      const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
-      if (existingUsers.length > 0) {
-        return Response.json({ error: 'Email já cadastrado' }, { status: 400 });
-      }
-    }
+    // Validar role
+    let baseRole = role === 'admin' ? 'admin' : 'user';
 
     // Gerar email se não fornecido
     const userEmail = email || `${username}@boldlife.local`;
 
     // Verificar se email já está em uso
-    const existingPending = await base44.asServiceRole.entities.PendingUserSetup.filter({ email: userEmail });
-    if (existingPending.length > 0) {
-      return Response.json({ error: 'Email já tem um convite pendente' }, { status: 400 });
+    const existingUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+    if (existingUsers.length > 0) {
+      return Response.json({ error: 'Email já cadastrado' }, { status: 400 });
     }
 
     // Convidar usuário
@@ -55,8 +40,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ 
       success: true, 
-      message: 'Usuário ' + username + ' criado com sucesso. Ele poderá fazer login com suas credenciais.',
-      pending: true
+      message: 'Usuário criado com sucesso',
+      userId: userEmail
     });
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
