@@ -27,6 +27,8 @@ export default function AdminUsers() {
   const [editName, setEditName] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [newCpf, setNewCpf] = useState('');
+  const [createMode, setCreateMode] = useState('invite'); // 'invite' ou 'direct'
 
   useEffect(() => {
     loadUsers();
@@ -93,20 +95,46 @@ export default function AdminUsers() {
   };
 
   const handleCreateUser = async () => {
-    if (!newEmail || !newName) {
-      toast.error('Preencha email e nome');
-      return;
-    }
-    try {
-      await base44.users.inviteUser(newEmail, newRole);
-      await loadUsers();
-      setShowDialog(false);
-      setNewEmail('');
-      setNewName('');
-      setNewRole('associate');
-      toast.success('Usuário convidado com sucesso');
-    } catch (error) {
-      toast.error('Erro ao convidar usuário');
+    if (createMode === 'direct') {
+      if (!newCpf || !newName) {
+        toast.error('Preencha CPF e nome');
+        return;
+      }
+      try {
+        await base44.functions.invoke('createDirectUser', {
+          cpf: newCpf,
+          full_name: newName,
+          email: newEmail,
+          role: newRole
+        });
+        await loadUsers();
+        setShowDialog(false);
+        setNewEmail('');
+        setNewName('');
+        setNewCpf('');
+        setNewRole('user');
+        setCreateMode('invite');
+        toast.success('Usuário criado com sucesso');
+      } catch (error) {
+        toast.error('Erro ao criar usuário');
+      }
+    } else {
+      if (!newEmail || !newName) {
+        toast.error('Preencha email e nome');
+        return;
+      }
+      try {
+        await base44.users.inviteUser(newEmail, newRole);
+        await loadUsers();
+        setShowDialog(false);
+        setNewEmail('');
+        setNewName('');
+        setNewRole('associate');
+        setCreateMode('invite');
+        toast.success('Usuário convidado com sucesso');
+      } catch (error) {
+        toast.error('Erro ao convidar usuário');
+      }
     }
   };
 
@@ -172,7 +200,9 @@ export default function AdminUsers() {
             setDialogMode('create');
             setNewEmail('');
             setNewName('');
-            setNewRole('associate');
+            setNewCpf('');
+            setNewRole('user');
+            setCreateMode('invite');
             setShowDialog(true);
           }}
           className="bg-primary"
@@ -261,6 +291,37 @@ export default function AdminUsers() {
           <div className="space-y-4">
             {dialogMode === 'create' ? (
               <>
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    variant={createMode === 'invite' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCreateMode('invite')}
+                    className="flex-1"
+                  >
+                    Convidar
+                  </Button>
+                  <Button
+                    variant={createMode === 'direct' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setCreateMode('direct')}
+                    className="flex-1"
+                  >
+                    Criar Direto
+                  </Button>
+                </div>
+
+                {createMode === 'direct' && (
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">CPF</label>
+                    <Input
+                      placeholder="00000000000"
+                      value={newCpf}
+                      onChange={(e) => setNewCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                      maxLength="11"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">Nome</label>
                   <Input
@@ -269,8 +330,11 @@ export default function AdminUsers() {
                     onChange={(e) => setNewName(e.target.value)}
                   />
                 </div>
+
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    {createMode === 'direct' ? 'Email (opcional)' : 'Email'}
+                  </label>
                   <Input
                     placeholder="email@example.com"
                     type="email"
@@ -363,7 +427,7 @@ export default function AdminUsers() {
               onClick={dialogMode === 'edit' ? handleUpdateUser : handleCreateUser}
               className="bg-primary"
             >
-              {dialogMode === 'edit' ? 'Salvar Alterações' : 'Convidar Usuário'}
+              {dialogMode === 'edit' ? 'Salvar Alterações' : createMode === 'direct' ? 'Criar Usuário' : 'Convidar Usuário'}
             </Button>
           </DialogFooter>
         </DialogContent>
