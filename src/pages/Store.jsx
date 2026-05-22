@@ -188,7 +188,7 @@ export default function Store() {
           <div className={`grid ${gridCols} gap-3`}>
             {paginated.map((product, i) => (
               <motion.div key={product.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}>
-                <ProductCard product={product} onAddToCart={addToCart} cart={cart} compact={cardCompact} />
+                <ProductCard product={product} onAddToCart={addToCart} cart={cart} compact={cardCompact} onExternalLinkClick={handleExternalLinkClick} />
               </motion.div>
             ))}
           </div>
@@ -243,11 +243,19 @@ export default function Store() {
           )}
         </>
       )}
+
+      {selectedClickId && (
+        <PurchaseProofModal
+          clickId={selectedClickId}
+          productName={selectedProductName}
+          onClose={() => setSelectedClickId(null)}
+        />
+      )}
     </div>
   );
 }
 
-function ProductCard({ product, onAddToCart, cart, compact }) {
+function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick }) {
   const cartItem = cart.find(i => i.id === product.id);
   const outOfStock = product.type === 'direct_sale' && (product.stock == null || product.stock <= 0);
 
@@ -277,7 +285,7 @@ function ProductCard({ product, onAddToCart, cart, compact }) {
           <p className="font-bold text-foreground text-xs leading-tight line-clamp-2">{product.name}</p>
           <p className="text-sm font-black text-primary">R$ {product.price?.toFixed(2)}</p>
           {product.type === 'external_link' ? (
-            <Button size="sm" className="w-full text-xs h-7 gold-gradient text-background font-bold gap-1" onClick={() => window.open(product.external_url, '_blank')}>
+            <Button size="sm" className="w-full text-xs h-7 gold-gradient text-background font-bold gap-1" onClick={() => { onExternalLinkClick(product); window.open(product.external_url, '_blank'); }}>
               <ExternalLink size={10} /> Ver
             </Button>
           ) : (
@@ -344,7 +352,7 @@ function ProductCard({ product, onAddToCart, cart, compact }) {
         <div className="mt-3">
           <p className="text-lg font-black text-primary">R$ {product.price?.toFixed(2)}</p>
           {product.type === 'external_link' ? (
-            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={() => window.open(product.external_url, '_blank')}>
+            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={() => { onExternalLinkClick(product); window.open(product.external_url, '_blank'); }}>
               <ExternalLink size={13} /> Ver Produto
             </Button>
           ) : (
