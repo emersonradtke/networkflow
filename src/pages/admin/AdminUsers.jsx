@@ -51,16 +51,21 @@ export default function AdminUsers() {
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
     try {
-      const updates = { role: newRole };
-      if (editName && editName !== selectedUser.full_name) {
+      const updates = {};
+      if (editName !== selectedUser.full_name) {
         updates.full_name = editName;
       }
-      if (editEmail && editEmail !== selectedUser.email) {
+      if (editEmail !== selectedUser.email) {
         updates.email = editEmail;
       }
-      
-      await base44.entities.User.update(selectedUser.id, updates);
-      
+      if (newRole !== selectedUser.role) {
+        updates.role = newRole;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await base44.entities.User.update(selectedUser.id, updates);
+      }
+
       // Se houver senha, enviar para função backend para atualizar
       if (editPassword && editPassword.trim()) {
         await base44.functions.invoke('updateUserPassword', {
@@ -68,7 +73,7 @@ export default function AdminUsers() {
           newPassword: editPassword
         });
       }
-      
+
       await loadUsers();
       setShowDialog(false);
       setSelectedUser(null);
@@ -76,6 +81,7 @@ export default function AdminUsers() {
       setShowPassword(false);
       toast.success('Usuário atualizado com sucesso');
     } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
       toast.error('Erro ao atualizar usuário');
     }
   };
@@ -112,8 +118,8 @@ export default function AdminUsers() {
         email: newEmail || '',
         role: newRole
       });
-      
-      if (result.data.success) {
+
+      if (result?.data?.success) {
         await loadUsers();
         setShowDialog(false);
         setNewEmail('');
@@ -121,10 +127,13 @@ export default function AdminUsers() {
         setNewCpf('');
         setNewRole('user');
         toast.success('Usuário criado com sucesso');
+      } else {
+        toast.error(result?.data?.error || 'Erro ao criar usuário');
       }
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
-      toast.error(error.response?.data?.error || 'Erro ao criar usuário');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Erro ao criar usuário';
+      toast.error(errorMsg);
     }
   };
 
