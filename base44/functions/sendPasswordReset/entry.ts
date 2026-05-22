@@ -15,13 +15,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Email é obrigatório' }, { status: 400 });
     }
 
-    // Enviar email com instrução para reset de senha
-    const resetUrl = `${Deno.env.get('APP_URL') || 'https://app.boldlife.com.br'}/auth/reset-password?email=${encodeURIComponent(email)}`;
+    // Instruir o usuário para fazer login e redefinir a senha através da plataforma
+    // pois não temos URL de reset dinâmica configurada
+    const resetUrl = 'Acesse o dashboard e use a opção de redefinir senha no menu de configurações';
 
     await base44.integrations.Core.SendEmail({
       to: email,
       subject: 'Redefinir sua senha - Bold Life',
-      body: `Olá ${userName || 'usuário'},\n\nVocê recebeu uma solicitação para redefinir sua senha.\n\nClique no link abaixo para redefinir:\n${resetUrl}\n\nSe você não solicitou isso, ignore este email.\n\nAtenciosamente,\nEquipe Bold Life`
+      body: `Olá ${userName || 'usuário'},\n\nUm administrador solicitou a redefinição de sua senha.\n\n${resetUrl}\n\nSe você não solicitou isso, entre em contato com um administrador.\n\nAtenciosamente,\nEquipe Bold Life`
     });
 
     return Response.json({ success: true, message: 'Email enviado com sucesso' });
