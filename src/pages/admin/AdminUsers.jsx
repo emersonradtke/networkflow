@@ -10,7 +10,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { ROLE_CONFIG, getRoleLabel, getRoleColor } from '@/lib/roles-config';
-import { Shield, Edit, Search, Plus, Trash2 } from 'lucide-react';
+import { Shield, Edit, Search, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminUsers() {
@@ -26,6 +26,7 @@ export default function AdminUsers() {
   const [editEmail, setEditEmail] = useState('');
   const [editName, setEditName] = useState('');
   const [editPassword, setEditPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -68,6 +69,7 @@ export default function AdminUsers() {
       setShowDialog(false);
       setSelectedUser(null);
       setEditPassword('');
+      setShowPassword(false);
       toast.success('Usuário atualizado com sucesso');
     } catch (error) {
       toast.error('Erro ao atualizar usuário');
@@ -298,12 +300,21 @@ export default function AdminUsers() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground mb-2 block">Nova Senha (opcional)</label>
-                  <Input
-                    value={editPassword}
-                    onChange={(e) => setEditPassword(e.target.value)}
-                    placeholder="Digite a nova senha"
-                    type="password"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder="Digite a nova senha"
+                      type={showPassword ? "text" : "password"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </>
             ) : null}
@@ -339,7 +350,13 @@ export default function AdminUsers() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowDialog(false);
+                setShowPassword(false);
+              }}
+            >
               Cancelar
             </Button>
             <Button
