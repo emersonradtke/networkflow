@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus, Sparkles } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { LogIn, UserPlus, Sparkles, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
@@ -12,6 +14,11 @@ const BRAIN_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29d
 export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings } = useAuth();
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated) {
@@ -20,8 +27,24 @@ export default function Landing() {
     }
   }, [isAuthenticated, isLoadingAuth, isLoadingPublicSettings, navigate]);
 
-  const handleLogin = () => {
-    base44.auth.redirectToLogin(`${window.location.origin}/role-redirect`);
+  const handleLoginClick = () => {
+    setShowLoginForm(true);
+    setError('');
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Tenta fazer login com email e senha
+      await base44.auth.login(email, password);
+      navigate('/role-redirect', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      setLoading(false);
+    }
   };
 
   const handleRegister = () => {
@@ -44,27 +67,89 @@ export default function Landing() {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-3xl shadow-2xl p-8 w-full my-6">
           <div className="text-center mb-8">
             <img src={LOGO_URL} alt="Bold Life" className="h-10 w-auto object-contain mx-auto mb-4" />
-            <h1 className="text-2xl font-black" style={{ color: '#1B2A5E' }}>Bem-vindo</h1>
-            <p className="text-slate-500 text-sm mt-2">Construa sua rede e ganhe comissões</p>
+            <h1 className="text-2xl font-black" style={{ color: '#1B2A5E' }}>
+              {showLoginForm ? 'Entrar na conta' : 'Bem-vindo'}
+            </h1>
+            <p className="text-slate-500 text-sm mt-2">
+              {showLoginForm ? 'Digite suas credenciais' : 'Construa sua rede e ganhe comissões'}
+            </p>
           </div>
 
-          <div className="space-y-3">
-            <Button
-              onClick={handleLogin}
-              className="w-full font-bold text-white text-base py-6"
-              style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
-            >
-              <LogIn size={18} className="mr-2" /> Entrar
-            </Button>
+          {showLoginForm ? (
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              {error && (
+                <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
+                  <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
 
-            <Button
-              onClick={handleRegister}
-              variant="outline"
-              className="w-full font-semibold py-6 border-slate-300"
-            >
-              <UserPlus size={18} className="mr-2" /> Criar conta
-            </Button>
-          </div>
+              <div>
+                <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail</Label>
+                <Input
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1.5 border-slate-200"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Senha</Label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1.5 border-slate-200"
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full font-bold text-white text-base py-6 mt-2"
+                style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+              >
+                {loading ? 'Entrando...' : <><LogIn size={18} className="mr-2" /> Entrar</>}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowLoginForm(false);
+                  setError('');
+                  setEmail('');
+                  setPassword('');
+                }}
+                variant="ghost"
+                className="w-full text-slate-500"
+              >
+                Voltar
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-3">
+              <Button
+                onClick={handleLoginClick}
+                className="w-full font-bold text-white text-base py-6"
+                style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+              >
+                <LogIn size={18} className="mr-2" /> Entrar
+              </Button>
+
+              <Button
+                onClick={handleRegister}
+                variant="outline"
+                className="w-full font-semibold py-6 border-slate-300"
+              >
+                <UserPlus size={18} className="mr-2" /> Criar conta
+              </Button>
+            </div>
+          )}
 
           <p className="text-xs text-slate-400 text-center mt-8">
             Ao entrar, você concorda com nossos Termos de Serviço
