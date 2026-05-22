@@ -107,6 +107,15 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
     setLoading(true);
     setError('');
     try {
+      // Validar estoque disponível
+      for (const item of cart) {
+        if (item.type === 'direct_sale' && (item.stock || 0) < item.qty) {
+          setError(`Estoque insuficiente para ${item.name}. Disponível: ${item.stock || 0}`);
+          setLoading(false);
+          return;
+        }
+      }
+
       const cartId = `cart_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       const res = await base44.functions.invoke('getNextOrderNumber', {});
       const orderNumber = res.data?.next_number || 1;
@@ -147,6 +156,9 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       };
 
       for (const item of cart) {
+        const itemSubtotal = item.price * item.qty;
+        // Distribui o frete igualmente entre os itens
+        const itemShipping = shippingCost / cart.length;
         await base44.entities.Order.create({
           order_number: orderNumber,
           cart_id: cartId,
@@ -157,7 +169,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           product_type: item.type,
           quantity: item.qty,
           unit_price: item.price,
-          amount: (item.price * item.qty) + shippingCost,
+          amount: itemSubtotal + itemShipping,
           commission_percent: item.commission_percent,
           status: 'pending',
           notes: `Qtd: ${item.qty}`,

@@ -39,6 +39,8 @@ function groupOrders(orders) {
         shipping_state: o.shipping_state,
         shipping_method_name: o.shipping_method_name,
         tracking_code: o.tracking_code,
+        scheduled_date: o.scheduled_date,
+        scheduled_time: o.scheduled_time,
         created_date: o.created_date,
         items: [],
         total: 0,
@@ -46,8 +48,8 @@ function groupOrders(orders) {
       };
     }
     groups[key].items.push(o);
-    // Total: soma dos amounts, subtraindo shipping duplicado (só conta 1x)
-    groups[key].total += (o.unit_price || o.amount || 0) * (o.quantity || 1);
+     // Total: soma dos amounts dos itens
+     groups[key].total += o.amount || 0;
   }
   // Adiciona shipping_cost 1x por grupo
   for (const g of Object.values(groups)) {

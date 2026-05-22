@@ -79,6 +79,15 @@
     "tracking_code": {
       "type": "string"
     },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Data agendada para entrega ou retirada"
+    },
+    "scheduled_time": {
+      "type": "string",
+      "description": "Hor\u00e1rio agendado (HH:MM)"
+    },
     "delivery_status": {
       "type": "string",
       "enum": [
