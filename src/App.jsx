@@ -27,6 +27,7 @@ import AdminSettings from './pages/admin/AdminSettings';
 import AdminNetwork from './pages/admin/AdminNetwork';
 import AdminSuppliers from './pages/admin/AdminSuppliers';
 import AdminShipping from './pages/admin/AdminShipping';
+import AdminExternalLinks from './pages/admin/AdminExternalLinks';
 import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
 
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/network" element={<AdminNetwork />} />
         <Route path="/admin/suppliers" element={<AdminSuppliers />} />
         <Route path="/admin/shipping" element={<AdminShipping />} />
+        <Route path="/admin/external-links" element={<AdminExternalLinks />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
       </Route>
 

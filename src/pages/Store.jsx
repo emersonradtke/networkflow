@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import CartDrawer from '@/components/ShoppingCart';
+import StoreBannerCarousel from '@/components/StoreBannerCarousel';
+import PurchaseProofModal from '@/components/PurchaseProofModal';
 
 export default function Store() {
   const { associate, reloadUser } = useOutletContext();
@@ -24,6 +26,8 @@ export default function Store() {
   const [cart, setCart] = useState([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
+  const [selectedClickId, setSelectedClickId] = useState(null);
+  const [selectedProductName, setSelectedProductName] = useState('');
 
   useEffect(() => { loadData(); }, []);
 
@@ -59,6 +63,20 @@ export default function Store() {
   const onCheckout = () => {
     setCart([]);
     loadData();
+  };
+
+  const handleExternalLinkClick = async (product) => {
+    try {
+      const res = await base44.functions.invoke('trackExternalLinkClick', {
+        product_id: product.id,
+        product_name: product.name,
+        link_type: 'product'
+      });
+      setSelectedClickId(res.data.click_id);
+      setSelectedProductName(product.name);
+    } catch (e) {
+      console.error('Erro ao rastrear clique', e);
+    }
   };
 
   const currentAssociate = localAssociate || associate;

@@ -1,0 +1,70 @@
+{
+  "name": "StoreBanner",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "T\u00edtulo do banner"
+    },
+    "description": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string",
+      "description": "URL para redirecionamento"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Imagem/visual do banner"
+    },
+    "background_color": {
+      "type": "string",
+      "default": "#1B2A5E",
+      "description": "Cor de fundo (hex)"
+    },
+    "text_color": {
+      "type": "string",
+      "default": "#FFFFFF",
+      "description": "Cor do texto (hex)"
+    },
+    "animation": {
+      "type": "string",
+      "enum": [
+        "none",
+        "fade",
+        "slide",
+        "pulse",
+        "bounce"
+      ],
+      "default": "fade",
+      "description": "Tipo de anima\u00e7\u00e3o"
+    },
+    "animation_speed": {
+      "type": "string",
+      "enum": [
+        "slow",
+        "normal",
+        "fast"
+      ],
+      "default": "normal"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "position": {
+      "type": "number",
+      "default": 0,
+      "description": "Ordem de exibi\u00e7\u00e3o"
+    },
+    "commission_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de comiss\u00e3o para cliques confirmados"
+    }
+  },
+  "required": [
+    "title",
+    "link"
+  ]
+}

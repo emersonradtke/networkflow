@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CategoryManager from '@/components/admin/CategoryManager';
+import BannerManager from '@/components/admin/BannerManager';
 
 export default function AdminSettings() {
   const [config, setConfig] = useState(null);
@@ -47,12 +50,20 @@ export default function AdminSettings() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-black text-foreground">Configurações</h1>
         <p className="text-muted-foreground text-sm mt-1">Configure a estrutura da rede e parâmetros do sistema</p>
       </div>
 
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="categories">Categorias</TabsTrigger>
+          <TabsTrigger value="banners">Banners</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6">
       <form onSubmit={save} className="space-y-6">
         {/* Network Config */}
         <div className="dark-card rounded-2xl p-6 space-y-5">
@@ -160,6 +171,16 @@ export default function AdminSettings() {
           <Save size={16} /> {saved ? 'Salvo!' : saving ? 'Salvando...' : 'Salvar Configurações'}
         </Button>
       </form>
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <CategoryManager />
+        </TabsContent>
+
+        <TabsContent value="banners">
+          <BannerManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

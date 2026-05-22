@@ -1,0 +1,69 @@
+{
+  "name": "ExternalLinkClick",
+  "type": "object",
+  "properties": {
+    "associate_id": {
+      "type": "string",
+      "description": "ID do associado que clicou"
+    },
+    "associate_name": {
+      "type": "string"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "ID do produto (pode ser null para banners)"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "banner_id": {
+      "type": "string",
+      "description": "ID do banner (pode ser null para produtos)"
+    },
+    "banner_name": {
+      "type": "string"
+    },
+    "link_type": {
+      "type": "string",
+      "enum": [
+        "product",
+        "banner"
+      ],
+      "description": "Tipo de link clicado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "intent",
+        "submitted",
+        "approved",
+        "rejected"
+      ],
+      "default": "intent",
+      "description": "intent: clique registrado, submitted: compra enviada para confirma\u00e7\u00e3o, approved: comiss\u00e3o confirmada"
+    },
+    "purchase_proof_url": {
+      "type": "string",
+      "description": "URL do comprovante de compra"
+    },
+    "purchase_amount": {
+      "type": "number",
+      "description": "Valor declarado da compra"
+    },
+    "commission_amount": {
+      "type": "number",
+      "description": "Valor da comiss\u00e3o a ser creditada"
+    },
+    "admin_notes": {
+      "type": "string"
+    },
+    "clicked_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "associate_id",
+    "link_type"
+  ]
+}
