@@ -7,12 +7,13 @@ import CartStep from './cart/CartStep';
 import ShippingStep from './cart/ShippingStep';
 import AddressStep from './cart/AddressStep';
 import ConfirmStep from './cart/ConfirmStep';
+import PaymentFrame from './PaymentFrame';
 
 // Steps: 'cart' → 'shipping' → 'address' → 'confirm' → 'success'
 
 export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, associate, onAssociateUpdate }) {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState('cart'); // cart | shipping | address | confirm | success
+  const [step, setStep] = useState('cart'); // cart | shipping | address | confirm | payment | success
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [shippingMethods, setShippingMethods] = useState([]);
@@ -24,6 +25,8 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
   const [selectedFranchise, setSelectedFranchise] = useState(null);
   const [userCoords, setUserCoords] = useState(null);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState(null);
+  const [paymentCartId, setPaymentCartId] = useState(null);
 
   useEffect(() => { setLocalAssociate(associate); }, [associate]);
 
@@ -208,8 +211,9 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       const paymentUrl = checkoutRes.data?.url;
       if (paymentUrl) {
         onCheckout();
-        window.open(paymentUrl, '_blank');
-        setStep('success');
+        setPaymentUrl(paymentUrl);
+        setPaymentCartId(cartId);
+        setStep('payment');
       } else {
         setError('Não foi possível gerar o link de pagamento.');
       }
@@ -238,6 +242,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       case 'shipping': return 'Método de Envio';
       case 'address': return 'Endereço de Entrega';
       case 'confirm': return 'Confirmar Pedido';
+      case 'payment': return 'Pagamento';
       case 'success': return 'Pedido Realizado!';
       default: return '';
     }
@@ -248,6 +253,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       case 'shipping': return 'cart';
       case 'address': return 'shipping';
       case 'confirm': return 'address';
+      case 'payment': return null;
       default: return null;
     }
   };
@@ -276,7 +282,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
               <ShoppingCart size={18} />
               {getStepTitle()}
             </SheetTitle>
-            {step !== 'success' && (
+            {step !== 'success' && step !== 'payment' && (
               <div className="flex gap-1 mt-2">
                 {['cart', 'shipping', 'address', 'confirm'].map((s, i) => (
                   <div key={s} className={`h-1 flex-1 rounded-full transition-all ${['cart','shipping','address','confirm'].indexOf(step) >= i ? 'bg-primary' : 'bg-slate-200'}`} />
@@ -347,14 +353,22 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
             />
           )}
 
+          {step === 'payment' && (
+            <PaymentFrame
+              paymentUrl={paymentUrl}
+              cartId={paymentCartId}
+              onPaymentConfirmed={() => setStep('success')}
+            />
+          )}
+
           {step === 'success' && (
             <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 p-8">
               <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1B2A5E,#3B9EE2)' }}>
                 <CheckCircle2 size={36} className="text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-foreground">Pedido Realizado!</h3>
-                <p className="text-sm text-muted-foreground mt-2">Seu pedido foi registrado com sucesso. Aguarde a confirmação do pagamento e o envio.</p>
+                <h3 className="text-xl font-black text-foreground">Pagamento Confirmado!</h3>
+                <p className="text-sm text-muted-foreground mt-2">Seu pedido foi pago com sucesso. Você receberá em breve mais informações sobre o envio.</p>
               </div>
               <button className="w-full px-4 py-2 rounded-lg font-bold text-white" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }} onClick={handleClose}>
                 Fechar
