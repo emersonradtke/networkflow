@@ -62,10 +62,10 @@ export default function StoreBannerCarousel() {
   const speedClass = speedClasses[currentBanner.animation_speed] || '';
 
   return (
-    <div className="w-full max-w-3xl mx-auto mb-8">
+    <div className="w-full max-w-xl mx-auto mb-6">
       <div
         onClick={() => handleClick(currentBanner)}
-        className={`relative w-full h-48 md:h-56 rounded-xl overflow-hidden cursor-pointer transition ${animClass} ${speedClass}`}
+        className={`relative w-full rounded-xl overflow-hidden cursor-pointer transition ${animClass} ${speedClass}`}
         style={{
           backgroundColor: currentBanner.background_color,
           color: currentBanner.text_color
@@ -79,18 +79,16 @@ export default function StoreBannerCarousel() {
           />
         )}
 
-        <div className="absolute inset-0 flex items-center justify-center p-6">
-          <div className="text-center flex flex-col items-center">
-            {currentBanner.logo_url && (
-              <img
-                src={currentBanner.logo_url}
-                alt="Logo"
-                className="h-12 md:h-16 mb-3 object-contain"
-              />
-            )}
-            <h2 className="text-xl md:text-3xl font-bold mb-2">{currentBanner.title}</h2>
+        <div className="relative flex items-center gap-4 p-4">
+          {currentBanner.logo_url && (
+            <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+              <img src={currentBanner.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg md:text-xl font-bold leading-tight">{currentBanner.title}</h2>
             {currentBanner.description && (
-              <p className="text-sm md:text-base opacity-90">{currentBanner.description}</p>
+              <p className="text-xs md:text-sm opacity-90 mt-1">{currentBanner.description}</p>
             )}
           </div>
         </div>
@@ -99,28 +97,28 @@ export default function StoreBannerCarousel() {
           <>
             <button
               onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full opacity-70 hover:opacity-100 transition"
+              className="absolute left-1 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-70 hover:opacity-100 transition"
               style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
             >
-              <ChevronLeft size={20} className="text-white" />
+              <ChevronLeft size={16} className="text-white" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); goToNext(); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full opacity-70 hover:opacity-100 transition"
+              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-70 hover:opacity-100 transition"
               style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
             >
-              <ChevronRight size={20} className="text-white" />
+              <ChevronRight size={16} className="text-white" />
             </button>
           </>
         )}
 
         {banners.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
             {banners.map((_, idx) => (
               <button
                 key={idx}
                 onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                className={`w-2 h-2 rounded-full transition ${idx === currentIndex ? 'opacity-100' : 'opacity-50'}`}
+                className={`w-1.5 h-1.5 rounded-full transition ${idx === currentIndex ? 'opacity-100' : 'opacity-50'}`}
                 style={{ backgroundColor: currentBanner.text_color }}
               />
             ))}
