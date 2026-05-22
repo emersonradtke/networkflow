@@ -35,13 +35,20 @@ export default function BannerEditForm({ banner, onSave, onCancel }) {
     if (!file) return;
 
     setUploading(true);
+    setError('');
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, logo_url: file_url });
+      const res = await base44.integrations.Core.UploadFile({ file });
+      const url = res?.file_url || res?.data?.file_url;
+      if (!url) {
+        setError('Upload não retornou URL');
+        return;
+      }
+      setFormData(prev => ({ ...prev, logo_url: url }));
     } catch (err) {
-      setError('Erro ao fazer upload da logomarca');
+      setError('Erro ao fazer upload da logomarca: ' + (err?.message || ''));
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
