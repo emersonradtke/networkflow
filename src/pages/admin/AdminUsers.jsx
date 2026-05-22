@@ -362,7 +362,13 @@ export default function AdminUsers() {
                   <Button
                     variant={createMode === 'direct' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setCreateMode('direct')}
+                    onClick={() => {
+                      setCreateMode('direct');
+                      setNewRole('associate');
+                      setNewCpf('');
+                      setNewName('');
+                      setNewEmail('');
+                    }}
                     className="flex-1"
                   >
                     Criar Direto
