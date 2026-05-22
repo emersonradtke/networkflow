@@ -234,7 +234,7 @@ export default function AdminOrders() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                       {statusBadge(group.status)}
-                      <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setDetailOrder(group.firstOrder)}>
+                      <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setDetailOrder(group)}>
                         <Eye size={11} /> Ver
                       </Button>
 

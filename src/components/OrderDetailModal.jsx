@@ -36,19 +36,30 @@ function AddressBlock({ title, icon: Icon, street, number, complement, neighborh
 
 export default function OrderDetailModal({ order, open, onClose }) {
   if (!order) return null;
+  
+  // Suporta tanto um order único quanto um group com items
+  const isGroup = order.items && Array.isArray(order.items);
+  const items = isGroup ? order.items : [order];
+  const firstItem = items[0];
+  
   const st = statusConfig[order.status] || statusConfig.pending;
   const Icon = st.icon;
   const del = deliveryStatusConfig[order.delivery_status] || deliveryStatusConfig.pending;
 
   const hasShipping = order.shipping_street || order.shipping_city;
   const hasBilling = order.billing_street || order.billing_city;
+  
+  const subtotal = items.reduce((sum, item) => sum + ((item.unit_price || 0) * (item.quantity || 1)), 0);
+  const shipping = order.shipping_cost || 0;
+  const total = subtotal + shipping;
+  const totalCommission = items.reduce((sum, item) => sum + (item.total_commission || 0), 0);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-black flex items-center gap-2">
-            <Package size={18} className="text-primary" /> Pedido — {order.product_name}
+            <Package size={18} className="text-primary" /> Pedido #{order.order_number || 'N/A'}
           </DialogTitle>
         </DialogHeader>
 
@@ -68,41 +79,54 @@ export default function OrderDetailModal({ order, open, onClose }) {
             </span>
           </div>
 
-          {/* Produto */}
+          {/* Produtos */}
           <div className="bg-slate-50 rounded-xl p-4">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Produto</p>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground text-xs">Nome</p>
-                <p className="font-semibold text-foreground">{order.product_name}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Tipo</p>
-                <p className="font-semibold text-foreground">{order.product_type === 'external_link' ? 'Link Externo' : 'Venda Direta'}</p>
-              </div>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">Produtos ({items.length})</p>
+            <div className="space-y-3">
+              {items.map((item, idx) => (
+                <div key={idx} className="border border-slate-200 rounded-lg p-3 bg-white">
+                  <div className="flex justify-between items-start gap-2 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground text-sm">{item.product_name}</p>
+                      <p className="text-xs text-muted-foreground">Tipo: {item.product_type === 'external_link' ? 'Link Externo' : 'Venda Direta'}</p>
+                    </div>
+                    <span className="text-sm font-bold text-primary shrink-0">
+                      R$ {(item.unit_price || 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Qtd: {item.quantity || 1}</span>
+                    <span className="font-semibold text-foreground">
+                      Subtotal: R$ {((item.unit_price || 0) * (item.quantity || 1)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Valores */}
           <div className="bg-slate-50 rounded-xl p-4">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Valores</p>
-            <div className="grid grid-cols-3 gap-3 text-sm">
-              <div>
-                <p className="text-muted-foreground text-xs">Subtotal</p>
-                <p className="font-bold text-foreground">R$ {((order.amount || 0) - (order.shipping_cost || 0)).toFixed(2)}</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">Valores</p>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-semibold">R$ {subtotal.toFixed(2)}</span>
               </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Frete</p>
-                <p className="font-bold text-foreground">R$ {(order.shipping_cost || 0).toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-xs">Total</p>
-                <p className="font-black text-primary text-base">R$ {order.amount?.toFixed(2)}</p>
+              {shipping > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Frete</span>
+                  <span className="font-semibold">R$ {shipping.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-slate-200 pt-2 font-bold text-base">
+                <span>Total</span>
+                <span className="text-primary">R$ {total.toFixed(2)}</span>
               </div>
             </div>
-            {order.commission_percent > 0 && (
+            {totalCommission > 0 && (
               <div className="mt-3 pt-3 border-t border-slate-200">
-                <p className="text-xs text-muted-foreground">Comissão gerada: <span className="font-semibold text-green-600">{order.commission_percent}% · R$ {order.total_commission?.toFixed(2)}</span></p>
+                <p className="text-xs text-muted-foreground">Comissão total gerada: <span className="font-semibold text-green-600">R$ {totalCommission.toFixed(2)}</span></p>
               </div>
             )}
           </div>
