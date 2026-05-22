@@ -23,6 +23,8 @@ export default function AdminUsers() {
   const [newRole, setNewRole] = useState('associate');
   const [newEmail, setNewEmail] = useState('');
   const [newName, setNewName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editName, setEditName] = useState('');
 
   useEffect(() => {
     loadUsers();
@@ -40,16 +42,38 @@ export default function AdminUsers() {
     }
   };
 
-  const handleUpdateRole = async () => {
+  const handleUpdateUser = async () => {
     if (!selectedUser) return;
     try {
-      await base44.entities.User.update(selectedUser.id, { role: newRole });
+      const updates = { role: newRole };
+      if (editName && editName !== selectedUser.full_name) {
+        updates.full_name = editName;
+      }
+      if (editEmail && editEmail !== selectedUser.email) {
+        updates.email = editEmail;
+      }
+      await base44.entities.User.update(selectedUser.id, updates);
       await loadUsers();
       setShowDialog(false);
       setSelectedUser(null);
-      toast.success('Role atualizado com sucesso');
+      toast.success('Usuário atualizado com sucesso');
     } catch (error) {
-      toast.error('Erro ao atualizar role');
+      toast.error('Erro ao atualizar usuário');
+    }
+  };
+
+  const handleSendPasswordReset = async () => {
+    if (!selectedUser) return;
+    try {
+      // Enviar email de reset de senha
+      await base44.integrations.Core.SendEmail({
+        to: selectedUser.email,
+        subject: 'Redefinir sua senha',
+        body: `Clique no link para redefinir sua senha: ${window.location.origin}/reset-password`
+      });
+      toast.success('Email de reset enviado para ' + selectedUser.email);
+    } catch (error) {
+      toast.error('Erro ao enviar email');
     }
   };
 
@@ -184,6 +208,8 @@ export default function AdminUsers() {
                         onClick={() => {
                           setDialogMode('edit');
                           setSelectedUser(user);
+                          setEditName(user.full_name || '');
+                          setEditEmail(user.email || '');
                           setNewRole(user.role || 'associate');
                           setShowDialog(true);
                         }}
@@ -238,11 +264,33 @@ export default function AdminUsers() {
                 </div>
               </>
             ) : selectedUser ? (
-              <div>
-                <p className="text-sm text-muted-foreground">Usuário</p>
-                <p className="font-semibold text-foreground">{selectedUser.full_name}</p>
-                <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
-              </div>
+              <>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Nome</label>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Nome completo"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
+                  <Input
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    type="email"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendPasswordReset}
+                  className="w-full text-sm"
+                >
+                  Enviar Reset de Senha
+                </Button>
+              </>
             ) : null}
 
             <div>
@@ -280,7 +328,7 @@ export default function AdminUsers() {
               Cancelar
             </Button>
             <Button
-              onClick={dialogMode === 'edit' ? handleUpdateRole : handleCreateUser}
+              onClick={dialogMode === 'edit' ? handleUpdateUser : handleCreateUser}
               className="bg-primary"
             >
               {dialogMode === 'edit' ? 'Salvar Alterações' : 'Convidar Usuário'}
