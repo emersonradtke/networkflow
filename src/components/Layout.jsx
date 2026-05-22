@@ -38,6 +38,22 @@ export default function Layout() {
       if (directUserData) {
         const directUser = JSON.parse(directUserData);
         setUser(directUser);
+        
+        // Buscar Associate pelo email do DirectUser
+        try {
+          const associates = await base44.entities.Associate.filter({ email: directUser.email });
+          if (associates.length > 0) {
+            setAssociate(associates[0]);
+            // Buscar notificações do Associate
+            const notifs = await base44.entities.Notification.filter({ 
+              associate_id: associates[0].id, 
+              is_read: false 
+            });
+            setUnreadCount(notifs.length);
+          }
+        } catch (assocErr) {
+          console.warn('Failed to load associate for legacy user:', assocErr);
+        }
       }
     }
   };
