@@ -9,6 +9,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'CPF/CNPJ e senha são obrigatórios.' }, { status: 400 });
     }
 
+    const { role } = await req.clone().json().catch(() => ({})) || {};
+
     // Buscar associado pelo CPF ou CNPJ
     const cleanDoc = doc.replace(/\D/g, '');
     let associates = [];
