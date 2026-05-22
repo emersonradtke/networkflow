@@ -419,7 +419,7 @@ export default function AdminUsers() {
               </Select>
             </div>
 
-            {newRole && (
+            {newRole && ROLE_CONFIG[newRole] && (
               <div className="p-3 rounded-lg bg-secondary">
                 <p className="text-xs font-semibold text-muted-foreground mb-2">Permissões:</p>
                 <div className="flex flex-wrap gap-1">
