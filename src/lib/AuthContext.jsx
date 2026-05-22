@@ -112,9 +112,9 @@ export const AuthProvider = ({ children }) => {
         
         // Carregar Associate vinculado (se existir)
         try {
-          const associates = await base44.asServiceRole.entities.Associate.filter({ user_id: currentUser.id });
-          if (associates.length > 0) {
-            setAssociate(associates[0]);
+          const res = await base44.functions.invoke('getAssociateByUserId', {});
+          if (res.data?.associate) {
+            setAssociate(res.data.associate);
           }
         } catch (assocError) {
           console.warn('Failed to load associate:', assocError);
