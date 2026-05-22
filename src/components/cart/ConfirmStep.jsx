@@ -1,4 +1,4 @@
-import { Store, MapPin, Truck, AlertCircle } from 'lucide-react';
+import { Store, MapPin, Truck, AlertCircle, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ConfirmStep({
@@ -87,10 +87,11 @@ export default function ConfirmStep({
           </div>
         )}
       </div>
-      <div className="border-t border-border p-5">
-        <Button className="w-full font-bold text-white" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }} onClick={onConfirm} disabled={loading}>
-          {loading ? 'Processando...' : 'Confirmar Pedido'}
+      <div className="border-t border-border p-5 space-y-2">
+        <Button className="w-full font-bold text-white gap-2" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }} onClick={onConfirm} disabled={loading}>
+          {loading ? 'Gerando link...' : <><CreditCard size={15} /> Pagar com InfinitePay</>}
         </Button>
+        <p className="text-xs text-center text-muted-foreground">Você será redirecionado ao checkout seguro</p>
       </div>
     </>
   );

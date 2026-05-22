@@ -155,15 +155,9 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           : undefined,
       };
 
-      // Calculate pontos after checkout
-      await base44.functions.invoke('calculatePontosOnCheckout', {
-        associate_id: localAssociate.id,
-        total_amount: total
-      });
-
+      // Criar pedidos com status pending
       for (const item of cart) {
         const itemSubtotal = item.price * item.qty;
-        // Distribui o frete igualmente entre os itens
         const itemShipping = shippingCost / cart.length;
         await base44.entities.Order.create({
           order_number: orderNumber,
@@ -185,8 +179,42 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           await base44.entities.Product.update(item.id, { stock: Math.max(0, (item.stock || 0) - item.qty) });
         }
       }
-      setStep('success');
-      onCheckout();
+
+      // Calculate pontos after checkout
+      await base44.functions.invoke('calculatePontosOnCheckout', {
+        associate_id: localAssociate.id,
+        total_amount: total
+      });
+
+      // Criar link de pagamento InfinitePay
+      const grandTotal = isPickup ? total : total + shippingCost;
+      const checkoutItems = cart.map(item => ({
+        description: item.name,
+        price: item.price + (shippingCost / cart.length),
+        quantity: item.qty,
+      }));
+
+      const appUrl = window.location.origin;
+      const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
+        order_nsu: `CART-${cartId}`,
+        items: checkoutItems,
+        customer: {
+          name: localAssociate.full_name,
+          email: localAssociate.email,
+          phone_number: localAssociate.phone || '',
+        },
+        redirect_url: `${appUrl}/orders`,
+        webhook_url: `${appUrl}/api/functions/infinitePayWebhook`,
+      });
+
+      const paymentUrl = checkoutRes.data?.url;
+      if (paymentUrl) {
+        onCheckout();
+        window.open(paymentUrl, '_blank');
+        setStep('success');
+      } else {
+        setError('Não foi possível gerar o link de pagamento.');
+      }
     } catch (e) {
       setError('Erro ao finalizar pedido. Tente novamente.');
     } finally {

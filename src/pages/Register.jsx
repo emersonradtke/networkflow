@@ -71,10 +71,12 @@ export default function Register() {
   const [sponsor, setSponsor] = useState(null);
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
   const [personType, setPersonType] = useState('pf'); // 'pf' | 'pj'
   const [form, setForm] = useState({
     full_name: '', email: '', phone: '', cpf: '', cnpj: '', company_name: ''
   });
+  const [newAssociateId, setNewAssociateId] = useState(null);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
@@ -142,7 +144,7 @@ export default function Register() {
     const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
     const params = new URLSearchParams(window.location.search);
 
-    await base44.entities.Associate.create({
+    const associate = await base44.entities.Associate.create({
       user_id: user.id,
       full_name: form.full_name,
       email: form.email,
@@ -161,12 +163,41 @@ export default function Register() {
       adhesion_paid: false,
     });
 
+    setNewAssociateId(associate.id);
     setStep('pending');
     setLoading(false);
   };
 
   const fieldCls = (key) =>
     `mt-1.5 border-slate-200 ${errors[key] ? 'border-red-400 focus:ring-red-400' : ''}`;
+
+  const handlePayAdhesion = async () => {
+    if (!newAssociateId || !config?.adhesion_price) return;
+    setPayLoading(true);
+    try {
+      const res = await base44.functions.invoke('createInfinitePayCheckout', {
+        order_nsu: `ADES-${newAssociateId}`,
+        items: [{
+          description: config.adhesion_description || 'Taxa de Adesão Bold Life',
+          price: config.adhesion_price,
+          quantity: 1,
+        }],
+        customer: {
+          name: form.full_name,
+          email: form.email,
+          phone_number: form.phone.replace(/\D/g, ''),
+        },
+        redirect_url: `${window.location.origin}/dashboard`,
+        webhook_url: `${window.location.origin}/api/functions/infinitePayWebhook`,
+      });
+      const url = res.data?.url;
+      if (url) window.open(url, '_blank');
+    } catch (e) {
+      console.error('Erro ao gerar link de pagamento', e);
+    } finally {
+      setPayLoading(false);
+    }
+  };
 
   if (step === 'pending') {
     return (
@@ -194,12 +225,19 @@ export default function Register() {
               ))}
             </div>
             <Button
-              className="w-full font-bold text-white text-base py-6"
+              className="w-full font-bold text-white text-base py-6 mb-3 gap-2"
               style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+              onClick={handlePayAdhesion}
+              disabled={payLoading || !newAssociateId}
+            >
+              {payLoading ? 'Gerando link...' : `💳 Pagar Adesão — R$ ${config?.adhesion_price?.toFixed(2) || '197,00'}`}
+            </Button>
+            <button
+              className="w-full text-sm text-slate-400 hover:text-slate-600 underline"
               onClick={() => navigate('/dashboard')}
             >
-              Ir para o Painel
-            </Button>
+              Pagar depois → Ir para o Painel
+            </button>
           </div>
         </motion.div>
       </div>
