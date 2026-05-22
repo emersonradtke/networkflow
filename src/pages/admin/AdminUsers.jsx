@@ -141,7 +141,13 @@ export default function AdminUsers() {
           role: newRole
         });
         
-        await loadUsers();
+        // Aguardar um pouco para a criação ser processada
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Recarregar a lista de usuários
+        const allUsers = await base44.entities.User.list('-created_date', 100);
+        setUsers(allUsers);
+        
         setShowDialog(false);
         setNewEmail('');
         setNewName('');
