@@ -104,12 +104,34 @@ export default function AdminUsers() {
         return;
       }
       try {
+        // Buscar associado com o mesmo CPF
+        const associates = await base44.entities.Associate.filter({ cpf: newCpf });
+        
+        if (associates.length === 0) {
+          toast.error('CPF não encontrado no cadastro de associados');
+          return;
+        }
+
+        const associate = associates[0];
+        
+        // Validar se o nome corresponde (case-insensitive e sem acentos)
+        const normalizeString = (str) => str
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+        
+        if (normalizeString(associate.full_name) !== normalizeString(newName)) {
+          toast.error(`Nome não corresponde. Associado registrado como: ${associate.full_name}`);
+          return;
+        }
+
         await base44.functions.invoke('createDirectUser', {
           cpf: newCpf,
           full_name: newName,
           email: newEmail,
           role: newRole
         });
+        
         await loadUsers();
         setShowDialog(false);
         setNewEmail('');
@@ -119,6 +141,7 @@ export default function AdminUsers() {
         setCreateMode('invite');
         toast.success('Usuário criado com sucesso');
       } catch (error) {
+        console.error('Erro ao criar usuário:', error);
         toast.error('Erro ao criar usuário');
       }
     } else {
@@ -136,6 +159,7 @@ export default function AdminUsers() {
         setCreateMode('invite');
         toast.success('Usuário convidado com sucesso');
       } catch (error) {
+        console.error('Erro ao convidar usuário:', error);
         toast.error('Erro ao convidar usuário');
       }
     }
