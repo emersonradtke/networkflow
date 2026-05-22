@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, AlertTriangle, PackagePlus } from 'lucide-react';
+import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, AlertTriangle, PackagePlus, CheckCircle, XCircle, Package } from 'lucide-react';
 import StatCard from '@/components/StatCard';
+import OrderStatusModal from '@/components/OrderStatusModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -9,29 +10,41 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, orders: 0, commissions: 0, withdrawals: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
+  const [ordersByStatus, setOrdersByStatus] = useState({ pending: [], paid: [], cancelled: [], refunded: [] });
+  const [selectedStatus, setSelectedStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    const [associates, orders, commissions, withdrawals, products] = await Promise.all([
+    const [associates, allOrders, commissions, withdrawals, products] = await Promise.all([
       base44.entities.Associate.list(),
-      base44.entities.Order.list('-created_date', 5),
+      base44.entities.Order.list(),
       base44.entities.Commission.list(),
       base44.entities.WithdrawalRequest.filter({ status: 'pending' }),
       base44.entities.Product.filter({ is_active: true }),
     ]);
 
     const totalCommissions = commissions.reduce((s, c) => s + (c.commission_amount || 0), 0);
+    
+    // Agrupar pedidos por status
+    const grouped = {
+      pending: allOrders.filter(o => o.status === 'pending'),
+      paid: allOrders.filter(o => o.status === 'paid'),
+      cancelled: allOrders.filter(o => o.status === 'cancelled'),
+      refunded: allOrders.filter(o => o.status === 'refunded'),
+    };
+
     setStats({
       total: associates.length,
       active: associates.filter(a => a.status === 'active').length,
       pending: associates.filter(a => a.status === 'pending').length,
-      orders: orders.length,
+      orders: allOrders.length,
       commissions: totalCommissions,
       withdrawals: withdrawals.length,
     });
-    setRecentActivity(orders);
+    setOrdersByStatus(grouped);
+    setRecentActivity(allOrders.slice(0, 5));
     setLowStockProducts(products.filter(p => p.type === 'direct_sale' && p.stock_min != null && p.stock != null && p.stock <= p.stock_min));
     setLoading(false);
   };
@@ -50,6 +63,56 @@ export default function AdminDashboard() {
         <StatCard title="Comissões Totais" value={`R$ ${stats.commissions.toFixed(2)}`} icon={TrendingUp} color="purple" />
         <StatCard title="Saques Pendentes" value={stats.withdrawals} icon={Wallet} color="gold" />
         <StatCard title="Últimos Pedidos" value={stats.orders} icon={ShoppingBag} color="blue" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button
+          onClick={() => setSelectedStatus('pending')}
+          className="dark-card rounded-2xl p-4 hover:shadow-md transition text-left border border-yellow-200 hover:border-yellow-400"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <Clock size={20} className="text-yellow-600" />
+            <span className="text-2xl font-black text-yellow-600">{ordersByStatus.pending.length}</span>
+          </div>
+          <p className="text-sm font-semibold text-foreground">Pedidos Pendentes</p>
+          <p className="text-xs text-muted-foreground">Aguardando pagamento</p>
+        </button>
+
+        <button
+          onClick={() => setSelectedStatus('paid')}
+          className="dark-card rounded-2xl p-4 hover:shadow-md transition text-left border border-green-200 hover:border-green-400"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <CheckCircle size={20} className="text-green-600" />
+            <span className="text-2xl font-black text-green-600">{ordersByStatus.paid.length}</span>
+          </div>
+          <p className="text-sm font-semibold text-foreground">Pedidos Pagos</p>
+          <p className="text-xs text-muted-foreground">Confirmados e processando</p>
+        </button>
+
+        <button
+          onClick={() => setSelectedStatus('cancelled')}
+          className="dark-card rounded-2xl p-4 hover:shadow-md transition text-left border border-red-200 hover:border-red-400"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <XCircle size={20} className="text-red-600" />
+            <span className="text-2xl font-black text-red-600">{ordersByStatus.cancelled.length}</span>
+          </div>
+          <p className="text-sm font-semibold text-foreground">Pedidos Cancelados</p>
+          <p className="text-xs text-muted-foreground">Transações canceladas</p>
+        </button>
+
+        <button
+          onClick={() => setSelectedStatus('refunded')}
+          className="dark-card rounded-2xl p-4 hover:shadow-md transition text-left border border-slate-200 hover:border-slate-400"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <Package size={20} className="text-slate-600" />
+            <span className="text-2xl font-black text-slate-600">{ordersByStatus.refunded.length}</span>
+          </div>
+          <p className="text-sm font-semibold text-foreground">Pedidos Reembolsados</p>
+          <p className="text-xs text-muted-foreground">Transações devolvidas</p>
+        </button>
       </div>
 
       {stats.pending > 0 && (
@@ -123,6 +186,13 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      <OrderStatusModal
+        status={selectedStatus}
+        orders={selectedStatus ? ordersByStatus[selectedStatus] : []}
+        open={selectedStatus !== null}
+        onClose={() => setSelectedStatus(null)}
+      />
     </div>
   );
 }
