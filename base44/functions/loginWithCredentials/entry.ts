@@ -8,23 +8,28 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Usuário e senha são obrigatórios' }, { status: 400 });
     }
 
-    // Usar serviço direto sem autenticação (é uma função pública de login)
     const base44 = createClientFromRequest(req);
     
-    // Usar asServiceRole para acessar DirectUser sem autenticação do usuário
-    const users = await base44.asServiceRole.entities.DirectUser.filter({ username });
+    // Buscar usuário direto na base sem autenticação
+    let users = [];
+    try {
+      users = await base44.asServiceRole.entities.DirectUser.list();
+    } catch (e) {
+      console.error('Error listing users:', e);
+      return Response.json({ error: 'Erro ao validar usuário' }, { status: 500 });
+    }
     
-    if (users.length === 0) {
+    const user = users.find(u => u.username === username);
+    
+    if (!user) {
       return Response.json({ error: 'Usuário ou senha inválidos' }, { status: 401 });
     }
-
-    const user = users[0];
 
     if (!user.is_active) {
       return Response.json({ error: 'Usuário desativado' }, { status: 401 });
     }
 
-    // Validar senha
+    // Validar senha com SHA-256
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
