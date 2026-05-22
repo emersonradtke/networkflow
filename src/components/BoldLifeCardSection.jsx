@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 
 export default function BoldLifeCardSection({ associate, networkConfig, onUpdate }) {
   const [showModal, setShowModal] = useState(false);
-  const [showRequestModal, setShowRequestModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [spending, setSpending] = useState('');
   const [file, setFile] = useState(null);
@@ -65,82 +64,21 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
     }
   };
 
-  const handleRequestCard = async (requestType) => {
-    setLoading(true);
-    try {
-      await base44.entities.CardRequest.create({
-        associate_id: associate.id,
-        associate_name: associate.full_name,
-        request_type: requestType,
-        status: 'pending'
-      });
-      toast.success(requestType === 'new_request' ? 'Solicitação enviada! Admin irá orientar.' : 'Obrigado por informar! Admin será notificado.');
-      setShowRequestModal(false);
-      onUpdate?.();
-    } catch (err) {
-      console.error('Error:', err);
-      toast.error('Erro ao enviar solicitação');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!associate.has_boldlife_card) {
     return (
-      <>
-        <div className="dark-card rounded-2xl p-5 border-l-4" style={{ borderLeftColor: '#3B9EE2' }}>
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg" style={{ background: '#3B9EE220' }}>
-                <CreditCard size={20} className="text-primary" />
-              </div>
-              <div>
-                <h3 className="font-bold text-foreground">Cartão BoldLife</h3>
-                <p className="text-sm text-muted-foreground mt-1">Você ainda não solicitou o cartão BoldLife</p>
-              </div>
+      <div className="dark-card rounded-2xl p-5 border-l-4" style={{ borderLeftColor: '#3B9EE2' }}>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg" style={{ background: '#3B9EE220' }}>
+              <CreditCard size={20} className="text-primary" />
             </div>
-            <Button 
-              onClick={() => setShowRequestModal(true)}
-              className="bg-primary hover:bg-primary/90 font-bold gap-2 shrink-0"
-            >
-              Solicitar Cartão
-            </Button>
+            <div>
+              <h3 className="font-bold text-foreground">Cartão BoldLife</h3>
+              <p className="text-sm text-muted-foreground mt-1">Você ainda não solicitou o cartão BoldLife</p>
+            </div>
           </div>
         </div>
-
-        {showRequestModal && (
-          <div className="dark-card rounded-2xl p-6 border-2 border-primary/20">
-            <h4 className="font-bold text-foreground mb-4">Solicitação de Cartão BoldLife</h4>
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Escolha uma das opções:</p>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => handleRequestCard('new_request')}
-                  disabled={loading}
-                  className="flex-1 bg-primary hover:bg-primary/90"
-                >
-                  {loading ? 'Enviando...' : 'Solicitar Cartão'}
-                </Button>
-                <Button
-                  onClick={() => handleRequestCard('already_has')}
-                  disabled={loading}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  {loading ? 'Enviando...' : 'Já Possuo Cartão'}
-                </Button>
-              </div>
-              <Button
-                onClick={() => setShowRequestModal(false)}
-                variant="outline"
-                className="w-full"
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        )}
-      </>
+      </div>
     );
   }
 
