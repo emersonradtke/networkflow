@@ -25,22 +25,27 @@ export default function Dashboard() {
   const [networkConfig, setNetworkConfig] = useState(null);
 
   useEffect(() => {
-    if (associate?.id) loadData();
+    if (associate?.id) {
+      loadData();
+      const loadConfig = async () => {
+        const config = await base44.entities.NetworkConfig.list();
+        setNetworkConfig(config[0] || null);
+      };
+      loadConfig();
+    }
   }, [associate]);
 
   const loadData = async () => {
-    const [commissions, networkMembers, notifs, subs, config] = await Promise.all([
+    const [commissions, networkMembers, notifs, subs] = await Promise.all([
       base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 5),
       base44.entities.Associate.filter({ sponsor_id: associate.id }),
       base44.entities.Notification.filter({ associate_id: associate.id, is_read: false }, '-created_date', 3),
       base44.entities.Subscription.filter({ associate_id: associate.id }),
-      base44.entities.NetworkConfig.list(),
     ]);
     setRecentCommissions(commissions);
     setNetworkCount(networkMembers.length);
     setNotifications(notifs);
     setSubscription(subs[0] || null);
-    setNetworkConfig(config[0] || null);
   };
 
   const copyInviteLink = () => {
