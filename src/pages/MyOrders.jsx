@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, Search, Eye } from 'lucide-react';
+import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, Search, Eye, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import OrderDetailModal from '@/components/OrderDetailModal';
+import ReviewModal from '@/components/ReviewModal';
 
 const statusConfig = {
   pending:   { label: 'Pendente',    icon: Clock,        cls: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' },
@@ -14,7 +15,7 @@ const statusConfig = {
   refunded:  { label: 'Reembolsado', icon: Package,      cls: 'bg-slate-500/20 text-slate-600 border-slate-500/30' },
 };
 
-function OrderCard({ order, onView }) {
+function OrderCard({ order, onView, onReview }) {
   const st = statusConfig[order.status] || statusConfig.pending;
   const Icon = st.icon;
 
@@ -43,6 +44,11 @@ function OrderCard({ order, onView }) {
         <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => onView(order)}>
           <Eye size={11} /> Ver
         </Button>
+        {order.status === 'paid' && (
+          <Button size="sm" className="h-7 gap-1 text-xs bg-primary" onClick={() => onReview(order)}>
+            <Star size={11} /> Avaliar
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -55,6 +61,7 @@ export default function MyOrdersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [reviewOrder, setReviewOrder] = useState(null);
 
   useEffect(() => {
     if (associate?.id) {
@@ -126,11 +133,12 @@ export default function MyOrdersPage() {
             <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
           </div>
         ) : (
-          filtered.map(o => <OrderCard key={o.id} order={o} onView={setSelectedOrder} />)
+          filtered.map(o => <OrderCard key={o.id} order={o} onView={setSelectedOrder} onReview={setReviewOrder} />)
         )}
-      </div>
+        </div>
 
-      <OrderDetailModal order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />
+        <OrderDetailModal order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />
+        <ReviewModal order={reviewOrder} isOpen={!!reviewOrder} onClose={() => setReviewOrder(null)} onSubmit={() => setReviewOrder(null)} />
     </div>
   );
 }

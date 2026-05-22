@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift } from 'lucide-react';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -10,6 +10,7 @@ import MyOrders from '@/components/MyOrders';
 import PendingPlacements from '@/components/PendingPlacements';
 import AddressModal from '@/components/AddressModal';
 import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
+import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
 
 export default function Dashboard() {
   const { user, associate } = useOutletContext();
@@ -18,20 +19,24 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscription, setSubscription] = useState(null);
 
   useEffect(() => {
     if (associate?.id) loadData();
   }, [associate]);
 
   const loadData = async () => {
-    const [commissions, networkMembers, notifs] = await Promise.all([
+    const [commissions, networkMembers, notifs, subs] = await Promise.all([
       base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 5),
       base44.entities.Associate.filter({ sponsor_id: associate.id }),
       base44.entities.Notification.filter({ associate_id: associate.id, is_read: false }, '-created_date', 3),
+      base44.entities.Subscription.filter({ associate_id: associate.id }),
     ]);
     setRecentCommissions(commissions);
     setNetworkCount(networkMembers.length);
     setNotifications(notifs);
+    setSubscription(subs[0] || null);
   };
 
   const copyInviteLink = () => {
@@ -60,13 +65,33 @@ export default function Dashboard() {
         </div>
         <h2 className="text-2xl font-black text-foreground mb-2">Conta Pendente</h2>
         <p className="text-muted-foreground mb-6">Sua adesão está aguardando confirmação de pagamento. Assim que confirmado, você terá acesso completo.</p>
-        <div className="dark-card rounded-xl p-5 text-left">
-          <p className="text-sm font-bold text-primary mb-2">Informações de Pagamento</p>
-          <p className="text-sm text-muted-foreground">Entre em contato com seu patrocinador ou com o suporte para realizar o pagamento da adesão.</p>
-          {associate.sponsor_name && (
-            <p className="text-sm text-foreground mt-2">Patrocinador: <span className="font-semibold text-primary">{associate.sponsor_name}</span></p>
-          )}
+        <div className="dark-card rounded-xl p-5 text-left space-y-4">
+          <div>
+            <p className="text-sm font-bold text-primary mb-2">Taxa de Adesão</p>
+            <p className="text-sm text-muted-foreground">Valor necessário para ativar sua conta e acessar todos os benefícios da plataforma.</p>
+            <p className="text-lg font-bold text-foreground mt-3">R$ 99,90</p>
+          </div>
+          <Button 
+            onClick={() => setShowSubscriptionModal(true)} 
+            className="w-full bg-primary hover:bg-primary/90 font-bold"
+          >
+            <CreditCard size={18} className="mr-2" />
+            Pagar Assinatura
+          </Button>
+          <div className="border-t pt-4">
+            <p className="text-sm text-muted-foreground text-center">ou entre em contato com seu patrocinador</p>
+            {associate.sponsor_name && (
+              <p className="text-sm text-foreground mt-2">Patrocinador: <span className="font-semibold text-primary">{associate.sponsor_name}</span></p>
+            )}
+          </div>
         </div>
+        
+        <SubscriptionPaymentModal
+          isOpen={showSubscriptionModal}
+          onClose={() => setShowSubscriptionModal(false)}
+          associate={associate}
+          onSuccess={loadData}
+        />
       </div>
     );
   }
@@ -131,6 +156,17 @@ export default function Dashboard() {
 
       {/* Solicitações de Colocação */}
       <PendingPlacements associateId={associate.id} onAccepted={loadData} />
+
+      {/* Subscription Status */}
+      {subscription?.status === 'active' && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-green-50 border border-green-200">
+          <CheckCircle size={20} className="text-green-600 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-green-800">Assinatura Ativa</p>
+            <p className="text-xs text-green-600">Renovação em: {new Date(subscription.renewal_date).toLocaleDateString('pt-BR')}</p>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -4,8 +4,11 @@ import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, 
 import StatCard from '@/components/StatCard';
 import OrderStatusModal from '@/components/OrderStatusModal';
 import CommissionsModal from '@/components/CommissionsModal';
+import TopProductsWidget from '@/components/admin/TopProductsWidget';
+import CommissionManager from '@/components/admin/CommissionManager';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, orders: 0, commissions: 0, withdrawals: 0 });
@@ -16,6 +19,7 @@ export default function AdminDashboard() {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [showCommissions, setShowCommissions] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => { loadData(); }, []);
 
@@ -59,6 +63,15 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-black text-foreground">Painel Admin</h1>
         <p className="text-muted-foreground text-sm mt-1">Visão geral da plataforma Bold Life</p>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="products">Produtos Top</TabsTrigger>
+          <TabsTrigger value="commissions">Gerenciar Comissões</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard title="Associados" value={stats.total} icon={Users} color="blue" />
@@ -205,6 +218,16 @@ export default function AdminDashboard() {
         open={showCommissions}
         onClose={() => setShowCommissions(false)}
       />
+        </TabsContent>
+
+        <TabsContent value="products">
+          <TopProductsWidget />
+        </TabsContent>
+
+        <TabsContent value="commissions">
+          <CommissionManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

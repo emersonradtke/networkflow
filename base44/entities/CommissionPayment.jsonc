@@ -1,0 +1,52 @@
+{
+  "name": "CommissionPayment",
+  "type": "object",
+  "properties": {
+    "commission_id": {
+      "type": "string",
+      "description": "ID da comiss\u00e3o paga"
+    },
+    "beneficiary_id": {
+      "type": "string",
+      "description": "ID do associado benefici\u00e1rio"
+    },
+    "beneficiary_name": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Valor pago"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "pix",
+        "bank_transfer",
+        "wallet"
+      ]
+    },
+    "payment_details": {
+      "type": "string",
+      "description": "Detalhes do pagamento (chave PIX, conta banc\u00e1ria, etc)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "completed",
+        "failed"
+      ],
+      "default": "pending"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "commission_id",
+    "beneficiary_id",
+    "amount",
+    "payment_method"
+  ]
+}
