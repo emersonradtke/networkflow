@@ -38,13 +38,6 @@ export default function Layout() {
       if (directUserData) {
         const directUser = JSON.parse(directUserData);
         setUser(directUser);
-        // Tenta carregar associado para usuário legado
-        try {
-          const associates = await base44.asServiceRole.entities.Associate.filter({ user_id: directUser.id });
-          if (associates.length > 0) setAssociate(associates[0]);
-        } catch (assocErr) {
-          console.warn('Failed to load associate:', assocErr);
-        }
       }
     }
   };
