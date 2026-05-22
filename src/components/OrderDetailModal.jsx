@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Truck, CreditCard, Package, Clock, CheckCircle, XCircle, DollarSign } from 'lucide-react';
+import { MapPin, Truck, CreditCard, Package, Clock, CheckCircle, XCircle, DollarSign, Calendar, Barcode } from 'lucide-react';
 
 const statusConfig = {
   pending:   { label: 'Pendente',    icon: Clock,        cls: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' },
@@ -133,8 +133,8 @@ export default function OrderDetailModal({ order, open, onClose }) {
 
           {/* Envio */}
           {order.shipping_method_name && (
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                 <Truck size={12} /> Envio
               </p>
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -143,14 +143,32 @@ export default function OrderDetailModal({ order, open, onClose }) {
                   <p className="font-semibold text-foreground">{order.shipping_method_name}</p>
                 </div>
                 {order.tracking_code && (
-                  <div>
-                    <p className="text-muted-foreground text-xs">Rastreio</p>
-                    <p className="font-mono font-bold text-blue-700">{order.tracking_code}</p>
+                  <div className="border border-slate-200 bg-white rounded-lg p-2">
+                    <p className="text-muted-foreground text-xs flex items-center gap-1 mb-0.5">
+                      <Barcode size={11} /> Rastreio
+                    </p>
+                    <p className="font-mono font-bold text-blue-700 text-sm">{order.tracking_code}</p>
                   </div>
                 )}
               </div>
+
+              {(order.scheduled_date || order.scheduled_time) && (
+                <div className="border border-slate-200 bg-white rounded-lg p-2">
+                  <p className="text-muted-foreground text-xs flex items-center gap-1 mb-1">
+                    <Calendar size={11} /> Agendamento
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {order.scheduled_date && new Date(order.scheduled_date).toLocaleDateString('pt-BR')}
+                    {order.scheduled_time && ` às ${order.scheduled_time}`}
+                  </p>
+                </div>
+              )}
+
               {order.delivery_notes && (
-                <p className="text-xs text-muted-foreground mt-2 bg-white rounded-lg p-2">{order.delivery_notes}</p>
+                <div className="bg-white rounded-lg p-2 border border-slate-200">
+                  <p className="text-xs text-muted-foreground font-semibold mb-1">Observações</p>
+                  <p className="text-xs text-foreground">{order.delivery_notes}</p>
+                </div>
               )}
             </div>
           )}
