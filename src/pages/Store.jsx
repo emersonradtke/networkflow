@@ -68,6 +68,7 @@ export default function Store() {
   const handleExternalLinkClick = async (product) => {
     try {
       const res = await base44.functions.invoke('trackExternalLinkClick', {
+        associate_id: currentAssociate?.id,
         product_id: product.id,
         product_name: product.name,
         link_type: 'product'
