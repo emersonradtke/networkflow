@@ -77,6 +77,11 @@ export default function BannerManager() {
         <div className="grid gap-4">
           {banners.map((banner) => (
             <div key={banner.id} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card">
+              {banner.logo_url && (
+                <div className="w-16 h-16 rounded-lg overflow-hidden border border-border bg-secondary flex-shrink-0">
+                  <img src={banner.logo_url} alt={banner.title} className="w-full h-full object-contain p-2" />
+                </div>
+              )}
               <div className="flex-1">
                 <h3 className="font-bold text-foreground">{banner.title}</h3>
                 <p className="text-sm text-muted-foreground">{banner.description}</p>

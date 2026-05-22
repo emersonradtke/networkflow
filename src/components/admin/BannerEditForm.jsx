@@ -5,11 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Upload, X } from 'lucide-react';
 
 export default function BannerEditForm({ banner, onSave, onCancel }) {
   const [formData, setFormData] = useState(banner || {
     title: '',
     description: '',
+    logo_url: '',
     link: '',
     image_url: '',
     background_color: '#1B2A5E',
@@ -22,9 +24,25 @@ export default function BannerEditForm({ banner, onSave, onCancel }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, logo_url: file_url });
+    } catch (err) {
+      setError('Erro ao fazer upload da logomarca');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -59,6 +77,34 @@ export default function BannerEditForm({ banner, onSave, onCancel }) {
       <div>
         <Label>Descrição</Label>
         <Textarea value={formData.description} onChange={(e) => handleChange('description', e.target.value)} placeholder="Descrição" rows={2} />
+      </div>
+
+      <div>
+        <Label>Logomarca</Label>
+        <div className="space-y-2">
+          {formData.logo_url && (
+            <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-border bg-secondary">
+              <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
+              <button type="button" onClick={() => handleChange('logo_url', '')} className="absolute top-1 right-1 bg-destructive text-white rounded p-0.5">
+                <X size={12} />
+              </button>
+            </div>
+          )}
+          <div className="relative">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              disabled={uploading}
+              className="hidden"
+              id="logo-upload"
+            />
+            <label htmlFor="logo-upload" className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+              <Upload size={16} />
+              <span className="text-sm">{uploading ? 'Enviando...' : 'Selecionar logo'}</span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div>

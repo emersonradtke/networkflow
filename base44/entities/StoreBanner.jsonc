@@ -9,6 +9,10 @@
     "description": {
       "type": "string"
     },
+    "logo_url": {
+      "type": "string",
+      "description": "URL da logomarca"
+    },
     "link": {
       "type": "string",
       "description": "URL para redirecionamento"
