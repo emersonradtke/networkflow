@@ -26,7 +26,12 @@ function OrderCard({ order }) {
           <ShoppingBag size={16} className="text-slate-500" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
+          <div className="flex items-center gap-2">
+            {order.order_number && (
+              <span className="text-xs font-black text-primary">#{order.order_number}</span>
+            )}
+            <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
+          </div>
           <p className="text-xs text-slate-500">
             {new Date(order.created_date).toLocaleDateString('pt-BR')} · R$ {order.amount?.toFixed(2)}
           </p>

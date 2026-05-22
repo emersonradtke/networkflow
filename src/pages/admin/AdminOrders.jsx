@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ShoppingBag, CheckCircle, XCircle, Search, Eye, Truck, Edit3, Hash } from 'lucide-react';
+import { ShoppingBag, CheckCircle, XCircle, Search, Eye, Truck, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import OrderDetailModal from '@/components/OrderDetailModal';
 import DeliveryManageModal from '@/components/DeliveryManageModal';
-import OrderEditModal from '@/components/OrderEditModal';
 
 const deliveryStatusConfig = {
   pending:    { label: 'Aguardando',    cls: 'bg-slate-500/20 text-slate-400' },
@@ -67,8 +66,6 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [detailOrder, setDetailOrder] = useState(null);
   const [deliveryOrder, setDeliveryOrder] = useState(null);
-  const [editCartId, setEditCartId] = useState(null);
-  const [editOrderNumber, setEditOrderNumber] = useState(null);
 
   useEffect(() => { loadOrders(); }, []);
 
@@ -155,8 +152,6 @@ export default function AdminOrders() {
       String(g.order_number || '').includes(search)
     );
 
-  const editGroup = filtered.find(g => g.cart_id === editCartId);
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -242,12 +237,7 @@ export default function AdminOrders() {
                       <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setDetailOrder(group.firstOrder)}>
                         <Eye size={11} /> Ver
                       </Button>
-                      {group.status === 'pending' && (
-                        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
-                          onClick={() => { setEditCartId(group.cart_id); setEditOrderNumber(group.order_number); }}>
-                          <Edit3 size={11} /> Editar
-                        </Button>
-                      )}
+
                       {group.status === 'paid' && (
                         <Button size="sm" variant="outline" className="h-7 gap-1 text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
                           onClick={() => setDeliveryOrder(group.firstOrder)}>
@@ -277,13 +267,7 @@ export default function AdminOrders() {
 
       <OrderDetailModal order={detailOrder} open={!!detailOrder} onClose={() => setDetailOrder(null)} />
       <DeliveryManageModal order={deliveryOrder} open={!!deliveryOrder} onClose={() => setDeliveryOrder(null)} onSaved={loadOrders} />
-      <OrderEditModal
-        cartId={editCartId}
-        orderNumber={editOrderNumber}
-        open={!!editCartId}
-        onClose={() => setEditCartId(null)}
-        onSaved={loadOrders}
-      />
+
     </div>
   );
 }
