@@ -17,7 +17,7 @@ export default function Landing() {
   }, [isAuthenticated, isLoadingAuth, isLoadingPublicSettings, navigate]);
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin(`${window.location.origin}/dashboard`);
+    base44.auth.redirectToLogin(`${window.location.origin}/role-redirect`);
   };
 
   const handleRegister = () => {
