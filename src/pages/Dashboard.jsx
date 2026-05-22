@@ -9,6 +9,7 @@ import StatCard from '@/components/StatCard';
 import MyOrders from '@/components/MyOrders';
 import PendingPlacements from '@/components/PendingPlacements';
 import AddressModal from '@/components/AddressModal';
+import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
 
 export default function Dashboard() {
   const { user, associate } = useOutletContext();
@@ -175,6 +176,9 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Purchase Intents */}
+      <PurchaseIntentsCard associateId={associate?.id} />
 
       {/* My Orders */}
       <MyOrders associateId={associate?.id} />

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, Eye } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle2, XCircle, Eye, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function ExternalLinksManager() {
@@ -20,17 +20,18 @@ export default function ExternalLinksManager() {
   const loadClicks = async () => {
     setLoading(true);
     try {
-      const data = await base44.entities.ExternalLinkClick.filter({ status: filter }, '-clicked_at', 100);
+      const query = filter === 'all' ? {} : { status: filter };
+      const data = await base44.entities.ExternalLinkClick.filter(query, '-created_date', 100);
       setClicks(data);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApprove = async (clickId, approved) => {
+  const handleApprove = async (approved) => {
     try {
       await base44.functions.invoke('approvePurchaseClick', {
-        click_id: clickId,
+        click_id: selectedClick.id,
         approved: approved,
         admin_notes: adminNotes
       });
@@ -39,6 +40,16 @@ export default function ExternalLinksManager() {
       loadClicks();
     } catch (e) {
       alert('Erro ao processar');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Tem certeza que deseja deletar?')) return;
+    try {
+      await base44.entities.ExternalLinkClick.delete(id);
+      loadClicks();
+    } catch (e) {
+      alert('Erro ao deletar');
     }
   };
 
@@ -51,14 +62,15 @@ export default function ExternalLinksManager() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2">
-        {['submitted', 'approved', 'rejected', 'intent'].map((status) => (
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {['submitted', 'approved', 'rejected', 'intent', 'all'].map((status) => (
           <Button
             key={status}
             variant={filter === status ? 'default' : 'outline'}
             onClick={() => setFilter(status)}
+            size="sm"
           >
-            {statusConfig[status].label}
+            {status === 'all' ? 'Todos' : statusConfig[status]?.label}
           </Button>
         ))}
       </div>
@@ -68,98 +80,182 @@ export default function ExternalLinksManager() {
       ) : clicks.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">Nenhum registro</div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {clicks.map((click) => (
-            <div key={click.id} className="p-4 rounded-lg border border-border bg-card flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-bold text-foreground">{click.associate_name}</h3>
-                  <Badge className={statusConfig[click.status].color}>{statusConfig[click.status].label}</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {click.link_type === 'product' ? `Produto: ${click.product_name}` : `Banner: ${click.banner_name}`}
-                </p>
-                {click.purchase_amount && (
-                  <p className="text-sm font-semibold mt-1">
-                    Compra: R$ {click.purchase_amount.toFixed(2)} | Comissão: R$ {click.commission_amount.toFixed(2)}
+            <div key={click.id} className="p-4 rounded-lg border border-border bg-card hover:border-primary/40 transition-colors">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-foreground truncate">{click.associate_name}</h3>
+                    <Badge className={statusConfig[click.status].color} variant="outline">
+                      {statusConfig[click.status].label}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {click.link_type === 'product' ? `📦 ${click.product_name}` : `🎨 ${click.banner_name}`}
                   </p>
-                )}
-              </div>
-              {click.status === 'submitted' && (
-                <div className="flex gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <p className="text-muted-foreground">Valor</p>
+                      <p className="font-semibold text-foreground">
+                        R$ {(click.purchase_amount || 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Comissão</p>
+                      <p className="font-semibold text-green-500">
+                        R$ {(click.commission_amount || 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Data/Hora</p>
+                      <p className="font-semibold text-foreground">
+                        {new Date(click.created_date).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Tipo</p>
+                      <p className="font-semibold text-foreground">
+                        {click.link_type === 'product' ? 'Produto' : 'Banner'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
-                    onClick={() => setSelectedClick(click)}
+                    className="h-8 w-8"
+                    onClick={() => {
+                      setSelectedClick(click);
+                      setAdminNotes(click.admin_notes || '');
+                    }}
                   >
                     <Eye size={16} />
                   </Button>
                   <Button
-                    size="sm"
-                    onClick={() => handleApprove(click.id, true)}
-                    className="bg-green-600 hover:bg-green-700"
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(click.id)}
                   >
-                    <CheckCircle2 size={16} />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleApprove(click.id, false)}
-                  >
-                    <XCircle size={16} />
+                    <Trash2 size={16} />
                   </Button>
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      <Dialog open={!!selectedClick} onOpenChange={(open) => { if (!open) setSelectedClick(null); }}>
-        <DialogContent className="max-w-2xl">
+      <Dialog open={!!selectedClick} onOpenChange={(open) => { if (!open) { setSelectedClick(null); setAdminNotes(''); } }}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Detalhes da Compra</DialogTitle>
+            <DialogTitle>Detalhes da Intenção de Compra</DialogTitle>
           </DialogHeader>
           {selectedClick && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Associado</p>
-                <p className="font-bold">{selectedClick.associate_name}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Associado</p>
+                <p className="text-sm font-medium text-foreground mt-1">{selectedClick.associate_name}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Produto/Banner</p>
+                <p className="text-sm font-medium text-foreground mt-1">
+                  {selectedClick.product_name || selectedClick.banner_name}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">Valor</p>
-                  <p className="font-bold">R$ {selectedClick.purchase_amount?.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor</p>
+                  <p className="text-sm font-semibold text-foreground mt-1">
+                    R$ {(selectedClick.purchase_amount || 0).toFixed(2)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Comissão</p>
-                  <p className="font-bold">R$ {selectedClick.commission_amount?.toFixed(2)}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Comissão</p>
+                  <p className="text-sm font-semibold text-green-500 mt-1">
+                    R$ {(selectedClick.commission_amount || 0).toFixed(2)}
+                  </p>
                 </div>
               </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Data e Hora</p>
+                <p className="text-sm text-foreground mt-1">
+                  {new Date(selectedClick.created_date).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </p>
+              </div>
+
               {selectedClick.purchase_proof_url && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Comprovante</p>
-                  <img src={selectedClick.purchase_proof_url} alt="Comprovante" className="max-h-64 rounded" />
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Comprovante de Compra</p>
+                  <img src={selectedClick.purchase_proof_url} alt="Comprovante" className="rounded-lg max-h-48 w-full object-cover border border-border" />
                 </div>
               )}
+
               <div>
-                <label className="text-sm text-muted-foreground">Observações do Admin</label>
-                <textarea
+                <label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Notas Administrativas</label>
+                <Textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full p-2 border rounded mt-1"
-                  rows="3"
-                  placeholder="Motivo da rejeição ou observações..."
+                  placeholder="Adicione notas internas..."
+                  className="mt-2 text-xs"
+                  rows={3}
                 />
               </div>
-              <div className="flex gap-3 pt-4">
-                <Button variant="destructive" onClick={() => handleApprove(selectedClick.id, false)} className="flex-1">
-                  Rejeitar
-                </Button>
-                <Button onClick={() => handleApprove(selectedClick.id, true)} className="flex-1 bg-green-600 hover:bg-green-700">
-                  Aprovar
-                </Button>
-              </div>
+
+              {selectedClick.status === 'submitted' && (
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => handleApprove(false)}
+                  >
+                    <XCircle size={14} className="mr-1" />
+                    Rejeitar
+                  </Button>
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    onClick={() => handleApprove(true)}
+                  >
+                    <CheckCircle2 size={14} className="mr-1" />
+                    Aprovar
+                  </Button>
+                </div>
+              )}
+
+              {selectedClick.status === 'approved' && (
+                <div className="p-3 rounded-lg bg-green-100 text-green-800 text-xs font-medium">
+                  ✓ Aprovado - Comissão e pontuação foram creditadas
+                </div>
+              )}
+
+              {selectedClick.status === 'rejected' && (
+                <div className="p-3 rounded-lg bg-red-100 text-red-800 text-xs font-medium">
+                  ✗ Rejeitado
+                </div>
+              )}
+
+              {selectedClick.status === 'intent' && (
+                <div className="p-3 rounded-lg bg-yellow-100 text-yellow-800 text-xs font-medium">
+                  ⏳ Intenção registrada - Aguardando comprovante do associado
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
