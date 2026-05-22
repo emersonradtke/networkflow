@@ -25,6 +25,7 @@ const generateCode = () => {
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -37,12 +38,17 @@ export default function AdminProducts() {
   const [filterCategory, setFilterCategory] = useState('all');
   const fileInputRef = useRef(null);
 
-  useEffect(() => { loadProducts(); }, []);
+  useEffect(() => { loadProducts(); loadSuppliers(); }, []);
 
   const loadProducts = async () => {
     const data = await base44.entities.Product.list('-created_date');
     setProducts(data);
     setLoading(false);
+  };
+
+  const loadSuppliers = async () => {
+    const data = await base44.entities.Supplier.filter({ is_active: true }, 'name');
+    setSuppliers(data);
   };
 
   const openCreate = () => { setForm({ ...emptyForm, code: generateCode() }); setEditId(null); setDialogOpen(true); };
@@ -349,7 +355,15 @@ export default function AdminProducts() {
               </div>
               <div>
                 <Label>Fornecedor</Label>
-                <Input className="mt-1.5" placeholder="Ex: Distribuidora X" value={form.supplier} onChange={e => setForm({ ...form, supplier: e.target.value })} />
+                <Select value={form.supplier || ''} onValueChange={v => setForm({ ...form, supplier: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Selecionar fornecedor" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Nenhum</SelectItem>
+                    {suppliers.map(s => (
+                      <SelectItem key={s.id} value={s.trade_name || s.name}>{s.trade_name || s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
