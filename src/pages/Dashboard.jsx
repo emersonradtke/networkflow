@@ -11,6 +11,7 @@ import PendingPlacements from '@/components/PendingPlacements';
 import AddressModal from '@/components/AddressModal';
 import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
 import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
+import BoldLifeCardSection from '@/components/BoldLifeCardSection';
 
 export default function Dashboard() {
   const { user, associate } = useOutletContext();
@@ -21,22 +22,25 @@ export default function Dashboard() {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscription, setSubscription] = useState(null);
+  const [networkConfig, setNetworkConfig] = useState(null);
 
   useEffect(() => {
     if (associate?.id) loadData();
   }, [associate]);
 
   const loadData = async () => {
-    const [commissions, networkMembers, notifs, subs] = await Promise.all([
+    const [commissions, networkMembers, notifs, subs, config] = await Promise.all([
       base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 5),
       base44.entities.Associate.filter({ sponsor_id: associate.id }),
       base44.entities.Notification.filter({ associate_id: associate.id, is_read: false }, '-created_date', 3),
       base44.entities.Subscription.filter({ associate_id: associate.id }),
+      base44.entities.NetworkConfig.list(),
     ]);
     setRecentCommissions(commissions);
     setNetworkCount(networkMembers.length);
     setNotifications(notifs);
     setSubscription(subs[0] || null);
+    setNetworkConfig(config[0] || null);
   };
 
   const copyInviteLink = () => {
@@ -153,6 +157,13 @@ export default function Dashboard() {
           </button>
         </div>
       )}
+
+      {/* Cartão BoldLife */}
+      <BoldLifeCardSection 
+        associate={associate} 
+        networkConfig={networkConfig}
+        onUpdate={loadData}
+      />
 
       {/* Solicitações de Colocação */}
       <PendingPlacements associateId={associate.id} onAccepted={loadData} />

@@ -157,6 +157,15 @@
       "type": "number",
       "default": 0,
       "description": "Total de pontos acumulados"
+    },
+    "has_boldlife_card": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o associado possui o cart\u00e3o da BoldLife"
+    },
+    "card_activation_month": {
+      "type": "string",
+      "description": "M\u00eas/ano da ativa\u00e7\u00e3o do cart\u00e3o (YYYY-MM)"
     }
   },
   "required": [

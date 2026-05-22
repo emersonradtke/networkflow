@@ -41,6 +41,11 @@
       "type": "number",
       "default": 1,
       "description": "Quantidade de pontos ganhos por real gasto"
+    },
+    "card_min_spending": {
+      "type": "number",
+      "default": 500,
+      "description": "Valor m\u00ednimo de gasto mensal do cart\u00e3o BoldLife para ativa\u00e7\u00e3o"
     }
   },
   "required": []

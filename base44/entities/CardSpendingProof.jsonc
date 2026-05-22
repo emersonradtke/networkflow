@@ -1,0 +1,49 @@
+{
+  "name": "CardSpendingProof",
+  "type": "object",
+  "properties": {
+    "associate_id": {
+      "type": "string",
+      "description": "ID do associado"
+    },
+    "associate_name": {
+      "type": "string"
+    },
+    "month": {
+      "type": "string",
+      "description": "M\u00eas de refer\u00eancia (YYYY-MM)"
+    },
+    "spending_amount": {
+      "type": "number",
+      "description": "Valor gasto no cart\u00e3o"
+    },
+    "proof_url": {
+      "type": "string",
+      "description": "URL do comprovante de gasto (extrato, screenshot, etc)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status da an\u00e1lise do comprovante"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do admin (motivo da rejei\u00e7\u00e3o, etc)"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "associate_id",
+    "month",
+    "spending_amount",
+    "proof_url"
+  ]
+}
