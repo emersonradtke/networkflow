@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, Network } from 'lucide-react';
+import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, Network, Gift } from 'lucide-react';
 import PlacementModal from '@/components/PlacementModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -216,10 +216,16 @@ export default function AdminAssociates() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {statusBadge(a.status)}
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(a)}>
-                    <Pencil size={14} />
-                  </Button>
+                   {statusBadge(a.status)}
+                   {(a.total_pontos || 0) > 0 && (
+                     <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 border border-amber-200">
+                       <Gift size={12} className="text-amber-600" />
+                       <span className="text-xs font-semibold text-amber-900">{a.total_pontos.toLocaleString('pt-BR')}</span>
+                     </div>
+                   )}
+                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => openEdit(a)}>
+                     <Pencil size={14} />
+                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">

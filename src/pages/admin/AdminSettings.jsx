@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Settings, Save, Plus, Minus, LayoutGrid } from 'lucide-react';
+import { Settings, Save, Plus, Minus, LayoutGrid, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,6 +17,7 @@ export default function AdminSettings() {
     withdrawal_min_amount: 50,
     welcome_message: '',
     store_page_size: 24,
+    pontos_por_real: 1,
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -105,6 +106,19 @@ export default function AdminSettings() {
           <div>
             <Label className="text-foreground">Descrição da Adesão</Label>
             <Textarea className="mt-1.5 bg-secondary border-border text-foreground resize-none" rows={3} placeholder="Descreva o que está incluído na adesão..." value={form.adhesion_description} onChange={e => setForm({...form, adhesion_description: e.target.value})} />
+          </div>
+        </div>
+
+        {/* Points Config */}
+        <div className="dark-card rounded-2xl p-6 space-y-5">
+          <h3 className="font-bold text-foreground flex items-center gap-2">
+            <Gift size={16} className="text-primary" /> Configurações de Pontos
+          </h3>
+          <div>
+            <Label className="text-foreground">Pontos por Real Gasto</Label>
+            <p className="text-xs text-muted-foreground mb-2">Quantos pontos o associado ganha a cada R$ 1,00 gasto</p>
+            <Input className="mt-1.5 bg-secondary border-border text-foreground max-w-xs" type="number" step="0.01" min="0" value={form.pontos_por_real} onChange={e => setForm({...form, pontos_por_real: parseFloat(e.target.value) || 0})} />
+            <p className="text-xs text-primary mt-2">Exemplo: Com valor 2, uma compra de R$ 100 = 200 pontos</p>
           </div>
         </div>
 

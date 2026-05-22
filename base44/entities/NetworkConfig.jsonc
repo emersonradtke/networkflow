@@ -36,6 +36,11 @@
       "type": "number",
       "default": 24,
       "description": "Quantidade de produtos por p\u00e1gina na loja"
+    },
+    "pontos_por_real": {
+      "type": "number",
+      "default": 1,
+      "description": "Quantidade de pontos ganhos por real gasto"
     }
   },
   "required": []

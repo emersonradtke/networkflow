@@ -155,6 +155,12 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           : undefined,
       };
 
+      // Calculate pontos after checkout
+      await base44.functions.invoke('calculatePontosOnCheckout', {
+        associate_id: localAssociate.id,
+        total_amount: total
+      });
+
       for (const item of cart) {
         const itemSubtotal = item.price * item.qty;
         // Distribui o frete igualmente entre os itens

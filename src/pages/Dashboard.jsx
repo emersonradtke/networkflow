@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell } from 'lucide-react';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -136,7 +136,7 @@ export default function Dashboard() {
         <StatCard title="Saldo" value={`R$ ${(associate.wallet_balance || 0).toFixed(2)}`} icon={Wallet} color="gold" />
         <StatCard title="Total Ganho" value={`R$ ${(associate.total_earned || 0).toFixed(2)}`} icon={TrendingUp} color="green" />
         <StatCard title="Diretos" value={networkCount} icon={Users} color="blue" />
-        <StatCard title="Pedidos" value="Ver loja" icon={ShoppingBag} color="purple" link="/store" />
+        <StatCard title="Pontos" value={`${(associate.total_pontos || 0).toLocaleString('pt-BR')}`} icon={Gift} color="purple" />
       </div>
 
       {/* Invite Link */}

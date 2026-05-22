@@ -152,6 +152,11 @@
       "type": "boolean",
       "default": false,
       "description": "Se o associado j\u00e1 completou os endere\u00e7os"
+    },
+    "total_pontos": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de pontos acumulados"
     }
   },
   "required": [
