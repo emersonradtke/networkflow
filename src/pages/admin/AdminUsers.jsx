@@ -9,10 +9,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
-import { Shield, Edit, Search, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Shield, Edit, Search, Trash2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { loadRoles } from '@/lib/role-helpers';
-import UserCreationForm from '@/components/admin/UserCreationForm';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -21,7 +20,6 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [editEmail, setEditEmail] = useState('');
   const [editName, setEditName] = useState('');
   const [editRole, setEditRole] = useState('');
@@ -179,7 +177,7 @@ export default function AdminUsers() {
         ))}
       </div>
 
-      {/* Search and Add */}
+      {/* Search */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -190,13 +188,6 @@ export default function AdminUsers() {
             className="pl-10"
           />
         </div>
-        <Button
-          onClick={() => setShowCreateForm(true)}
-          className="bg-primary"
-        >
-          <Plus size={18} className="mr-2" />
-          Novo Usuário
-        </Button>
       </div>
 
       {/* Users List */}
@@ -366,13 +357,6 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Form para criar novo usuário */}
-      <UserCreationForm 
-        open={showCreateForm}
-        onOpenChange={setShowCreateForm}
-        onSuccess={loadUsers}
-      />
 
       {/* Dialog - Confirmar Exclusão */}
       <Dialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
