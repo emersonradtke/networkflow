@@ -25,6 +25,7 @@ import Store from './pages/Store';
 import Network from './pages/Network';
 import Wallet from './pages/Wallet';
 import Notifications from './pages/Notifications';
+import Checkout from './pages/Checkout';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -76,6 +77,7 @@ const AuthenticatedApp = () => {
         <Route path="/withdrawals" element={<MyWithdrawals />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/checkout" element={<Checkout />} />
 
         {/* Admin */}
         <Route path="/admin" element={<AdminDashboard />} />
