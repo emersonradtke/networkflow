@@ -15,6 +15,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'CPF, nome e role são obrigatórios' }, { status: 400 });
     }
 
+    // Validar role (Base44 só aceita 'user' ou 'admin')
+    const validRoles = ['user', 'admin'];
+    const baseRole = validRoles.includes(role) ? role : 'user';
+
     // Verificar se usuário com esse email já existe
     if (email) {
       const existingUsers = await base44.asServiceRole.entities.User.filter({ email });
@@ -25,7 +29,7 @@ Deno.serve(async (req) => {
 
     // Convidar usuário com email gerado ou fornecido
     const userEmail = email || `${cpf}@boldlife.local`;
-    await base44.users.inviteUser(userEmail, role);
+    await base44.users.inviteUser(userEmail, baseRole);
 
     // Buscar o usuário criado
     const createdUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
