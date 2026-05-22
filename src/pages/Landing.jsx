@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogIn, UserPlus, Sparkles, Wallet, Users, ShoppingBag } from 'lucide-react';
+import { LogIn, UserPlus, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
+const BRAIN_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/fa8c43cb9_BOLDLIFE-ICON1.png';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -25,91 +29,48 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0F1A3D] via-[#1B2A5E] to-[#3B9EE2] flex flex-col">
-      {/* Header */}
-      <header className="px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-white font-bold text-xl tracking-tight">BOLD<span className="text-cyan-300">LIFE</span></span>
-        </div>
-        <Button
-          onClick={handleLogin}
-          variant="ghost"
-          size="sm"
-          className="text-white hover:bg-white/10 hover:text-white gap-2"
-        >
-          <LogIn size={16} /> Entrar
-        </Button>
-      </header>
+    <div className="min-h-screen flex" style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}>
+      {/* Left panel */}
+      <div className="hidden lg:flex flex-col items-center justify-center flex-1 p-12 text-white">
+        <img src={BRAIN_URL} alt="Bold Life Brain" className="w-52 h-52 object-contain mb-8 opacity-90" style={{ filter: 'brightness(0) invert(1)' }} />
+        <h2 className="text-4xl font-black mb-3 text-center">Bem-vindo à<br/>Bold Life</h2>
+        <p className="text-white/70 text-center text-lg max-w-xs leading-relaxed">
+          Transforme sua rede em resultados reais. Junte-se a uma comunidade de sucesso.
+        </p>
+      </div>
 
-      {/* Hero */}
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="max-w-2xl w-full text-center space-y-8 animate-fade-up">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-            <Sparkles size={14} className="text-cyan-300" />
-            <span className="text-white/90 text-xs font-medium">Plataforma de associados</span>
+      {/* Right panel */}
+      <div className="flex-1 lg:max-w-md flex items-center justify-center p-6 overflow-y-auto">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-3xl shadow-2xl p-8 w-full my-6">
+          <div className="text-center mb-8">
+            <img src={LOGO_URL} alt="Bold Life" className="h-10 w-auto object-contain mx-auto mb-4" />
+            <h1 className="text-2xl font-black" style={{ color: '#1B2A5E' }}>Bem-vindo</h1>
+            <p className="text-slate-500 text-sm mt-2">Construa sua rede e ganhe comissões</p>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tight">
-            Bem-vindo ao{' '}
-            <span className="bg-gradient-to-r from-cyan-300 to-white bg-clip-text text-transparent">
-              Bold Life
-            </span>
-          </h1>
-
-          <p className="text-white/80 text-base md:text-lg max-w-lg mx-auto leading-relaxed">
-            Construa sua rede, faça vendas e acompanhe suas comissões em tempo real.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+          <div className="space-y-3">
             <Button
               onClick={handleLogin}
-              size="lg"
-              className="bg-white text-[#1B2A5E] hover:bg-white/90 font-semibold gap-2 h-12 px-8 shadow-xl"
+              className="w-full font-bold text-white text-base py-6"
+              style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
             >
-              <LogIn size={18} /> Entrar
+              <LogIn size={18} className="mr-2" /> Entrar
             </Button>
+
             <Button
               onClick={handleRegister}
-              size="lg"
               variant="outline"
-              className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white font-semibold gap-2 h-12 px-8"
+              className="w-full font-semibold py-6 border-slate-300"
             >
-              <UserPlus size={18} /> Criar conta
+              <UserPlus size={18} className="mr-2" /> Criar conta
             </Button>
           </div>
 
-          {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-12">
-            {[
-              { icon: Users, title: 'Sua Rede', desc: 'Acompanhe seus associados' },
-              { icon: ShoppingBag, title: 'Loja', desc: 'Produtos com comissão' },
-              { icon: Wallet, title: 'Carteira', desc: 'Saques e ganhos' },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div
-                key={title}
-                className="p-5 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-lg bg-cyan-300/20 flex items-center justify-center mb-3 mx-auto">
-                  <Icon size={18} className="text-cyan-300" />
-                </div>
-                <h3 className="text-white font-semibold text-sm">{title}</h3>
-                <p className="text-white/60 text-xs mt-1">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="px-6 py-6 text-center">
-        <p className="text-white/50 text-xs">
-          © {new Date().getFullYear()} Bold Life. Todos os direitos reservados.
-        </p>
-      </footer>
+          <p className="text-xs text-slate-400 text-center mt-8">
+            Ao entrar, você concorda com nossos Termos de Serviço
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 }
