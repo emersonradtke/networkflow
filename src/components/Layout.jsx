@@ -22,13 +22,30 @@ export default function Layout() {
   useEffect(() => { loadUser(); }, []);
 
   const loadUser = async () => {
-    const me = await base44.auth.me();
-    setUser(me);
-    if (me) {
-      const associates = await base44.entities.Associate.filter({ user_id: me.id });
-      if (associates.length > 0) setAssociate(associates[0]);
-      const notifs = await base44.entities.Notification.filter({ associate_id: me.id, is_read: false });
-      setUnreadCount(notifs.length);
+    try {
+      // Tenta Base44 nativo primeiro
+      const me = await base44.auth.me();
+      setUser(me);
+      if (me) {
+        const associates = await base44.entities.Associate.filter({ user_id: me.id });
+        if (associates.length > 0) setAssociate(associates[0]);
+        const notifs = await base44.entities.Notification.filter({ associate_id: me.id, is_read: false });
+        setUnreadCount(notifs.length);
+      }
+    } catch (err) {
+      // Fallback para DirectUser legado
+      const directUserData = sessionStorage.getItem('directUser');
+      if (directUserData) {
+        const directUser = JSON.parse(directUserData);
+        setUser(directUser);
+        // Tenta carregar associado para usuário legado
+        try {
+          const associates = await base44.asServiceRole.entities.Associate.filter({ user_id: directUser.id });
+          if (associates.length > 0) setAssociate(associates[0]);
+        } catch (assocErr) {
+          console.warn('Failed to load associate:', assocErr);
+        }
+      }
     }
   };
 
