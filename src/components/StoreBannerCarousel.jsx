@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import PurchaseProofModal from '@/components/PurchaseProofModal';
 
 const animationClasses = {
   none: '',
@@ -20,6 +21,8 @@ export default function StoreBannerCarousel() {
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [selectedClickId, setSelectedClickId] = useState(null);
+  const [selectedBannerName, setSelectedBannerName] = useState('');
 
   useEffect(() => {
     loadBanners();
@@ -36,11 +39,13 @@ export default function StoreBannerCarousel() {
 
   const handleClick = async (banner) => {
     try {
-      await base44.functions.invoke('trackExternalLinkClick', {
+      const res = await base44.functions.invoke('trackExternalLinkClick', {
         banner_id: banner.id,
         banner_name: banner.title,
         link_type: 'banner'
       });
+      setSelectedClickId(res.data.click_id);
+      setSelectedBannerName(banner.title);
     } catch (e) {
       console.error('Erro ao rastrear clique', e);
     }
@@ -62,6 +67,14 @@ export default function StoreBannerCarousel() {
   const speedClass = speedClasses[currentBanner.animation_speed] || '';
 
   return (
+    <>
+    {selectedClickId && (
+      <PurchaseProofModal
+        clickId={selectedClickId}
+        productName={selectedBannerName}
+        onClose={() => setSelectedClickId(null)}
+      />
+    )}
     <div className="w-full max-w-xl mx-auto mb-6">
       <div
         onClick={() => handleClick(currentBanner)}
@@ -126,5 +139,6 @@ export default function StoreBannerCarousel() {
         )}
       </div>
     </div>
+    </>
   );
 }
