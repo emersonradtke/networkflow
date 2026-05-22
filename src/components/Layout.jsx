@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
-  LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
+  LayoutDashboard, ShoppingBag, Users, User, Wallet, Bell, Settings,
   LogOut, Menu, X, Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck,
   ExternalLink, Briefcase, Eye
 } from 'lucide-react';
@@ -33,16 +33,19 @@ export default function Layout() {
   };
 
   const iconMap = {
-    LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
+    LayoutDashboard, ShoppingBag, Users, User, Wallet, Bell, Settings,
     Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck,
-    ExternalLink, Briefcase, Eye
+    ExternalLink, Briefcase, Eye, LogOut
   };
 
-  const navItems = getAvailableMenuItems(user?.role || 'guest').map(item => ({
-    ...item,
-    icon: iconMap[item.icon],
-    badge: item.path === '/notifications' ? unreadCount : 0
-  }));
+  const navItems = getAvailableMenuItems(user?.role || 'guest').map(item => {
+    const IconComponent = iconMap[item.icon];
+    return {
+      ...item,
+      icon: IconComponent || LayoutDashboard,
+      badge: item.path === '/notifications' ? unreadCount : 0
+    };
+  });
 
   const NavLink = ({ item }) => {
     const Icon = item.icon;
