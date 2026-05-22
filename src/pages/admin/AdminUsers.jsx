@@ -9,32 +9,41 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
-import { ROLE_CONFIG, getRoleLabel, getRoleColor } from '@/lib/roles-config';
 import { Shield, Edit, Search, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { loadRoles } from '@/lib/role-helpers';
+import UserCreationForm from '@/components/admin/UserCreationForm';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState('edit'); // 'edit' ou 'create'
-  const [newRole, setNewRole] = useState('associate');
-  const [newEmail, setNewEmail] = useState('');
-  const [newName, setNewName] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [editEmail, setEditEmail] = useState('');
   const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [newCpf, setNewCpf] = useState('');
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
     loadUsers();
+    loadRolesData();
   }, []);
+
+  const loadRolesData = async () => {
+    try {
+      const rolesData = await loadRoles();
+      setRoles(rolesData);
+    } catch (error) {
+      console.error('Erro ao carregar roles:', error);
+    }
+  };
 
   const loadUsers = async () => {
     setLoading(true);
@@ -58,22 +67,21 @@ export default function AdminUsers() {
       if (editEmail !== selectedUser.email) {
         updates.email = editEmail;
       }
-      if (newRole !== selectedUser.role) {
-        updates.role = newRole;
+      if (editRole !== selectedUser.role) {
+        updates.role = editRole;
       }
-
+      
       if (Object.keys(updates).length > 0) {
         await base44.entities.User.update(selectedUser.id, updates);
       }
-
-      // Se houver senha, enviar para função backend para atualizar
+      
       if (editPassword && editPassword.trim()) {
         await base44.functions.invoke('updateUserPassword', {
           userId: selectedUser.id,
           newPassword: editPassword
         });
       }
-
+      
       await loadUsers();
       setShowDialog(false);
       setSelectedUser(null);
@@ -89,7 +97,6 @@ export default function AdminUsers() {
   const handleSendPasswordReset = async () => {
     if (!selectedUser) return;
     try {
-      // Chamar função backend para enviar reset de senha
       await base44.functions.invoke('sendPasswordReset', {
         userId: selectedUser.id,
         email: selectedUser.email,
@@ -99,41 +106,6 @@ export default function AdminUsers() {
     } catch (error) {
       console.error('Erro ao enviar reset:', error);
       toast.error('Erro ao enviar email de reset');
-    }
-  };
-
-  const handleCreateUser = async () => {
-    if (!newName) {
-      toast.error('Nome é obrigatório');
-      return;
-    }
-    if (!newCpf && !newEmail) {
-      toast.error('Preencha CPF ou Email');
-      return;
-    }
-    try {
-      const result = await base44.functions.invoke('createDirectUser', {
-        cpf: newCpf || 'no-cpf',
-        full_name: newName,
-        email: newEmail || '',
-        role: newRole
-      });
-
-      if (result?.data?.success) {
-        await loadUsers();
-        setShowDialog(false);
-        setNewEmail('');
-        setNewName('');
-        setNewCpf('');
-        setNewRole('user');
-        toast.success('Usuário criado com sucesso');
-      } else {
-        toast.error(result?.data?.error || 'Erro ao criar usuário');
-      }
-    } catch (error) {
-      console.error('Erro ao criar usuário:', error);
-      const errorMsg = error?.response?.data?.error || error?.message || 'Erro ao criar usuário';
-      toast.error(errorMsg);
     }
   };
 
@@ -181,17 +153,17 @@ export default function AdminUsers() {
 
       {/* Role Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Object.entries(ROLE_CONFIG).map(([roleKey, config]) => (
-          <div key={roleKey} className="p-4 rounded-lg border border-border bg-card">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${config.color}`}>
+        {roles.map(role => (
+          <div key={role.id} className="p-4 rounded-lg border border-border bg-card">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${role.color}`}>
               <Shield size={20} />
             </div>
-            <h3 className="font-semibold text-foreground">{config.label}</h3>
-            <p className="text-xs text-muted-foreground mt-2">{config.description}</p>
+            <h3 className="font-semibold text-foreground">{role.label}</h3>
+            <p className="text-xs text-muted-foreground mt-2">{role.description}</p>
             <div className="mt-3 flex flex-wrap gap-1">
-              {config.permissions.slice(0, 2).map((perm, i) => (
+              {role.permissions?.slice(0, 2).map((perm, i) => (
                 <Badge key={i} variant="outline" className="text-xs">
-                  {perm.replace('_', ' ')}
+                  {perm}
                 </Badge>
               ))}
             </div>
@@ -211,14 +183,7 @@ export default function AdminUsers() {
           />
         </div>
         <Button
-          onClick={() => {
-            setDialogMode('create');
-            setNewEmail('');
-            setNewName('');
-            setNewCpf('');
-            setNewRole('user');
-            setShowDialog(true);
-          }}
+          onClick={() => setShowCreateForm(true)}
           className="bg-primary"
         >
           <Plus size={18} className="mr-2" />
@@ -253,9 +218,11 @@ export default function AdminUsers() {
                       </div>
                     </td>
                     <td className="px-6 py-3">
-                      <Badge className={getRoleColor(user.role)}>
-                        {getRoleLabel(user.role)}
-                      </Badge>
+                      {user.role && (
+                        <Badge className={roles.find(r => r.name === user.role)?.color || 'bg-gray-100 text-gray-800'}>
+                          {roles.find(r => r.name === user.role)?.label || user.role}
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-6 py-3 text-muted-foreground text-xs">
                       {new Date(user.created_date).toLocaleDateString('pt-BR')}
@@ -265,12 +232,11 @@ export default function AdminUsers() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setDialogMode('edit');
                           setSelectedUser(user);
                           setEditName(user.full_name || '');
                           setEditEmail(user.email || '');
                           setEditPassword('');
-                          setNewRole(user.role || 'associate');
+                          setEditRole(user.role || '');
                           setShowDialog(true);
                         }}
                       >
@@ -294,117 +260,81 @@ export default function AdminUsers() {
         </div>
       )}
 
-      {/* Dialog - Edit or Create */}
+      {/* Dialog - Edit */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {dialogMode === 'edit' ? 'Editar Role do Usuário' : 'Convidar Novo Usuário'}
-            </DialogTitle>
+            <DialogTitle>Editar Usuário</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {dialogMode === 'create' ? (
-              <>
+          {selectedUser && (
+            <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">Nome *</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Nome</label>
                 <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
                   placeholder="Nome completo"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
                 />
               </div>
-
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">CPF (opcional)</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
                 <Input
-                  placeholder="00000000000"
-                  value={newCpf}
-                  onChange={(e) => setNewCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                  maxLength="11"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">Email (opcional)</label>
-                <Input
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
                   placeholder="email@example.com"
                   type="email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
                 />
               </div>
-              </>
-              ) : selectedUser ? (
-              <>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Nome</label>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">Nova Senha (opcional)</label>
+                <div className="relative">
                   <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Nome completo"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="Digite a nova senha"
+                    type={showPassword ? "text" : "password"}
                   />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Email</label>
-                  <Input
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    placeholder="email@example.com"
-                    type="email"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Nova Senha (opcional)</label>
-                  <div className="relative">
-                    <Input
-                      value={editPassword}
-                      onChange={(e) => setEditPassword(e.target.value)}
-                      placeholder="Digite a nova senha"
-                      type={showPassword ? "text" : "password"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : null}
-
-            <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Role</label>
-              <Select value={newRole} onValueChange={setNewRole}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="associate">Associado</SelectItem>
-                  <SelectItem value="employee">Funcionário</SelectItem>
-                  <SelectItem value="guest">Visitante</SelectItem>
-                  <SelectItem value="franchise">Franquia</SelectItem>
-                  <SelectItem value="partner">Parceiro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {newRole && ROLE_CONFIG[newRole] && (
-              <div className="p-3 rounded-lg bg-secondary">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Permissões:</p>
-                <div className="flex flex-wrap gap-1">
-                  {ROLE_CONFIG[newRole].permissions.map((perm, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
-                      {perm === 'all' ? 'Acesso Total' : perm.replace('_', ' ')}
-                    </Badge>
-                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">Role</label>
+                <Select value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map(role => (
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {editRole && roles.find(r => r.name === editRole) && (
+                <div className="p-3 rounded-lg bg-secondary">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Permissões:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {roles.find(r => r.name === editRole)?.permissions?.map((perm, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <DialogFooter>
             <Button 
@@ -417,14 +347,21 @@ export default function AdminUsers() {
               Cancelar
             </Button>
             <Button
-              onClick={dialogMode === 'edit' ? handleUpdateUser : handleCreateUser}
+              onClick={handleUpdateUser}
               className="bg-primary"
             >
-              {dialogMode === 'edit' ? 'Salvar Alterações' : 'Criar Usuário'}
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Form para criar novo usuário */}
+      <UserCreationForm 
+        open={showCreateForm}
+        onOpenChange={setShowCreateForm}
+        onSuccess={loadUsers}
+      />
 
       {/* Dialog - Confirmar Exclusão */}
       <Dialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
