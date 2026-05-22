@@ -21,6 +21,11 @@
     "is_active": {
       "type": "boolean",
       "default": true
+    },
+    "requires_address": {
+      "type": "boolean",
+      "default": true,
+      "description": "Se o endere\u00e7o do associado \u00e9 necess\u00e1rio para este m\u00e9todo"
     }
   },
   "required": [

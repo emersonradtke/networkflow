@@ -39,6 +39,10 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
 
   const hasAddress = localAssociate?.shipping_street && localAssociate?.shipping_city;
   const isPickup = pickupType === 'store' || pickupType === 'franchise';
+  const needsAddress = selectedShipping?.requires_address !== false;
+  const canProceed = isPickup
+    ? (pickupType === 'store' || (pickupType === 'franchise' && selectedFranchise))
+    : needsAddress ? hasAddress : true;
 
   // Haversine distance in km
   const haversine = (lat1, lon1, lat2, lon2) => {
@@ -95,9 +99,6 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
   const nearestFranchiseId = userCoords && sortedFranchises.length > 0 && sortedFranchises[0]._lat
     ? sortedFranchises[0].id
     : null;
-  const canProceed = isPickup
-    ? (pickupType === 'store' || (pickupType === 'franchise' && selectedFranchise))
-    : hasAddress;
 
   const handleOpenCheckout = () => {
     setError('');
@@ -133,13 +134,13 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
         : '';
 
       const shippingData = {
-        shipping_street: isPickup ? pickupStreet : (localAssociate.shipping_street || ''),
-        shipping_number: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_number || '' : '') : (localAssociate.shipping_number || ''),
-        shipping_complement: isPickup ? '' : (localAssociate.shipping_complement || ''),
-        shipping_neighborhood: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_neighborhood || '' : '') : (localAssociate.shipping_neighborhood || ''),
-        shipping_city: isPickup ? pickupCity : (localAssociate.shipping_city || ''),
-        shipping_state: isPickup ? pickupState : (localAssociate.shipping_state || ''),
-        shipping_zip: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_zip || '' : '') : (localAssociate.shipping_zip || ''),
+        shipping_street: isPickup ? pickupStreet : (needsAddress ? (localAssociate.shipping_street || '') : ''),
+        shipping_number: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_number || '' : '') : (needsAddress ? (localAssociate.shipping_number || '') : ''),
+        shipping_complement: isPickup ? '' : (needsAddress ? (localAssociate.shipping_complement || '') : ''),
+        shipping_neighborhood: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_neighborhood || '' : '') : (needsAddress ? (localAssociate.shipping_neighborhood || '') : ''),
+        shipping_city: isPickup ? pickupCity : (needsAddress ? (localAssociate.shipping_city || '') : ''),
+        shipping_state: isPickup ? pickupState : (needsAddress ? (localAssociate.shipping_state || '') : ''),
+        shipping_zip: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_zip || '' : '') : (needsAddress ? (localAssociate.shipping_zip || '') : ''),
         billing_street: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_street : (localAssociate.billing_street || ''),
         billing_number: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_number : (localAssociate.billing_number || ''),
         billing_complement: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_complement : (localAssociate.billing_complement || ''),
@@ -370,8 +371,8 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
                   )}
                 </div>
 
-                {/* Endereço de entrega — oculto se pickup */}
-                {!isPickup && (
+                {/* Endereço de entrega — oculto se pickup ou método não requer */}
+                {!isPickup && selectedShipping?.requires_address !== false && (
                   <div>
                     <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
                       <MapPin size={14} className="text-primary" /> Endereço de Entrega

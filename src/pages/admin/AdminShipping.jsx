@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 
-const EMPTY = { name: '', description: '', price: 0, estimated_days: '', is_active: true };
+const EMPTY = { name: '', description: '', price: 0, estimated_days: '', is_active: true, requires_address: true };
 
 export default function AdminShipping() {
   const [methods, setMethods] = useState([]);
@@ -26,7 +26,7 @@ export default function AdminShipping() {
   };
 
   const openNew = () => { setEditing(null); setForm(EMPTY); setDialogOpen(true); };
-  const openEdit = (m) => { setEditing(m); setForm({ name: m.name, description: m.description || '', price: m.price || 0, estimated_days: m.estimated_days || '', is_active: m.is_active !== false }); setDialogOpen(true); };
+  const openEdit = (m) => { setEditing(m); setForm({ name: m.name, description: m.description || '', price: m.price || 0, estimated_days: m.estimated_days || '', is_active: m.is_active !== false, requires_address: m.requires_address !== false }); setDialogOpen(true); };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -92,6 +92,7 @@ export default function AdminShipping() {
                     <span className="font-semibold text-primary">R$ {(m.price || 0).toFixed(2)}</span>
                     {m.estimated_days && <span>{m.estimated_days} dias úteis</span>}
                     {m.description && <span>{m.description}</span>}
+                    <span className={m.requires_address ? 'text-blue-500' : 'text-orange-500'}>{m.requires_address ? 'Requer endereço' : 'Sem endereço'}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
@@ -135,9 +136,15 @@ export default function AdminShipping() {
               <Label>Descrição</Label>
               <Input className="mt-1.5" placeholder="Informações adicionais" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="active_check" className="w-4 h-4 accent-primary" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
-              <label htmlFor="active_check" className="text-sm cursor-pointer">Ativo (disponível na loja)</label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="active_check" className="w-4 h-4 accent-primary" checked={form.is_active} onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))} />
+                <label htmlFor="active_check" className="text-sm cursor-pointer">Ativo (disponível na loja)</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="requires_address_check" className="w-4 h-4 accent-primary" checked={form.requires_address} onChange={e => setForm(f => ({ ...f, requires_address: e.target.checked }))} />
+                <label htmlFor="requires_address_check" className="text-sm cursor-pointer">Requer endereço do associado no pedido</label>
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
