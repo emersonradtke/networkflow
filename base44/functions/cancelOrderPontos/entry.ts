@@ -22,12 +22,16 @@ Deno.serve(async (req) => {
 
     // Atualizar Associate subtraindo os pontos
     if (associateId && pontosCancelados > 0) {
-      const associate = await base44.asServiceRole.entities.Associate.get(associateId);
-      if (associate) {
-        const newPontos = Math.max(0, (associate.total_pontos || 0) - pontosCancelados);
-        await base44.asServiceRole.entities.Associate.update(associateId, {
-          total_pontos: newPontos
-        });
+      try {
+        const associate = await base44.asServiceRole.entities.Associate.get(associateId);
+        if (associate) {
+          const newPontos = Math.max(0, (associate.total_pontos || 0) - pontosCancelados);
+          await base44.asServiceRole.entities.Associate.update(associateId, {
+            total_pontos: newPontos
+          });
+        }
+      } catch (e) {
+        console.error(`Erro ao atualizar pontos do associado ${associateId}:`, e.message);
       }
     }
 
