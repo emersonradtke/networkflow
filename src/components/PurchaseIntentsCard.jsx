@@ -17,6 +17,16 @@ export default function PurchaseIntentsCard({ associateId }) {
     loadIntents();
   }, [associateId]);
 
+  useEffect(() => {
+    // Subscribe to new external link clicks
+    const unsubscribe = base44.entities.ExternalLinkClick.subscribe((event) => {
+      if (event.type === 'create' && event.data?.associate_id === associateId) {
+        loadIntents();
+      }
+    });
+    return unsubscribe;
+  }, [associateId]);
+
   const loadIntents = async () => {
     try {
       const data = await base44.entities.ExternalLinkClick.filter(
