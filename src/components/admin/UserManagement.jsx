@@ -248,11 +248,16 @@ export default function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="user">Usuário</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    {roles.map(r => (
-                      <SelectItem key={r.id} value={r.name}>{r.label}</SelectItem>
-                    ))}
+                    {roles.length === 0 ? (
+                      <>
+                        <SelectItem value="user">Usuário</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </>
+                    ) : (
+                      roles.map(r => (
+                        <SelectItem key={r.id} value={r.name}>{r.label}</SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -319,8 +324,16 @@ export default function UserManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">Usuário</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  {roles.length === 0 ? (
+                    <>
+                      <SelectItem value="user">Usuário</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </>
+                  ) : (
+                    roles.map(r => (
+                      <SelectItem key={r.id} value={r.name}>{r.label}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -415,17 +428,22 @@ export default function UserManagement() {
                     <td className="py-3 px-3 text-muted-foreground">{user.email || 'N/A'}</td>
                     <td className="py-3 px-3">
                       <Select value={user.role} onValueChange={(val) => handleRoleChange(user.id, val)}>
-                        <SelectTrigger className="w-32 h-8 bg-secondary border-border text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">Usuário</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          {roles.map(r => (
-                            <SelectItem key={r.id} value={r.name}>{r.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                         <SelectTrigger className="w-32 h-8 bg-secondary border-border text-xs">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           {roles.length === 0 ? (
+                             <>
+                               <SelectItem value="user">Usuário</SelectItem>
+                               <SelectItem value="admin">Admin</SelectItem>
+                             </>
+                           ) : (
+                             roles.map(r => (
+                               <SelectItem key={r.id} value={r.name}>{r.label}</SelectItem>
+                             ))
+                           )}
+                         </SelectContent>
+                       </Select>
                     </td>
                     <td className="py-3 px-3 text-right flex gap-2 justify-end">
                       <Button
