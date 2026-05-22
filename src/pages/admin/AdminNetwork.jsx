@@ -12,18 +12,13 @@ export default function AdminNetwork() {
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    try {
-      const [assocs, configs] = await Promise.all([
-        base44.entities.Associate.filter({ status: 'active' }, '-created_date', 100),
-        base44.entities.NetworkConfig.list(),
-      ]);
-      setAssociates(assocs);
-      if (configs.length > 0) setConfig(configs[0]);
-      setLoading(false);
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      setLoading(false);
-    }
+    const [assocs, configs] = await Promise.all([
+      base44.entities.Associate.filter({ status: 'active' }),
+      base44.entities.NetworkConfig.list(),
+    ]);
+    setAssociates(assocs);
+    if (configs.length > 0) setConfig(configs[0]);
+    setLoading(false);
   };
 
   const roots = associates.filter(a => !a.sponsor_id);
