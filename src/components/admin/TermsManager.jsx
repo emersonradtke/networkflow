@@ -22,10 +22,11 @@ export default function TermsManager() {
   const fetchTerms = async () => {
     try {
       setLoading(true);
-      const data = await base44.asServiceRole.entities.TermsOfService.list('-created_date');
-      setTerms(data);
+      const response = await base44.functions.invoke('getTermsList', {});
+      setTerms(response.data?.terms || []);
     } catch (error) {
       console.error('Erro ao carregar termos:', error);
+      setTerms([]);
     } finally {
       setLoading(false);
     }
@@ -66,22 +67,12 @@ export default function TermsManager() {
     }
 
     try {
-      if (editingId) {
-        await base44.asServiceRole.entities.TermsOfService.update(editingId, formData);
-      } else {
-        // Se estamos criando um novo termo, desativa os antigos
-        const activeTerms = terms.filter(t => t.is_active);
-        for (const term of activeTerms) {
-          await base44.asServiceRole.entities.TermsOfService.update(term.id, { is_active: false });
-        }
-        
-        const nextVersion = Math.max(...terms.map(t => t.version || 1), 0) + 1;
-        await base44.asServiceRole.entities.TermsOfService.create({
-          ...formData,
-          version: nextVersion,
-          is_active: true
-        });
-      }
+      await base44.functions.invoke('saveTermsOfService', {
+        id: editingId || null,
+        title: formData.title,
+        content: formData.content,
+        is_active: formData.is_active
+      });
 
       setShowForm(false);
       setEditingId(null);
@@ -107,7 +98,7 @@ export default function TermsManager() {
     if (!confirm('Tem certeza que deseja deletar este termo?')) return;
 
     try {
-      await base44.asServiceRole.entities.TermsOfService.delete(id);
+      await base44.functions.invoke('deleteTermsOfService', { id });
       fetchTerms();
     } catch (error) {
       console.error('Erro ao deletar termo:', error);
