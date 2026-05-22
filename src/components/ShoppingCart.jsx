@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ShoppingCart, Trash2, Plus, Minus, CheckCircle2, AlertCircle, MapPin, Truck, ChevronRight, ChevronLeft, Edit2 } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, CheckCircle2, AlertCircle, MapPin, Truck, ChevronRight, ChevronLeft, Edit2, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -19,11 +19,15 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
   const [selectedShipping, setSelectedShipping] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [localAssociate, setLocalAssociate] = useState(associate);
+  const [pickupType, setPickupType] = useState(null); // null | 'store' | 'franchise'
+  const [franchises, setFranchises] = useState([]);
+  const [selectedFranchise, setSelectedFranchise] = useState(null);
 
   useEffect(() => { setLocalAssociate(associate); }, [associate]);
 
   useEffect(() => {
     base44.entities.ShippingMethod.filter({ is_active: true }).then(setShippingMethods);
+    base44.entities.Supplier.filter({ type: 'franchise', is_active: true }, 'name').then(setFranchises);
   }, []);
 
   const total = cart.reduce((s, item) => s + item.price * item.qty, 0);
@@ -32,6 +36,10 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
   const grandTotal = total + shippingCost;
 
   const hasAddress = localAssociate?.shipping_street && localAssociate?.shipping_city;
+  const isPickup = pickupType === 'store' || pickupType === 'franchise';
+  const canProceed = isPickup
+    ? (pickupType === 'store' || (pickupType === 'franchise' && selectedFranchise))
+    : hasAddress;
 
   const handleOpenCheckout = () => {
     setError('');
@@ -55,14 +63,25 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       const res = await base44.functions.invoke('getNextOrderNumber', {});
       const orderNumber = res.data?.next_number || 1;
 
+      // Pickup address = franchise address or "Retirada na Loja"
+      const pickupStreet = pickupType === 'franchise' && selectedFranchise
+        ? selectedFranchise.address_street || ''
+        : pickupType === 'store' ? 'Retirada na Loja' : '';
+      const pickupCity = pickupType === 'franchise' && selectedFranchise
+        ? selectedFranchise.address_city || ''
+        : '';
+      const pickupState = pickupType === 'franchise' && selectedFranchise
+        ? selectedFranchise.address_state || ''
+        : '';
+
       const shippingData = {
-        shipping_street: localAssociate.shipping_street || '',
-        shipping_number: localAssociate.shipping_number || '',
-        shipping_complement: localAssociate.shipping_complement || '',
-        shipping_neighborhood: localAssociate.shipping_neighborhood || '',
-        shipping_city: localAssociate.shipping_city || '',
-        shipping_state: localAssociate.shipping_state || '',
-        shipping_zip: localAssociate.shipping_zip || '',
+        shipping_street: isPickup ? pickupStreet : (localAssociate.shipping_street || ''),
+        shipping_number: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_number || '' : '') : (localAssociate.shipping_number || ''),
+        shipping_complement: isPickup ? '' : (localAssociate.shipping_complement || ''),
+        shipping_neighborhood: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_neighborhood || '' : '') : (localAssociate.shipping_neighborhood || ''),
+        shipping_city: isPickup ? pickupCity : (localAssociate.shipping_city || ''),
+        shipping_state: isPickup ? pickupState : (localAssociate.shipping_state || ''),
+        shipping_zip: isPickup ? (pickupType === 'franchise' && selectedFranchise ? selectedFranchise.address_zip || '' : '') : (localAssociate.shipping_zip || ''),
         billing_street: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_street : (localAssociate.billing_street || ''),
         billing_number: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_number : (localAssociate.billing_number || ''),
         billing_complement: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_complement : (localAssociate.billing_complement || ''),
@@ -70,9 +89,14 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
         billing_city: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_city : (localAssociate.billing_city || ''),
         billing_state: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_state : (localAssociate.billing_state || ''),
         billing_zip: localAssociate.billing_same_as_shipping !== false ? localAssociate.shipping_zip : (localAssociate.billing_zip || ''),
-        shipping_method_id: selectedShipping?.id || '',
-        shipping_method_name: selectedShipping?.name || '',
-        shipping_cost: shippingCost,
+        shipping_method_id: isPickup ? '' : (selectedShipping?.id || ''),
+        shipping_method_name: isPickup
+          ? (pickupType === 'store' ? 'Retirada na Loja' : `Retirada na Franquia: ${selectedFranchise?.trade_name || selectedFranchise?.name}`)
+          : (selectedShipping?.name || ''),
+        shipping_cost: isPickup ? 0 : shippingCost,
+        notes: isPickup && pickupType === 'franchise' && selectedFranchise
+          ? `Retirada: ${selectedFranchise.trade_name || selectedFranchise.name}`
+          : undefined,
       };
 
       for (const item of cart) {
@@ -214,72 +238,126 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           {step === 'address' && (
             <>
               <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                {/* Endereço de entrega */}
+
+                {/* Opções de retirada */}
                 <div>
                   <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                    <MapPin size={14} className="text-primary" /> Endereço de Entrega
+                    <Store size={14} className="text-primary" /> Retirada
                   </p>
-                  <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex items-start gap-3">
-                    <MapPin size={14} className="text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      {hasAddress ? (
-                        <>
-                          <p className="text-sm font-medium text-foreground">{[localAssociate.shipping_street, localAssociate.shipping_number].filter(Boolean).join(', ')}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {[localAssociate.shipping_neighborhood, localAssociate.shipping_city, localAssociate.shipping_state].filter(Boolean).join(' / ')}
-                            {localAssociate.shipping_zip && ` — CEP ${localAssociate.shipping_zip}`}
-                          </p>
-                        </>
+                  <div className="space-y-2">
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${pickupType === 'store' ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}>
+                      <input type="checkbox" checked={pickupType === 'store'} onChange={() => setPickupType(p => p === 'store' ? null : 'store')} className="w-4 h-4 accent-primary" />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Retirada na Loja</p>
+                        <p className="text-xs text-muted-foreground">Retire diretamente no estabelecimento</p>
+                      </div>
+                    </label>
+                    <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${pickupType === 'franchise' ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}>
+                      <input type="checkbox" checked={pickupType === 'franchise'} onChange={() => { setPickupType(p => p === 'franchise' ? null : 'franchise'); setSelectedFranchise(null); }} className="w-4 h-4 accent-primary" />
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Retirada na Franquia</p>
+                        <p className="text-xs text-muted-foreground">Escolha uma franquia para retirar</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Seleção de franquia */}
+                  {pickupType === 'franchise' && (
+                    <div className="mt-3 space-y-2">
+                      {franchises.length === 0 ? (
+                        <p className="text-sm text-muted-foreground bg-slate-50 rounded-xl p-3">Nenhuma franquia cadastrada.</p>
                       ) : (
-                        <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado</p>
+                        franchises.map(f => {
+                          const addr = [f.address_street, f.address_number].filter(Boolean).join(', ');
+                          const city = [f.address_city, f.address_state].filter(Boolean).join('/');
+                          return (
+                            <button
+                              key={f.id}
+                              onClick={() => setSelectedFranchise(f)}
+                              className={`w-full text-left p-3 rounded-xl border transition-all ${selectedFranchise?.id === f.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
+                            >
+                              <p className="text-sm font-semibold text-foreground">{f.trade_name || f.name}</p>
+                              {addr && <p className="text-xs text-muted-foreground mt-0.5">{addr}{city ? ` — ${city}` : ''}</p>}
+                              {f.address_zip && <p className="text-xs text-muted-foreground">CEP {f.address_zip}</p>}
+                              {f.phone && <p className="text-xs text-muted-foreground">{f.phone}</p>}
+                            </button>
+                          );
+                        })
                       )}
                     </div>
-                    <button onClick={() => setShowAddressModal(true)} className="text-primary hover:text-primary/80 shrink-0">
-                      <Edit2 size={14} />
-                    </button>
-                  </div>
-                  {!hasAddress && (
-                    <Button size="sm" variant="outline" className="w-full mt-2 gap-1" onClick={() => setShowAddressModal(true)}>
-                      <MapPin size={13} /> Adicionar Endereço
-                    </Button>
                   )}
                 </div>
 
-                {/* Método de envio */}
-                <div>
-                  <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                    <Truck size={14} className="text-primary" /> Método de Envio
-                  </p>
-                  {shippingMethods.length === 0 ? (
-                    <p className="text-sm text-muted-foreground bg-slate-50 rounded-xl p-3">Nenhum método de envio disponível.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => setSelectedShipping(null)}
-                        className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${!selectedShipping ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
-                      >
-                        <span className="text-sm text-foreground">Sem frete (retirada / incluso)</span>
-                        <span className="text-sm font-bold text-green-600">Grátis</span>
+                {/* Endereço de entrega — oculto se pickup */}
+                {!isPickup && (
+                  <div>
+                    <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
+                      <MapPin size={14} className="text-primary" /> Endereço de Entrega
+                    </p>
+                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex items-start gap-3">
+                      <MapPin size={14} className="text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        {hasAddress ? (
+                          <>
+                            <p className="text-sm font-medium text-foreground">{[localAssociate.shipping_street, localAssociate.shipping_number].filter(Boolean).join(', ')}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {[localAssociate.shipping_neighborhood, localAssociate.shipping_city, localAssociate.shipping_state].filter(Boolean).join(' / ')}
+                              {localAssociate.shipping_zip && ` — CEP ${localAssociate.shipping_zip}`}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Nenhum endereço cadastrado</p>
+                        )}
+                      </div>
+                      <button onClick={() => setShowAddressModal(true)} className="text-primary hover:text-primary/80 shrink-0">
+                        <Edit2 size={14} />
                       </button>
-                      {shippingMethods.map(m => (
-                        <button
-                          key={m.id}
-                          onClick={() => setSelectedShipping(m)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${selectedShipping?.id === m.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{m.name}</p>
-                            {m.estimated_days && <p className="text-xs text-muted-foreground">{m.estimated_days} dias úteis</p>}
-                            {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
-                          </div>
-                          <span className="text-sm font-bold text-primary shrink-0 ml-3">
-                            {(m.price || 0) === 0 ? 'Grátis' : `R$ ${m.price.toFixed(2)}`}
-                          </span>
-                        </button>
-                      ))}
                     </div>
-                  )}
-                </div>
+                    {!hasAddress && (
+                      <Button size="sm" variant="outline" className="w-full mt-2 gap-1" onClick={() => setShowAddressModal(true)}>
+                        <MapPin size={13} /> Adicionar Endereço
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Método de envio — oculto se pickup */}
+                {!isPickup && (
+                  <div>
+                    <p className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
+                      <Truck size={14} className="text-primary" /> Método de Envio
+                    </p>
+                    {shippingMethods.length === 0 ? (
+                      <p className="text-sm text-muted-foreground bg-slate-50 rounded-xl p-3">Nenhum método de envio disponível.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => setSelectedShipping(null)}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${!selectedShipping ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
+                        >
+                          <span className="text-sm text-foreground">Sem frete (incluso)</span>
+                          <span className="text-sm font-bold text-green-600">Grátis</span>
+                        </button>
+                        {shippingMethods.map(m => (
+                          <button
+                            key={m.id}
+                            onClick={() => setSelectedShipping(m)}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${selectedShipping?.id === m.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">{m.name}</p>
+                              {m.estimated_days && <p className="text-xs text-muted-foreground">{m.estimated_days} dias úteis</p>}
+                              {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
+                            </div>
+                            <span className="text-sm font-bold text-primary shrink-0 ml-3">
+                              {(m.price || 0) === 0 ? 'Grátis' : `R$ ${m.price.toFixed(2)}`}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-border p-5 space-y-3">
@@ -287,7 +365,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-semibold">R$ {total.toFixed(2)}</span>
                 </div>
-                {selectedShipping && (
+                {!isPickup && selectedShipping && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Frete ({selectedShipping.name})</span>
                     <span className="font-semibold">R$ {shippingCost.toFixed(2)}</span>
@@ -295,13 +373,13 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
                 )}
                 <div className="flex justify-between items-center border-t border-slate-100 pt-2">
                   <span className="font-bold text-foreground">Total</span>
-                  <span className="text-xl font-black text-primary">R$ {grandTotal.toFixed(2)}</span>
+                  <span className="text-xl font-black text-primary">R$ {(isPickup ? total : grandTotal).toFixed(2)}</span>
                 </div>
                 <Button
                   className="w-full font-bold text-white gap-1"
                   style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }}
                   onClick={() => setStep('confirm')}
-                  disabled={!hasAddress}
+                  disabled={!canProceed}
                 >
                   Revisar Pedido <ChevronRight size={14} />
                 </Button>
@@ -323,14 +401,34 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
                   </div>
                 ))}
 
-                <div className="bg-slate-50 rounded-xl p-3">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                    <MapPin size={11} /> Entregar em
-                  </p>
-                  <p className="text-sm text-foreground">{shippingLine()}</p>
-                </div>
+                {isPickup ? (
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <Store size={11} /> Retirada
+                    </p>
+                    {pickupType === 'store' && <p className="text-sm text-foreground font-semibold">Retirada na Loja</p>}
+                    {pickupType === 'franchise' && selectedFranchise && (
+                      <>
+                        <p className="text-sm text-foreground font-semibold">{selectedFranchise.trade_name || selectedFranchise.name}</p>
+                        {selectedFranchise.address_street && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {[selectedFranchise.address_street, selectedFranchise.address_number].filter(Boolean).join(', ')}
+                            {selectedFranchise.address_city ? ` — ${selectedFranchise.address_city}/${selectedFranchise.address_state}` : ''}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-3">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <MapPin size={11} /> Entregar em
+                    </p>
+                    <p className="text-sm text-foreground">{shippingLine()}</p>
+                  </div>
+                )}
 
-                {selectedShipping && (
+                {!isPickup && selectedShipping && (
                   <div className="bg-slate-50 rounded-xl p-3">
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
                       <Truck size={11} /> Envio
@@ -345,7 +443,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>R$ {total.toFixed(2)}</span>
                   </div>
-                  {selectedShipping && (
+                  {!isPickup && selectedShipping && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Frete</span>
                       <span>R$ {shippingCost.toFixed(2)}</span>
@@ -353,7 +451,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
                   )}
                   <div className="flex justify-between items-center font-bold text-base pt-1 border-t border-slate-200">
                     <span>Total</span>
-                    <span className="text-primary">R$ {grandTotal.toFixed(2)}</span>
+                    <span className="text-primary">R$ {(isPickup ? total : grandTotal).toFixed(2)}</span>
                   </div>
                 </div>
 
