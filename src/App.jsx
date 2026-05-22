@@ -31,9 +31,18 @@ import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError } = useAuth();
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  // Verificar se há sessão de associado local (bypass do auth Base44)
+  const hasLocalSession = (() => {
+    try {
+      const s = localStorage.getItem('associate_session');
+      if (s) { const p = JSON.parse(s); return !!p?.id; }
+    } catch {}
+    return false;
+  })();
+
+  if (isLoadingPublicSettings || (isLoadingAuth && !hasLocalSession)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center">
@@ -44,12 +53,12 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (authError) {
+  if (authError && !hasLocalSession) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
+      // Redirecionar para login interno, não Base44
+      return <Navigate to="/login" replace />;
     }
   }
 
