@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
@@ -16,17 +16,49 @@ export default function Layout() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => { loadUser(); }, []);
 
   const loadUser = async () => {
-    const me = await base44.auth.me();
-    setUser(me);
-    if (me) {
-      const associates = await base44.entities.Associate.filter({ user_id: me.id });
-      if (associates.length > 0) setAssociate(associates[0]);
-      const notifs = await base44.entities.Notification.filter({ associate_id: me.id, is_read: false });
-      setUnreadCount(notifs.length);
+    // Verificar se é admin (Base44 auth)
+    try {
+      const me = await base44.auth.me();
+      if (me?.role === 'admin') {
+        setUser(me);
+        return;
+      }
+    } catch {}
+
+    // Verificar sessão de associado
+    const session = localStorage.getItem('associate_session');
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed?.id) {
+          // Recarregar dados frescos do associado
+          const associates = await base44.entities.Associate.filter({ id: parsed.id });
+          const fresh = associates.length > 0 ? associates[0] : parsed;
+          setAssociate(fresh);
+          setUser({ full_name: fresh.full_name, email: fresh.email, role: 'associate' });
+          const notifs = await base44.entities.Notification.filter({ associate_id: fresh.id, is_read: false });
+          setUnreadCount(notifs.length);
+          return;
+        }
+      } catch {}
+    }
+
+    // Sem sessão → redirecionar para login
+    navigate('/login');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('associate_session');
+    const isAdmin = user?.role === 'admin';
+    if (isAdmin) {
+      base44.auth.logout();
+    } else {
+      navigate('/login');
     }
   };
 
@@ -115,7 +147,7 @@ export default function Layout() {
         </div>
         <button
           className="flex items-center gap-2 text-slate-400 hover:text-red-500 text-sm transition-colors w-full"
-          onClick={() => base44.auth.logout()}
+          onClick={handleLogout}
         >
           <LogOut size={14} /> Sair
         </button>

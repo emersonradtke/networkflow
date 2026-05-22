@@ -11,6 +11,7 @@ import Layout from './components/Layout';
 
 // User Pages
 import Register from './pages/Register';
+import AssociateLogin from './pages/AssociateLogin';
 import Dashboard from './pages/Dashboard';
 import Store from './pages/Store';
 import Network from './pages/Network';
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       {/* Public */}
+      <Route path="/login" element={<AssociateLogin />} />
       <Route path="/register" element={<Register />} />
 
       {/* User App */}
