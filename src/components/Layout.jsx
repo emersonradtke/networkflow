@@ -83,9 +83,8 @@ export default function Layout() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <img src={ICON_URL} alt="Bold Life Icon" className="h-9 w-9 object-contain flex-shrink-0" />
-          <img src={LOGO_URL} alt="Bold Life" className="h-6 w-auto object-contain" />
+        <div className="flex items-center">
+          <img src={LOGO_URL} alt="Bold Life" className="h-9 w-auto object-contain" />
         </div>
         {isAdmin && (
           <div className="flex items-center gap-1 mt-2">
@@ -154,9 +153,8 @@ export default function Layout() {
             <button onClick={() => setSidebarOpen(true)} className="text-slate-500">
               <Menu size={20} />
             </button>
-            <div className="flex items-center gap-2">
-              <img src={ICON_URL} alt="Bold Life" className="h-7 w-7 object-contain" />
-              <img src={LOGO_URL} alt="Bold Life" className="h-5 w-auto object-contain" />
+            <div className="flex items-center">
+              <img src={LOGO_URL} alt="Bold Life" className="h-7 w-auto object-contain" />
             </div>
           </div>
           <Link to="/notifications" className="relative">
