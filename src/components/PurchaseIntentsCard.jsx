@@ -162,12 +162,13 @@ export default function PurchaseIntentsCard({ associateId }) {
 
       {selectedIntent && (
         <PurchaseProofModal
-          open={showProofModal}
+          clickId={selectedIntent.id}
+          isOpen={showProofModal}
           onClose={() => {
             setShowProofModal(false);
             setSelectedIntent(null);
           }}
-          intent={selectedIntent}
+          productName={selectedIntent.product_name || selectedIntent.banner_name}
           onSubmitted={handleProofSubmitted}
         />
       )}
