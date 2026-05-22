@@ -20,6 +20,7 @@ export default function Landing() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated) {
@@ -35,6 +36,21 @@ export default function Landing() {
       }
     }
   }, [isAuthenticated, isLoadingAuth, isLoadingPublicSettings, navigate]);
+
+  useEffect(() => {
+    if (justLoggedIn && isAuthenticated) {
+      const directUserData = sessionStorage.getItem('directUser');
+      if (directUserData) {
+        const directUser = JSON.parse(directUserData);
+        console.log('Redirecting after login to', directUser.role === 'admin' ? '/admin' : '/dashboard');
+        if (directUser.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      }
+    }
+  }, [justLoggedIn, isAuthenticated, navigate]);
 
   const handleLoginClick = () => {
     setShowLoginForm(true);
@@ -55,16 +71,13 @@ export default function Landing() {
       if (response.data?.success && response.data?.user) {
         // Salva o usuário em sessionStorage
         sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
-        console.log('User saved, redirecting to', response.data.user.role === 'admin' ? '/admin' : '/dashboard');
+        console.log('User saved, triggering auth check');
         
-        // Aguarda um pouco para garantir que o sessionStorage foi atualizado
-        setTimeout(() => {
-          if (response.data.user.role === 'admin') {
-            navigate('/admin', { replace: true });
-          } else {
-            navigate('/dashboard', { replace: true });
-          }
-        }, 100);
+        // Revalidar autenticação no contexto
+        await checkUserAuth();
+        
+        // Flag que faz redirect no useEffect
+        setJustLoggedIn(true);
       } else {
         setError(response.data?.error || 'Usuário ou senha inválidos');
         setLoading(false);
