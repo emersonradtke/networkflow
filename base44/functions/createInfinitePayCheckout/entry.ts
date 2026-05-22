@@ -15,10 +15,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'order_nsu e items são obrigatórios' }, { status: 400 });
     }
 
-    // Webhook URL: URL pública da função infinitePayWebhook na base44
-    // O APP_ID é injetado automaticamente pelo ambiente
-    const appId = Deno.env.get('BASE44_APP_ID') || '';
-    const webhookUrl = `https://app-functions.base44.com/api/apps/${appId}/functions/infinitePayWebhook`;
+    // Webhook URL: será chamado pela InfinitePay quando pagamento for aprovado
+    // Usar a URL relativa sem webhook_url - InfinitePay retorna apenas para a redirect_url
+    // A confirmação virá via subscription do banco de dados (real-time)
 
     const payload = {
       handle: 'boldlife',
@@ -28,7 +27,6 @@ Deno.serve(async (req) => {
         price: Math.round(item.price * 100), // converter para centavos
         quantity: item.quantity || 1,
       })),
-      webhook_url: webhookUrl,
     };
 
     if (redirect_url) payload.redirect_url = redirect_url;
