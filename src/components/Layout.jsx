@@ -3,7 +3,7 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
-  LogOut, Menu, X, Shield, Package, BarChart3, Building2, ArrowUpCircle
+  LogOut, Menu, X, Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -40,6 +40,7 @@ export default function Layout() {
     { path: '/admin/withdrawals', label: 'Saques', icon: Wallet },
     { path: '/admin/network', label: 'Rede', icon: BarChart3 },
     { path: '/admin/suppliers', label: 'Fornecedores', icon: Building2 },
+    { path: '/admin/shipping', label: 'Envio', icon: Truck },
     { path: '/admin/settings', label: 'Configurações', icon: Settings },
   ];
 

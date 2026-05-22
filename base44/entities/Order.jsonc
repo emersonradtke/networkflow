@@ -48,6 +48,76 @@
     },
     "notes": {
       "type": "string"
+    },
+    "shipping_method_id": {
+      "type": "string"
+    },
+    "shipping_method_name": {
+      "type": "string"
+    },
+    "shipping_cost": {
+      "type": "number",
+      "default": 0
+    },
+    "tracking_code": {
+      "type": "string"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "returned"
+      ],
+      "default": "pending",
+      "description": "Status da entrega"
+    },
+    "delivery_notes": {
+      "type": "string"
+    },
+    "shipping_street": {
+      "type": "string"
+    },
+    "shipping_number": {
+      "type": "string"
+    },
+    "shipping_complement": {
+      "type": "string"
+    },
+    "shipping_neighborhood": {
+      "type": "string"
+    },
+    "shipping_city": {
+      "type": "string"
+    },
+    "shipping_state": {
+      "type": "string"
+    },
+    "shipping_zip": {
+      "type": "string"
+    },
+    "billing_street": {
+      "type": "string"
+    },
+    "billing_number": {
+      "type": "string"
+    },
+    "billing_complement": {
+      "type": "string"
+    },
+    "billing_neighborhood": {
+      "type": "string"
+    },
+    "billing_city": {
+      "type": "string"
+    },
+    "billing_state": {
+      "type": "string"
+    },
+    "billing_zip": {
+      "type": "string"
     }
   },
   "required": [

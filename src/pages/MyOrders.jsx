@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ShoppingBag, Package, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp, Truck, Search } from 'lucide-react';
+import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, Search, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import OrderDetailModal from '@/components/OrderDetailModal';
 
 const statusConfig = {
   pending:   { label: 'Pendente',    icon: Clock,        cls: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' },
@@ -12,76 +14,30 @@ const statusConfig = {
   refunded:  { label: 'Reembolsado', icon: Package,      cls: 'bg-slate-500/20 text-slate-600 border-slate-500/30' },
 };
 
-function OrderCard({ order }) {
-  const [expanded, setExpanded] = useState(false);
+function OrderCard({ order, onView }) {
   const st = statusConfig[order.status] || statusConfig.pending;
   const Icon = st.icon;
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
-      <button
-        className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors text-left"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-          <ShoppingBag size={16} className="text-slate-500" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
-          <p className="text-xs text-slate-500">
-            {new Date(order.created_date).toLocaleDateString('pt-BR')} · R$ {order.amount?.toFixed(2)}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Badge className={`${st.cls} text-xs`}>
-            <Icon size={10} className="mr-1" />{st.label}
-          </Badge>
-          {expanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="border-t border-slate-100 p-4 bg-slate-50 space-y-3">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Produto</p>
-              <p className="text-slate-700 font-medium mt-0.5">{order.product_name}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Valor</p>
-              <p className="text-slate-700 font-bold mt-0.5">R$ {order.amount?.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Tipo</p>
-              <p className="text-slate-700 mt-0.5">{order.product_type === 'external_link' ? 'Link Externo' : 'Venda Direta'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Pagamento</p>
-              <p className="text-slate-700 mt-0.5">{order.payment_method || '—'}</p>
-            </div>
-            {order.commission_percent > 0 && (
-              <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Comissão Gerada</p>
-                <p className="text-green-600 font-semibold mt-0.5">{order.commission_percent}% · R$ {order.total_commission?.toFixed(2)}</p>
-              </div>
-            )}
-          </div>
-          {order.tracking_code && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1 flex items-center gap-1">
-                <Truck size={12} /> Código de Rastreio
-              </p>
-              <p className="text-sm font-mono font-bold text-blue-800">{order.tracking_code}</p>
-            </div>
-          )}
-          {order.notes && (
-            <div className="bg-slate-100 rounded-lg p-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Observações</p>
-              <p className="text-sm text-slate-700">{order.notes}</p>
-            </div>
-          )}
-        </div>
-      )}
+    <div className="border border-slate-200 rounded-xl p-4 bg-white flex items-center gap-3">
+      <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+        <ShoppingBag size={16} className="text-slate-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
+        <p className="text-xs text-slate-500">
+          {new Date(order.created_date).toLocaleDateString('pt-BR')} · R$ {order.amount?.toFixed(2)}
+          {order.shipping_city && ` · ${order.shipping_city}`}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Badge className={`${st.cls} text-xs`}>
+          <Icon size={10} className="mr-1" />{st.label}
+        </Badge>
+        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => onView(order)}>
+          <Eye size={11} /> Ver
+        </Button>
+      </div>
     </div>
   );
 }
@@ -92,6 +48,7 @@ export default function MyOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     if (associate?.id) {
@@ -163,9 +120,11 @@ export default function MyOrdersPage() {
             <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
           </div>
         ) : (
-          filtered.map(o => <OrderCard key={o.id} order={o} />)
+          filtered.map(o => <OrderCard key={o.id} order={o} onView={setSelectedOrder} />)
         )}
       </div>
+
+      <OrderDetailModal order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />
     </div>
   );
 }

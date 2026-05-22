@@ -96,6 +96,62 @@
     },
     "state": {
       "type": "string"
+    },
+    "shipping_street": {
+      "type": "string",
+      "description": "Endere\u00e7o de entrega - Rua"
+    },
+    "shipping_number": {
+      "type": "string",
+      "description": "Endere\u00e7o de entrega - N\u00famero"
+    },
+    "shipping_complement": {
+      "type": "string"
+    },
+    "shipping_neighborhood": {
+      "type": "string",
+      "description": "Bairro"
+    },
+    "shipping_city": {
+      "type": "string"
+    },
+    "shipping_state": {
+      "type": "string"
+    },
+    "shipping_zip": {
+      "type": "string",
+      "description": "CEP de entrega"
+    },
+    "billing_same_as_shipping": {
+      "type": "boolean",
+      "default": true
+    },
+    "billing_street": {
+      "type": "string",
+      "description": "Endere\u00e7o de faturamento - Rua"
+    },
+    "billing_number": {
+      "type": "string"
+    },
+    "billing_complement": {
+      "type": "string"
+    },
+    "billing_neighborhood": {
+      "type": "string"
+    },
+    "billing_city": {
+      "type": "string"
+    },
+    "billing_state": {
+      "type": "string"
+    },
+    "billing_zip": {
+      "type": "string"
+    },
+    "addresses_completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se o associado j\u00e1 completou os endere\u00e7os"
     }
   },
   "required": [

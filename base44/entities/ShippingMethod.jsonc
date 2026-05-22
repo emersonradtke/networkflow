@@ -1,0 +1,29 @@
+{
+  "name": "ShippingMethod",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nome do tipo de envio (ex: PAC, SEDEX, Motoboy)"
+    },
+    "description": {
+      "type": "string"
+    },
+    "price": {
+      "type": "number",
+      "default": 0,
+      "description": "Custo do envio"
+    },
+    "estimated_days": {
+      "type": "number",
+      "description": "Prazo estimado em dias \u00fateis"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

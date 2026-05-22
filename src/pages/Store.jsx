@@ -9,7 +9,14 @@ import { motion } from 'framer-motion';
 import CartDrawer from '@/components/ShoppingCart';
 
 export default function Store() {
-  const { associate } = useOutletContext();
+  const { associate, reloadUser } = useOutletContext();
+  const [localAssociate, setLocalAssociate] = useState(null);
+
+  useEffect(() => { setLocalAssociate(associate); }, [associate]);
+
+  const handleAssociateUpdate = (updated) => {
+    setLocalAssociate(updated);
+  };
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('all');
@@ -54,7 +61,9 @@ export default function Store() {
     loadData();
   };
 
-  if (associate?.status !== 'active') {
+  const currentAssociate = localAssociate || associate;
+
+  if (currentAssociate?.status !== 'active') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
@@ -109,7 +118,8 @@ export default function Store() {
           onUpdate={updateCartQty}
           onRemove={removeFromCart}
           onCheckout={onCheckout}
-          associate={associate}
+          associate={currentAssociate}
+          onAssociateUpdate={handleAssociateUpdate}
         />
       </div>
 

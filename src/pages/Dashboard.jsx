@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import StatCard from '@/components/StatCard';
 import MyOrders from '@/components/MyOrders';
 import PendingPlacements from '@/components/PendingPlacements';
+import AddressModal from '@/components/AddressModal';
 
 export default function Dashboard() {
   const { user, associate } = useOutletContext();
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [networkCount, setNetworkCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [showAddressModal, setShowAddressModal] = useState(false);
 
   useEffect(() => {
     if (associate?.id) loadData();
@@ -112,6 +114,20 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Prompt de endereço */}
+      {!associate.addresses_completed && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-blue-200 bg-blue-50">
+          <span className="text-xl">📍</span>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-blue-800">Complete seu endereço</p>
+            <p className="text-xs text-blue-600 mt-0.5">Adicione seu endereço de entrega e faturamento para poder realizar compras.</p>
+          </div>
+          <button onClick={() => setShowAddressModal(true)} className="text-xs font-bold text-blue-700 border border-blue-300 bg-white px-3 py-1.5 rounded-lg hover:bg-blue-50 shrink-0">
+            Preencher
+          </button>
+        </div>
+      )}
+
       {/* Solicitações de Colocação */}
       <PendingPlacements associateId={associate.id} onAccepted={loadData} />
 
@@ -162,6 +178,13 @@ export default function Dashboard() {
 
       {/* My Orders */}
       <MyOrders associateId={associate?.id} />
+
+      <AddressModal
+        associate={associate}
+        open={showAddressModal}
+        onClose={() => setShowAddressModal(false)}
+        onSaved={() => { setShowAddressModal(false); }}
+      />
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4">

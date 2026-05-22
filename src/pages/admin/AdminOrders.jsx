@@ -1,15 +1,27 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ShoppingBag, CheckCircle, XCircle, Search } from 'lucide-react';
+import { ShoppingBag, CheckCircle, XCircle, Search, Eye, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import OrderDetailModal from '@/components/OrderDetailModal';
+import DeliveryManageModal from '@/components/DeliveryManageModal';
+
+const deliveryStatusConfig = {
+  pending:    { label: 'Aguardando',    cls: 'bg-slate-500/20 text-slate-400' },
+  processing: { label: 'Em separação', cls: 'bg-yellow-500/20 text-yellow-400' },
+  shipped:    { label: 'Enviado',       cls: 'bg-blue-500/20 text-blue-400' },
+  delivered:  { label: 'Entregue',      cls: 'bg-green-500/20 text-green-400' },
+  returned:   { label: 'Devolvido',     cls: 'bg-red-500/20 text-red-400' },
+};
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [detailOrder, setDetailOrder] = useState(null);
+  const [deliveryOrder, setDeliveryOrder] = useState(null);
 
   useEffect(() => { loadOrders(); }, []);
 
@@ -22,17 +34,12 @@ export default function AdminOrders() {
   const confirmPayment = async (order) => {
     await base44.entities.Order.update(order.id, { status: 'paid' });
 
-    // Calculate and distribute commissions
     const commissionAmount = (order.amount * (order.commission_percent / 100));
     const config = await base44.entities.NetworkConfig.list();
     const maxLevels = config[0]?.max_levels || 5;
 
-    // Walk up the network and distribute commissions
     let currentAssociate = await base44.entities.Associate.filter({ id: order.associate_id });
-    if (currentAssociate.length === 0) {
-      loadOrders();
-      return;
-    }
+    if (currentAssociate.length === 0) { loadOrders(); return; }
 
     let current = currentAssociate[0];
     let level = 1;
@@ -57,15 +64,11 @@ export default function AdminOrders() {
         status: 'credited',
       });
 
-      // Update sponsor wallet
-      const newBalance = (sponsor.wallet_balance || 0) + commissionAmount;
-      const newTotal = (sponsor.total_earned || 0) + commissionAmount;
       await base44.entities.Associate.update(sponsor.id, {
-        wallet_balance: newBalance,
-        total_earned: newTotal,
+        wallet_balance: (sponsor.wallet_balance || 0) + commissionAmount,
+        total_earned: (sponsor.total_earned || 0) + commissionAmount,
       });
 
-      // Notify sponsor
       await base44.entities.Notification.create({
         associate_id: sponsor.id,
         title: 'Nova Comissão Recebida! 💰',
@@ -89,7 +92,7 @@ export default function AdminOrders() {
   const statusBadge = (status) => {
     const map = {
       pending: { label: 'Pendente', cls: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-      paid: { label: 'Pago', cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
+      paid:    { label: 'Pago',     cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
       cancelled: { label: 'Cancelado', cls: 'bg-red-500/20 text-red-400 border-red-500/30' },
     };
     const s = map[status] || map.pending;
@@ -107,7 +110,7 @@ export default function AdminOrders() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-black text-foreground">Pedidos</h1>
-        <p className="text-muted-foreground text-sm mt-1">Gerencie pagamentos e distribua comissões</p>
+        <p className="text-muted-foreground text-sm mt-1">Gerencie pagamentos, comissões e entregas</p>
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -115,7 +118,7 @@ export default function AdminOrders() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9 bg-secondary border-border text-foreground" placeholder="Buscar pedido..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {['all', 'pending', 'paid', 'cancelled'].map(f => (
             <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${filter === f ? 'gold-gradient text-background' : 'bg-secondary text-muted-foreground'}`}>
               {f === 'all' ? 'Todos' : f === 'pending' ? 'Pendentes' : f === 'paid' ? 'Pagos' : 'Cancelados'}
@@ -134,36 +137,61 @@ export default function AdminOrders() {
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {filtered.map(o => (
-              <div key={o.id} className="p-4 hover:bg-secondary/20 transition-colors">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{o.product_name}</p>
-                    <p className="text-xs text-muted-foreground">{o.associate_name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm font-bold text-primary">R$ {o.amount?.toFixed(2)}</span>
-                      <span className="text-xs text-muted-foreground">{o.commission_percent}% comissão</span>
+            {filtered.map(o => {
+              const del = deliveryStatusConfig[o.delivery_status];
+              return (
+                <div key={o.id} className="p-4 hover:bg-secondary/20 transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{o.product_name}</p>
+                      <p className="text-xs text-muted-foreground">{o.associate_name}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-sm font-bold text-primary">R$ {o.amount?.toFixed(2)}</span>
+                        <span className="text-xs text-muted-foreground">{o.commission_percent}% comissão</span>
+                        {o.shipping_city && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            📍 {o.shipping_city}/{o.shipping_state}
+                          </span>
+                        )}
+                        {o.shipping_method_name && (
+                          <span className="text-xs text-muted-foreground">{o.shipping_method_name}</span>
+                        )}
+                      </div>
+                      {del && o.status === 'paid' && (
+                        <Badge className={`${del.cls} text-xs mt-1`}>{del.label}</Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                      {statusBadge(o.status)}
+                      <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => setDetailOrder(o)}>
+                        <Eye size={11} /> Ver
+                      </Button>
+                      {o.status === 'paid' && (
+                        <Button size="sm" variant="outline" className="h-7 gap-1 text-xs text-blue-600 border-blue-300 hover:bg-blue-50" onClick={() => setDeliveryOrder(o)}>
+                          <Truck size={11} /> Entrega
+                        </Button>
+                      )}
+                      {o.status === 'pending' && (
+                        <div className="flex gap-1">
+                          <Button size="sm" className="h-7 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 gap-1" onClick={() => confirmPayment(o)}>
+                            <CheckCircle size={12} /> Confirmar
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 text-red-400 hover:text-red-300" onClick={() => cancelOrder(o.id)}>
+                            <XCircle size={12} />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {statusBadge(o.status)}
-                    {o.status === 'pending' && (
-                      <div className="flex gap-1">
-                        <Button size="sm" className="h-7 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 gap-1" onClick={() => confirmPayment(o)}>
-                          <CheckCircle size={12} /> Confirmar
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-7 text-red-400 hover:text-red-300" onClick={() => cancelOrder(o.id)}>
-                          <XCircle size={12} />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      <OrderDetailModal order={detailOrder} open={!!detailOrder} onClose={() => setDetailOrder(null)} />
+      <DeliveryManageModal order={deliveryOrder} open={!!deliveryOrder} onClose={() => setDeliveryOrder(null)} onSaved={loadOrders} />
     </div>
   );
 }
