@@ -31,19 +31,10 @@ export default function AdminUsers() {
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [userToDelete, setUserToDelete] = useState(null);
-  const [loadingAssociate, setLoadingAssociate] = useState(false);
-  const createMode = 'direct';
 
   useEffect(() => {
     loadUsers();
   }, []);
-
-  // Buscar associado ao digitar CPF
-  useEffect(() => {
-    if (createMode === 'direct' && newCpf.length === 11) {
-      loadAssociateData();
-    }
-  }, [newCpf]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -54,28 +45,6 @@ export default function AdminUsers() {
       console.error('Erro ao carregar usuários:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadAssociateData = async () => {
-    setLoadingAssociate(true);
-    try {
-      const associates = await base44.entities.Associate.filter({ cpf: newCpf });
-      if (associates.length > 0) {
-        const associate = associates[0];
-        setNewName(associate.full_name);
-        setNewEmail(associate.email || '');
-        toast.success(`Associado encontrado: ${associate.full_name}`);
-      } else {
-        toast.error('CPF não encontrado no cadastro de associados');
-        setNewName('');
-        setNewEmail('');
-      }
-    } catch (error) {
-      console.error('Erro ao buscar associado:', error);
-      toast.error('Erro ao buscar associado');
-    } finally {
-      setLoadingAssociate(false);
     }
   };
 
@@ -128,34 +97,34 @@ export default function AdminUsers() {
   };
 
   const handleCreateUser = async () => {
-    if (!newCpf || !newName) {
-      toast.error('Preencha CPF e nome');
+    if (!newName) {
+      toast.error('Nome é obrigatório');
+      return;
+    }
+    if (!newCpf && !newEmail) {
+      toast.error('Preencha CPF ou Email');
       return;
     }
     try {
-      await base44.functions.invoke('createDirectUser', {
-        cpf: newCpf,
+      const result = await base44.functions.invoke('createDirectUser', {
+        cpf: newCpf || 'no-cpf',
         full_name: newName,
-        email: newEmail,
+        email: newEmail || '',
         role: newRole
       });
       
-      // Aguardar um pouco para a criação ser processada
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Recarregar a lista de usuários
-      const allUsers = await base44.entities.User.list('-created_date', 100);
-      setUsers(allUsers);
-      
-      setShowDialog(false);
-      setNewEmail('');
-      setNewName('');
-      setNewCpf('');
-      setNewRole('user');
-      toast.success('Usuário criado com sucesso');
+      if (result.data.success) {
+        await loadUsers();
+        setShowDialog(false);
+        setNewEmail('');
+        setNewName('');
+        setNewCpf('');
+        setNewRole('user');
+        toast.success('Usuário criado com sucesso');
+      }
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
-      toast.error('Erro ao criar usuário');
+      toast.error(error.response?.data?.error || 'Erro ao criar usuário');
     }
   };
 
@@ -329,25 +298,21 @@ export default function AdminUsers() {
             {dialogMode === 'create' ? (
               <>
               <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">CPF</label>
+                <label className="text-sm font-medium text-foreground mb-2 block">Nome *</label>
+                <Input
+                  placeholder="Nome completo"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">CPF (opcional)</label>
                 <Input
                   placeholder="00000000000"
                   value={newCpf}
                   onChange={(e) => setNewCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
                   maxLength="11"
-                  disabled={loadingAssociate}
-                />
-                {loadingAssociate && (
-                  <p className="text-xs text-muted-foreground mt-1">Buscando associado...</p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-foreground mb-2 block">Nome</label>
-                <Input
-                  placeholder="Nome completo"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
                 />
               </div>
 

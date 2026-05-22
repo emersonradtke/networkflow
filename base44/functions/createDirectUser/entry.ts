@@ -37,22 +37,39 @@ Deno.serve(async (req) => {
     const userEmail = email || `${cpf}@boldlife.local`;
     await base44.users.inviteUser(userEmail, baseRole);
 
-    // Buscar o usuário criado
-    const createdUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+    // Aguardar um pouco para o usuário ser criado no sistema
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Buscar o usuário criado com retry
+    let createdUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+    
+    if (!createdUsers || createdUsers.length === 0) {
+      // Tentar novamente após um pouco mais de espera
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      createdUsers = await base44.asServiceRole.entities.User.filter({ email: userEmail });
+    }
+
+    if (!createdUsers || createdUsers.length === 0) {
+      return Response.json({ error: 'Erro ao criar usuário - não encontrado após criação' }, { status: 500 });
+    }
+
     const newUser = createdUsers[0];
 
-    // Se o role for diferente do baseRole, atualizar com o role customizado
+    // Atualizar nome e role customizado
+    const updates = { full_name };
     if (role !== baseRole) {
-      await base44.asServiceRole.entities.User.update(newUser.id, { role });
+      updates.role = role;
     }
+    
+    await base44.asServiceRole.entities.User.update(newUser.id, updates);
 
     return Response.json({ 
       success: true, 
       user: {
         id: newUser.id,
-        full_name: newUser.full_name,
-        email: newUser.email,
-        role: role || newUser.role
+        full_name,
+        email: userEmail,
+        role
       }
     });
   } catch (error) {
