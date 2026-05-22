@@ -125,8 +125,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
             <Button 
               onClick={handleAlreadyHaveCard}
               disabled={requestLoading}
-              variant="outline"
-              className="font-bold"
+              className="bg-green-600 hover:bg-green-700 text-white font-bold"
             >
               Já Tenho
             </Button>
