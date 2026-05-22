@@ -29,7 +29,7 @@ export default function UserManagement() {
 
   const loadData = async () => {
     try {
-      const userList = await base44.entities.User.list();
+      const userList = await base44.entities.DirectUser.list();
       setUsers(userList);
       const roleList = await base44.entities.Role.list();
       setRoles(roleList);
@@ -79,7 +79,7 @@ export default function UserManagement() {
     if (!confirm('Tem certeza que deseja deletar este usuário?')) return;
 
     try {
-      await base44.entities.User.delete(userId);
+      await base44.entities.DirectUser.delete(userId);
       setSuccess('Usuário deletado com sucesso!');
       loadData();
     } catch (err) {
@@ -89,7 +89,7 @@ export default function UserManagement() {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await base44.auth.updateMe({ role: newRole });
+      await base44.entities.DirectUser.update(userId, { role: newRole });
       setSuccess('Role atualizado com sucesso!');
       loadData();
     } catch (err) {
@@ -236,7 +236,7 @@ export default function UserManagement() {
               ) : (
                 users.map(user => (
                   <tr key={user.id} className="border-b border-border hover:bg-secondary/30">
-                    <td className="py-3 px-3 text-foreground font-semibold">{user.email?.split('@')[0] || 'N/A'}</td>
+                    <td className="py-3 px-3 text-foreground font-semibold">{user.username || 'N/A'}</td>
                     <td className="py-3 px-3 text-muted-foreground">{user.email || 'N/A'}</td>
                     <td className="py-3 px-3">
                       <Select value={user.role} onValueChange={(val) => handleRoleChange(user.id, val)}>
