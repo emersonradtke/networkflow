@@ -49,6 +49,7 @@ import AdminNetwork from './pages/admin/AdminNetwork';
 import AdminSuppliers from './pages/admin/AdminSuppliers';
 import AdminShipping from './pages/admin/AdminShipping';
 import AdminExternalLinks from './pages/admin/AdminExternalLinks';
+import AdminCardRequests from './pages/admin/AdminCardRequests';
 import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
 
@@ -103,6 +104,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/suppliers" element={<AdminSuppliers />} />
         <Route path="/admin/shipping" element={<AdminShipping />} />
         <Route path="/admin/external-links" element={<AdminExternalLinks />} />
+        <Route path="/admin/card-requests" element={<AdminCardRequests />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
       </Route>
 
