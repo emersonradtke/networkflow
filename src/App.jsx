@@ -1,15 +1,24 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+
+const RequireAuth = ({ children }) => {
+  const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings } = useAuth();
+  const location = useLocation();
+  if (isLoadingAuth || isLoadingPublicSettings) return null;
+  if (!isAuthenticated) return <Navigate to="/" replace state={{ from: location }} />;
+  return children;
+};
 
 // Layout
 import Layout from './components/Layout';
 
 // User Pages
+import Landing from './pages/Landing';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Store from './pages/Store';
@@ -48,20 +57,18 @@ const AuthenticatedApp = () => {
   if (authError) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      navigateToLogin();
-      return null;
     }
+    // For 'auth_required' we no longer auto-redirect — the Landing page handles login.
   }
 
   return (
     <Routes>
       {/* Public */}
+      <Route path="/" element={<Landing />} />
       <Route path="/register" element={<Register />} />
 
-      {/* User App */}
-      <Route element={<Layout />}>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* User App (protected) */}
+      <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/store" element={<Store />} />
         <Route path="/network" element={<Network />} />
