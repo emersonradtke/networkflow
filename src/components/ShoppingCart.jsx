@@ -50,11 +50,15 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
   };
 
   const getFranchiseCoords = async (f) => {
-    const addr = [f.address_street, f.address_number, f.address_city, f.address_state, 'Brasil'].filter(Boolean).join(', ');
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
-    const data = await res.json();
-    if (data[0]) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    const addr = f.address_zip 
+      ? `${f.address_zip}, Brasil`
+      : [f.address_street, f.address_number, f.address_city, f.address_state, 'Brasil'].filter(Boolean).join(', ');
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1&countrycodes=br`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data[0]) return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    } catch (e) {}
     return null;
   };
 
