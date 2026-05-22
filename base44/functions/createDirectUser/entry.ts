@@ -27,21 +27,33 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Email já cadastrado' }, { status: 400 });
     }
 
-    // Convidar usuário
-    await base44.users.inviteUser(userEmail, baseRole);
-
-    // Criar PendingUserSetup com role customizado e username
-    await base44.asServiceRole.entities.PendingUserSetup.create({
-      email: userEmail,
-      full_name: username,
-      role,
-      applied: false,
+    // Criar usuário via API do Base44 com autenticação de serviço
+    const apiToken = Deno.env.get('BASE44_SERVICE_TOKEN') || '';
+    const createUserResponse = await fetch('https://api.base44.com/users/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiToken}`
+      },
+      body: JSON.stringify({
+        email: userEmail,
+        password,
+        full_name: username,
+        role: baseRole,
+      })
     });
+
+    if (!createUserResponse.ok) {
+      const errData = await createUserResponse.json();
+      return Response.json({ error: errData.error || 'Erro ao criar usuário' }, { status: 400 });
+    }
+
+    const createdUser = await createUserResponse.json();
 
     return Response.json({ 
       success: true, 
       message: 'Usuário criado com sucesso',
-      userId: userEmail
+      userId: createdUser.id || userEmail
     });
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
