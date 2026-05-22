@@ -60,7 +60,7 @@ export default function BannerManager() {
           <DialogTrigger asChild>
             <Button onClick={() => setEditingBanner(null)}>+ Novo Banner</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingBanner ? 'Editar Banner' : 'Criar Banner'}</DialogTitle>
             </DialogHeader>
@@ -103,7 +103,7 @@ export default function BannerManager() {
                       <Edit2 size={16} />
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Editar Banner</DialogTitle>
                     </DialogHeader>

@@ -62,10 +62,10 @@ export default function StoreBannerCarousel() {
   const speedClass = speedClasses[currentBanner.animation_speed] || '';
 
   return (
-    <div className="w-full mb-8">
+    <div className="w-full max-w-3xl mx-auto mb-8">
       <div
         onClick={() => handleClick(currentBanner)}
-        className={`relative w-full h-64 rounded-xl overflow-hidden cursor-pointer transition ${animClass} ${speedClass}`}
+        className={`relative w-full h-48 md:h-56 rounded-xl overflow-hidden cursor-pointer transition ${animClass} ${speedClass}`}
         style={{
           backgroundColor: currentBanner.background_color,
           color: currentBanner.text_color
@@ -80,8 +80,15 @@ export default function StoreBannerCarousel() {
         )}
 
         <div className="absolute inset-0 flex items-center justify-center p-6">
-          <div className="text-center">
-            <h2 className="text-2xl md:text-4xl font-bold mb-2">{currentBanner.title}</h2>
+          <div className="text-center flex flex-col items-center">
+            {currentBanner.logo_url && (
+              <img
+                src={currentBanner.logo_url}
+                alt="Logo"
+                className="h-12 md:h-16 mb-3 object-contain"
+              />
+            )}
+            <h2 className="text-xl md:text-3xl font-bold mb-2">{currentBanner.title}</h2>
             {currentBanner.description && (
               <p className="text-sm md:text-base opacity-90">{currentBanner.description}</p>
             )}
