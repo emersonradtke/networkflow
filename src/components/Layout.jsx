@@ -21,7 +21,20 @@ export default function Layout() {
   useEffect(() => { loadUser(); }, []);
 
   const loadUser = async () => {
-    // Verificar se é admin (Base44 auth)
+    // 1. Verificar sessão de associado no localStorage primeiro
+    const session = localStorage.getItem('associate_session');
+    if (session) {
+      try {
+        const parsed = JSON.parse(session);
+        if (parsed?.id) {
+          setAssociate(parsed);
+          setUser({ full_name: parsed.full_name, email: parsed.email, role: 'associate' });
+          return;
+        }
+      } catch {}
+    }
+
+    // 2. Sem sessão local → tentar admin Base44
     try {
       const me = await base44.auth.me();
       if (me?.role === 'admin') {
@@ -30,25 +43,7 @@ export default function Layout() {
       }
     } catch {}
 
-    // Verificar sessão de associado
-    const session = localStorage.getItem('associate_session');
-    if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        if (parsed?.id) {
-          // Recarregar dados frescos do associado
-          const associates = await base44.entities.Associate.filter({ id: parsed.id });
-          const fresh = associates.length > 0 ? associates[0] : parsed;
-          setAssociate(fresh);
-          setUser({ full_name: fresh.full_name, email: fresh.email, role: 'associate' });
-          const notifs = await base44.entities.Notification.filter({ associate_id: fresh.id, is_read: false });
-          setUnreadCount(notifs.length);
-          return;
-        }
-      } catch {}
-    }
-
-    // Sem sessão → redirecionar para login
+    // 3. Nada encontrado → login
     navigate('/login');
   };
 
