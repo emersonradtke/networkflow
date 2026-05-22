@@ -29,6 +29,9 @@ export default function AdminUsers() {
   const [showPassword, setShowPassword] = useState(false);
   const [newCpf, setNewCpf] = useState('');
   const [createMode, setCreateMode] = useState('invite'); // 'invite' ou 'direct'
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [userToDelete, setUserToDelete] = useState(null);
 
   useEffect(() => {
     loadUsers();
@@ -138,11 +141,27 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!confirm('Tem certeza que deseja remover este usuário?')) return;
+  const handleDeleteUser = (user) => {
+    if (user.role === 'admin') {
+      toast.error('Não é permitido remover usuários admin');
+      return;
+    }
+    setUserToDelete(user);
+    setDeletePassword('');
+    setDeleteConfirmDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletePassword) {
+      toast.error('Digite sua senha para confirmar');
+      return;
+    }
     try {
-      await base44.entities.User.delete(userId);
+      await base44.entities.User.delete(userToDelete.id);
       await loadUsers();
+      setDeleteConfirmDialog(false);
+      setUserToDelete(null);
+      setDeletePassword('');
       toast.success('Usuário removido');
     } catch (error) {
       toast.error('Erro ao remover usuário');
@@ -266,7 +285,8 @@ export default function AdminUsers() {
                         variant="outline"
                         size="sm"
                         className="text-red-600 hover:text-red-700"
-                        onClick={() => handleDeleteUser(user.id)}
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={user.role === 'admin'}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -428,6 +448,49 @@ export default function AdminUsers() {
               className="bg-primary"
             >
               {dialogMode === 'edit' ? 'Salvar Alterações' : createMode === 'direct' ? 'Criar Usuário' : 'Convidar Usuário'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog - Confirmar Exclusão */}
+      <Dialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <p className="text-sm text-foreground">
+              Tem certeza que deseja remover o usuário <strong>{userToDelete?.full_name}</strong>? Esta ação não pode ser desfeita.
+            </p>
+            
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Digite sua senha para confirmar</label>
+              <Input
+                type="password"
+                placeholder="Sua senha"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setDeleteConfirmDialog(false);
+                setDeletePassword('');
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+            >
+              Remover Usuário
             </Button>
           </DialogFooter>
         </DialogContent>
