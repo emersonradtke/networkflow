@@ -24,9 +24,15 @@ function OrderCard({ order, onView }) {
         <ShoppingBag size={16} className="text-slate-500" />
       </div>
       <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          {order.order_number && (
+            <span className="text-xs font-black text-primary">#{order.order_number}</span>
+          )}
+          <span className="text-xs text-slate-500">{new Date(order.created_date).toLocaleDateString('pt-BR')}</span>
+        </div>
         <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
         <p className="text-xs text-slate-500">
-          {new Date(order.created_date).toLocaleDateString('pt-BR')} · R$ {order.amount?.toFixed(2)}
+          R$ {order.amount?.toFixed(2)}
           {order.shipping_city && ` · ${order.shipping_city}`}
         </p>
       </div>

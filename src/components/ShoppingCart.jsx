@@ -48,6 +48,13 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
     setLoading(true);
     setError('');
     try {
+      // Gera cart_id único para este checkout
+      const cartId = `cart_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      // Busca próximo número de pedido
+      const res = await base44.functions.invoke('getNextOrderNumber', {});
+      const orderNumber = res.data?.next_number || 1;
+
       const shippingData = {
         shipping_street: localAssociate.shipping_street || '',
         shipping_number: localAssociate.shipping_number || '',
@@ -70,11 +77,15 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
 
       for (const item of cart) {
         await base44.entities.Order.create({
+          order_number: orderNumber,
+          cart_id: cartId,
           associate_id: localAssociate.id,
           associate_name: localAssociate.full_name,
           product_id: item.id,
           product_name: item.name,
           product_type: item.type,
+          quantity: item.qty,
+          unit_price: item.price,
           amount: (item.price * item.qty) + shippingCost,
           commission_percent: item.commission_percent,
           status: 'pending',

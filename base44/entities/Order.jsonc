@@ -2,6 +2,14 @@
   "name": "Order",
   "type": "object",
   "properties": {
+    "order_number": {
+      "type": "number",
+      "description": "N\u00famero incremental do pedido"
+    },
+    "cart_id": {
+      "type": "string",
+      "description": "ID do carrinho \u2014 agrupa itens do mesmo checkout"
+    },
     "associate_id": {
       "type": "string"
     },
@@ -20,6 +28,15 @@
         "direct_sale",
         "external_link"
       ]
+    },
+    "quantity": {
+      "type": "number",
+      "default": 1,
+      "description": "Quantidade do item"
+    },
+    "unit_price": {
+      "type": "number",
+      "description": "Pre\u00e7o unit\u00e1rio do produto"
     },
     "amount": {
       "type": "number"
