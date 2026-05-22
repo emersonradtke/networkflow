@@ -3,7 +3,7 @@ import { Link, useLocation, Outlet } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import {
   LayoutDashboard, ShoppingBag, Users, Wallet, Bell, Settings,
-  LogOut, Menu, X, Shield, Package, BarChart3, Building2
+  LogOut, Menu, X, Shield, Package, BarChart3, Building2, ArrowUpCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -45,9 +45,9 @@ export default function Layout() {
 
   const userNav = [
     { path: '/dashboard', label: 'Início', icon: LayoutDashboard },
-    { path: '/store', label: 'Loja', icon: ShoppingBag },
     { path: '/network', label: 'Minha Rede', icon: Users },
-    { path: '/wallet', label: 'Carteira', icon: Wallet },
+    { path: '/orders', label: 'Meus Pedidos', icon: ShoppingBag },
+    { path: '/withdrawals', label: 'Saques', icon: ArrowUpCircle },
     { path: '/notifications', label: 'Notificações', icon: Bell, badge: unreadCount },
   ];
 

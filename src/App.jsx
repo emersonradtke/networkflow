@@ -26,6 +26,8 @@ import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminNetwork from './pages/admin/AdminNetwork';
 import AdminSuppliers from './pages/admin/AdminSuppliers';
+import MyOrdersPage from './pages/MyOrders';
+import MyWithdrawals from './pages/MyWithdrawals';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -61,6 +63,8 @@ const AuthenticatedApp = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/store" element={<Store />} />
         <Route path="/network" element={<Network />} />
+        <Route path="/orders" element={<MyOrdersPage />} />
+        <Route path="/withdrawals" element={<MyWithdrawals />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/notifications" element={<Notifications />} />
 
