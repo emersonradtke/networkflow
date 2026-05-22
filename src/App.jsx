@@ -28,7 +28,6 @@ import AdminNetwork from './pages/admin/AdminNetwork';
 import AdminSuppliers from './pages/admin/AdminSuppliers';
 import AdminShipping from './pages/admin/AdminShipping';
 import AdminExternalLinks from './pages/admin/AdminExternalLinks';
-import AdminUsers from './pages/admin/AdminUsers';
 import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
 
@@ -74,7 +73,6 @@ const AuthenticatedApp = () => {
         {/* Admin */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/associates" element={<AdminAssociates />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
