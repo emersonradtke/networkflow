@@ -40,7 +40,8 @@
         "pending",
         "active",
         "inactive",
-        "blocked"
+        "blocked",
+        "awaiting_placement"
       ],
       "default": "pending"
     },

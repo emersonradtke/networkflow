@@ -1,0 +1,43 @@
+{
+  "name": "PlacementRequest",
+  "type": "object",
+  "properties": {
+    "associate_id": {
+      "type": "string",
+      "description": "ID do associado aguardando coloca\u00e7\u00e3o"
+    },
+    "associate_name": {
+      "type": "string"
+    },
+    "target_sponsor_id": {
+      "type": "string",
+      "description": "ID do patrocinador que receber\u00e1 o associado"
+    },
+    "target_sponsor_name": {
+      "type": "string"
+    },
+    "original_sponsor_id": {
+      "type": "string",
+      "description": "ID do patrocinador original (que est\u00e1 cheio)"
+    },
+    "original_sponsor_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "admin_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "associate_id",
+    "target_sponsor_id"
+  ]
+}

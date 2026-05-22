@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, X } from 'lucide-react';
+import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, Network } from 'lucide-react';
+import PlacementModal from '@/components/PlacementModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,6 +50,7 @@ export default function AdminAssociates() {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const [placingAssociate, setPlacingAssociate] = useState(null);
 
   useEffect(() => { loadAssociates(); }, []);
 
@@ -58,10 +60,31 @@ export default function AdminAssociates() {
     setLoading(false);
   };
 
-  const activate = async (id) => {
-    await base44.entities.Associate.update(id, { status: 'active', adhesion_paid: true });
+  const activate = async (assoc) => {
+    // Verificar se o patrocinador atingiu o limite de níveis
+    if (assoc.sponsor_id) {
+      const [configs, sponsorDownline] = await Promise.all([
+        base44.entities.NetworkConfig.list(),
+        base44.entities.Associate.filter({ sponsor_id: assoc.sponsor_id }),
+      ]);
+      const maxLevels = configs[0]?.max_levels || 5;
+      if (sponsorDownline.length >= maxLevels) {
+        // Colocar em aguardando colocação em vez de ativar
+        await base44.entities.Associate.update(assoc.id, { status: 'awaiting_placement', adhesion_paid: true });
+        await base44.entities.Notification.create({
+          associate_id: assoc.id,
+          title: 'Aguardando Colocação na Rede',
+          message: `Seu patrocinador ${assoc.sponsor_name || ''} já atingiu o limite de membros diretos. O administrador irá alocar você em outra posição da rede em breve.`,
+          type: 'system',
+          is_read: false,
+        });
+        loadAssociates();
+        return;
+      }
+    }
+    await base44.entities.Associate.update(assoc.id, { status: 'active', adhesion_paid: true });
     await base44.entities.Notification.create({
-      associate_id: id,
+      associate_id: assoc.id,
       title: 'Conta Ativada! 🎉',
       message: 'Seu pagamento foi confirmado. Bem-vindo à Bold Life! Acesse a loja e comece a ganhar.',
       type: 'activation',
@@ -125,13 +148,14 @@ export default function AdminAssociates() {
       active: { label: 'Ativo', cls: 'bg-green-500/20 text-green-600 border-green-500/30' },
       blocked: { label: 'Bloqueado', cls: 'bg-red-500/20 text-red-600 border-red-500/30' },
       inactive: { label: 'Inativo', cls: 'bg-secondary text-muted-foreground' },
+      awaiting_placement: { label: 'Ag. Colocação', cls: 'bg-blue-500/20 text-blue-600 border-blue-500/30' },
     };
     const s = map[status] || map.inactive;
     return <Badge className={s.cls}>{s.label}</Badge>;
   };
 
   const filtered = associates
-    .filter(a => filter === 'all' || a.status === filter)
+    .filter(a => filter === 'all' || a.status === filter || (filter === 'awaiting_placement' && a.status === 'awaiting_placement'))
     .filter(a =>
       a.full_name?.toLowerCase().includes(search.toLowerCase()) ||
       a.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -151,7 +175,7 @@ export default function AdminAssociates() {
           <Input className="pl-9" placeholder="Buscar por nome, email ou CPF..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div className="flex gap-2">
-          {['all', 'pending', 'active', 'blocked'].map(f => (
+          {['all', 'pending', 'active', 'awaiting_placement', 'blocked'].map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -160,7 +184,7 @@ export default function AdminAssociates() {
               }`}
               style={filter === f ? { background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' } : {}}
             >
-              {f === 'all' ? 'Todos' : f === 'pending' ? 'Pendentes' : f === 'active' ? 'Ativos' : 'Bloqueados'}
+              {f === 'all' ? 'Todos' : f === 'pending' ? 'Pendentes' : f === 'active' ? 'Ativos' : f === 'awaiting_placement' ? 'Ag. Colocação' : 'Bloqueados'}
             </button>
           ))}
         </div>
@@ -201,8 +225,13 @@ export default function AdminAssociates() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       {a.status === 'pending' && (
-                        <DropdownMenuItem onClick={() => activate(a.id)} className="text-green-600 gap-2">
+                        <DropdownMenuItem onClick={() => activate(a)} className="text-green-600 gap-2">
                           <CheckCircle size={14} /> Ativar
+                        </DropdownMenuItem>
+                      )}
+                      {a.status === 'awaiting_placement' && (
+                        <DropdownMenuItem onClick={() => setPlacingAssociate(a)} className="text-blue-600 gap-2">
+                          <Network size={14} /> Alocar na Rede
                         </DropdownMenuItem>
                       )}
                       {a.status === 'active' && (
@@ -226,6 +255,15 @@ export default function AdminAssociates() {
           </div>
         )}
       </div>
+
+      {/* Modal Alocação */}
+      {placingAssociate && (
+        <PlacementModal
+          associate={placingAssociate}
+          onClose={() => setPlacingAssociate(null)}
+          onPlaced={loadAssociates}
+        />
+      )}
 
       {/* Modal Edição */}
       <Dialog open={!!editAssociate} onOpenChange={() => setEditAssociate(null)}>
@@ -286,6 +324,7 @@ export default function AdminAssociates() {
                   <SelectContent>
                     <SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="awaiting_placement">Ag. Colocação</SelectItem>
                     <SelectItem value="blocked">Bloqueado</SelectItem>
                     <SelectItem value="inactive">Inativo</SelectItem>
                   </SelectContent>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, ExternalLink, Bell } from 'lucide-react';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import StatCard from '@/components/StatCard';
 import MyOrders from '@/components/MyOrders';
+import PendingPlacements from '@/components/PendingPlacements';
 
 export default function Dashboard() {
   const { user, associate } = useOutletContext();
@@ -67,6 +68,25 @@ export default function Dashboard() {
     );
   }
 
+  if (associate.status === 'awaiting_placement') {
+    return (
+      <div className="max-w-lg mx-auto text-center py-16">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1B2A5E20,#3B9EE220)' }}>
+          <Users size={36} className="text-primary" />
+        </div>
+        <h2 className="text-2xl font-black text-foreground mb-2">Aguardando Colocação</h2>
+        <p className="text-muted-foreground mb-6">
+          Seu patrocinador atingiu o limite de membros diretos. O administrador está buscando uma posição para você na rede. Você será notificado assim que confirmado.
+        </p>
+        {associate.sponsor_name && (
+          <div className="dark-card rounded-xl p-4 text-left">
+            <p className="text-sm text-muted-foreground">Indicado por: <span className="font-semibold text-primary">{associate.sponsor_name}</span></p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-up">
       {/* Header */}
@@ -91,6 +111,9 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      {/* Solicitações de Colocação */}
+      <PendingPlacements associateId={associate.id} onAccepted={loadData} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
