@@ -22,9 +22,9 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
   const fetchActiveTerms = async () => {
     try {
       setLoading(true);
-      const activeTerms = await base44.asServiceRole.entities.TermsOfService.filter({ is_active: true });
-      if (activeTerms.length > 0) {
-        setTerms(activeTerms[0]);
+      const response = await base44.functions.invoke('checkUserTermsStatus', {});
+      if (response.data?.current_terms) {
+        setTerms(response.data.current_terms);
         setAgreed(false);
       }
     } catch (error) {
@@ -40,13 +40,10 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
     try {
       setAccepting(true);
       
-      // Registrar aceite do termo com versionamento
-      await base44.asServiceRole.entities.UserTermsAcceptance.create({
-        user_id: user.id,
-        user_email: user.email || user.username,
+      // Registrar aceite do termo
+      await base44.functions.invoke('acceptTerms', {
         terms_id: terms.id,
-        terms_version: terms.version || 1,
-        accepted_at: new Date().toISOString()
+        terms_version: terms.version || 1
       });
 
       setAgreed(false);
