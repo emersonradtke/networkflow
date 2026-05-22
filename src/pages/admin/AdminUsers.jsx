@@ -32,10 +32,18 @@ export default function AdminUsers() {
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [userToDelete, setUserToDelete] = useState(null);
+  const [loadingAssociate, setLoadingAssociate] = useState(false);
 
   useEffect(() => {
     loadUsers();
   }, []);
+
+  // Buscar associado ao digitar CPF
+  useEffect(() => {
+    if (createMode === 'direct' && newCpf.length === 11) {
+      loadAssociateData();
+    }
+  }, [newCpf]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -46,6 +54,23 @@ export default function AdminUsers() {
       console.error('Erro ao carregar usuários:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAssociateData = async () => {
+    setLoadingAssociate(true);
+    try {
+      const associates = await base44.entities.Associate.filter({ cpf: newCpf });
+      if (associates.length > 0) {
+        const associate = associates[0];
+        setNewName(associate.full_name);
+        setNewEmail(associate.email || '');
+        toast.success(`Associado encontrado: ${associate.full_name}`);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar associado:', error);
+    } finally {
+      setLoadingAssociate(false);
     }
   };
 
@@ -104,27 +129,6 @@ export default function AdminUsers() {
         return;
       }
       try {
-        // Buscar associado com o mesmo CPF
-        const associates = await base44.entities.Associate.filter({ cpf: newCpf });
-        
-        if (associates.length === 0) {
-          toast.error('CPF não encontrado no cadastro de associados');
-          return;
-        }
-
-        const associate = associates[0];
-        
-        // Validar se o nome corresponde (case-insensitive e sem acentos)
-        const normalizeString = (str) => str
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '');
-        
-        if (normalizeString(associate.full_name) !== normalizeString(newName)) {
-          toast.error(`Nome não corresponde. Associado registrado como: ${associate.full_name}`);
-          return;
-        }
-
         await base44.functions.invoke('createDirectUser', {
           cpf: newCpf,
           full_name: newName,
