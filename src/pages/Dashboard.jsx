@@ -36,16 +36,26 @@ export default function Dashboard() {
   }, [associate]);
 
   const loadData = async () => {
-    const [commissions, networkMembers, notifs, subs] = await Promise.all([
-      base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 5),
-      base44.entities.Associate.filter({ sponsor_id: associate.id }),
-      base44.entities.Notification.filter({ associate_id: associate.id, is_read: false }, '-created_date', 3),
-      base44.entities.Subscription.filter({ associate_id: associate.id }),
-    ]);
-    setRecentCommissions(commissions);
-    setNetworkCount(networkMembers.length);
-    setNotifications(notifs);
-    setSubscription(subs[0] || null);
+    try {
+      // Load data sequentially to avoid rate limit
+      const commissions = await base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 5);
+      await new Promise(r => setTimeout(r, 100));
+      
+      const networkMembers = await base44.entities.Associate.filter({ sponsor_id: associate.id });
+      await new Promise(r => setTimeout(r, 100));
+      
+      const notifs = await base44.entities.Notification.filter({ associate_id: associate.id, is_read: false }, '-created_date', 3);
+      await new Promise(r => setTimeout(r, 100));
+      
+      const subs = await base44.entities.Subscription.filter({ associate_id: associate.id });
+      
+      setRecentCommissions(commissions);
+      setNetworkCount(networkMembers.length);
+      setNotifications(notifs);
+      setSubscription(subs[0] || null);
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+    }
   };
 
   const copyInviteLink = () => {
