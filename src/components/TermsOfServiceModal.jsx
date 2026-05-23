@@ -23,7 +23,7 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
   const fetchPendingTerms = async () => {
     try {
       setLoading(true);
-      const response = await base44.functions.invoke('checkUserTermsStatus', {});
+      const response = await base44.functions.invoke('checkUserTermsStatus', { user_id: user.id });
       const pending = response.data?.pending_terms || [];
       setPendingTerms(pending);
       setCurrentIndex(0);
