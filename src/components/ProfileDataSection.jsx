@@ -71,7 +71,6 @@ export default function ProfileDataSection({ associate }) {
       set('state', result.state);
       set('number', '');
       set('complement', '');
-      toast({ title: 'Endereço encontrado!', description: 'Preencha os dados complementares.' });
       setTimeout(() => {
         if (numberInputRef.current) {
           numberInputRef.current.focus();
