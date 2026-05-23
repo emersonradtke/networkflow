@@ -12,14 +12,19 @@ Deno.serve(async (req) => {
     }
 
     // Registrar aceite do termo (se autenticado)
-    if (user) {
-      await base44.asServiceRole.entities.UserTermsAcceptance.create({
-        user_id: user.id,
-        user_email: user.email || user.username,
-        terms_id: terms_id,
-        terms_version: terms_version,
-        accepted_at: new Date().toISOString()
-      });
+    if (user && user.email) {
+      try {
+        await base44.asServiceRole.entities.UserTermsAcceptance.create({
+          user_id: user.id || user.email,
+          user_email: user.email,
+          terms_id: terms_id,
+          terms_version: terms_version,
+          accepted_at: new Date().toISOString()
+        });
+      } catch (acceptError) {
+        console.error('Error creating acceptance record:', acceptError);
+        // Não falhar se não conseguir registrar, apenas log
+      }
     }
 
     return Response.json({ success: true });
