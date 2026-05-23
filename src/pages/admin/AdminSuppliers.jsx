@@ -61,22 +61,27 @@ export default function AdminSuppliers() {
   const save = async (e) => {
     e.preventDefault();
     setSaving(true);
-    if (editId) await base44.entities.Supplier.update(editId, form);
-    else await base44.entities.Supplier.create(form);
+    if (editId) {
+      const updated = await base44.entities.Supplier.update(editId, form);
+      setItems(prev => prev.map(i => i.id === editId ? updated : i));
+    } else {
+      const created = await base44.entities.Supplier.create(form);
+      setItems(prev => [created, ...prev]);
+    }
     setDialogOpen(false);
-    load();
     setSaving(false);
   };
 
   const remove = async (id) => {
     if (!confirm('Remover cadastro?')) return;
     await base44.entities.Supplier.delete(id);
-    load();
+    setItems(prev => prev.filter(i => i.id !== id));
   };
 
   const toggleActive = async (item) => {
+    const updated = { ...item, is_active: !item.is_active };
+    setItems(prev => prev.map(i => i.id === item.id ? updated : i));
     await base44.entities.Supplier.update(item.id, { is_active: !item.is_active });
-    load();
   };
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
