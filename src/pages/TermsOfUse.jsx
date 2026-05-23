@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
@@ -10,6 +11,7 @@ export default function TermsOfUse() {
   const navigate = useNavigate();
   const [term, setTerm] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accepting, setAccepting] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -26,6 +28,25 @@ export default function TermsOfUse() {
     };
     load();
   }, []);
+
+  const handleAccept = async () => {
+    if (!term) return;
+    try {
+      setAccepting(true);
+      console.log(`[TERMS LOG] User accepted: ${term.title} (v${term.version || 1}) - Type: ${term.term_type} - Time: ${new Date().toISOString()}`);
+      
+      await base44.functions.invoke('acceptTerms', {
+        terms_id: term.id,
+        terms_version: term.version || 1
+      });
+      
+      navigate(-1);
+    } catch (error) {
+      console.error('Erro ao aceitar termos:', error);
+    } finally {
+      setAccepting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -50,6 +71,22 @@ export default function TermsOfUse() {
             </div>
             <div className="prose prose-sm max-w-none text-slate-700">
               <ReactMarkdown>{term.content}</ReactMarkdown>
+            </div>
+            <div className="border-t pt-6 mt-8 flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => navigate(-1)}
+                disabled={accepting}
+              >
+                Voltar
+              </Button>
+              <Button
+                onClick={handleAccept}
+                disabled={accepting}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {accepting ? 'Aceitando...' : 'Aceitar'}
+              </Button>
             </div>
           </div>
         ) : (
