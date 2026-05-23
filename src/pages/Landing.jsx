@@ -21,6 +21,11 @@ export default function Landing() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [justLoggedIn, setJustLoggedIn] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState('Construa sua rede e ganhe comissões');
+
+  useEffect(() => {
+    loadWelcomeMessage();
+  }, []);
 
   useEffect(() => {
     if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated) {
@@ -36,6 +41,17 @@ export default function Landing() {
       }
     }
   }, [isAuthenticated, isLoadingAuth, isLoadingPublicSettings, navigate]);
+
+  const loadWelcomeMessage = async () => {
+    try {
+      const configs = await base44.entities.NetworkConfig.list();
+      if (configs.length > 0 && configs[0].welcome_message) {
+        setWelcomeMessage(configs[0].welcome_message);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar mensagem de boas-vindas:', err);
+    }
+  };
 
   useEffect(() => {
     if (justLoggedIn && isAuthenticated) {
@@ -211,7 +227,7 @@ export default function Landing() {
         <img src={BRAIN_URL} alt="Bold Life Brain" className="w-40 h-40 object-contain mb-6 opacity-90" style={{ filter: 'brightness(0) invert(1)' }} />
         <h2 className="text-3xl font-black mb-3 text-center">Bem-vindo à<br/>Bold Life</h2>
         <p className="text-white/70 text-center text-base max-w-xs leading-relaxed">
-          Transforme sua rede em resultados reais. Junte-se a uma comunidade de sucesso.
+          {welcomeMessage}
         </p>
       </div>
     </div>
