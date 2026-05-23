@@ -18,11 +18,10 @@ Deno.serve(async (req) => {
 
     const pending = pendings[0];
 
-    // Atualizar Associate se existe
+    // Atualizar Associate se existe — apenas vincula o user_id, não altera o status
     if (pending.associate_id) {
       await base44.asServiceRole.entities.Associate.update(pending.associate_id, {
         user_id: user.id,
-        status: 'active',
       });
     }
 
