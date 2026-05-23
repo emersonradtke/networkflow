@@ -25,8 +25,11 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    // Gerar email se não fornecido
-    let finalEmail = email?.trim() || `cpf_${docRaw}@boldlife.local`;
+    if (!email?.trim()) {
+      return Response.json({ error: 'E-mail é obrigatório' }, { status: 400 });
+    }
+
+    const finalEmail = email.trim();
 
     // Verificar se email já está em uso
     const existingUsers = await base44.asServiceRole.entities.User.filter({ email: finalEmail });
@@ -55,13 +58,11 @@ Deno.serve(async (req) => {
       adhesion_paid: false,
     });
 
-    // Enviar convite Base44 (apenas para emails reais, não gerados automaticamente)
-    if (email?.trim() && !finalEmail.endsWith('@boldlife.local')) {
-      try {
-        await base44.users.inviteUser(finalEmail, 'user');
-      } catch (inviteErr) {
-        console.warn('Falha ao enviar convite, continuando:', inviteErr.message);
-      }
+    // Enviar convite Base44
+    try {
+      await base44.users.inviteUser(finalEmail, 'user');
+    } catch (inviteErr) {
+      console.warn('Falha ao enviar convite, continuando:', inviteErr.message);
     }
 
     // Criar PendingUserSetup com role customizado

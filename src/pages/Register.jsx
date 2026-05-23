@@ -104,7 +104,8 @@ export default function Register() {
   const validate = () => {
     const errs = {};
     if (!form.full_name.trim()) errs.full_name = 'Nome obrigatório';
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'E-mail inválido';
+    if (!form.email.trim()) errs.email = 'E-mail obrigatório';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'E-mail inválido';
     if (!form.phone.trim()) errs.phone = 'Telefone obrigatório';
     else if (!validatePhone(form.phone)) errs.phone = 'Telefone inválido';
 
@@ -297,8 +298,8 @@ export default function Register() {
 
             {/* Email (opcional) */}
             <div>
-              <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail <span className="text-xs text-slate-400">(opcional)</span></Label>
-              <Input className={fieldCls('email')} type="email" placeholder="seuemail@exemplo.com (deixar em branco para gerar automaticamente)" value={form.email} onChange={e => setField('email', e.target.value)} />
+              <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail</Label>
+              <Input className={fieldCls('email')} type="email" placeholder="seuemail@exemplo.com" value={form.email} onChange={e => setField('email', e.target.value)} />
               {errors.email && <FieldError msg={errors.email} />}
             </div>
 
