@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, Search, Eye, Star } from 'lucide-react';
+import { ShoppingBag, Package, Clock, CheckCircle, XCircle, Truck, Search, Eye, Star, MessageSquare } from 'lucide-react';
+import DeliveryActionsModal from '@/components/DeliveryActionsModal';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,9 +16,19 @@ const statusConfig = {
   refunded:  { label: 'Reembolsado', icon: Package,      cls: 'bg-slate-500/20 text-slate-600 border-slate-500/30' },
 };
 
-function OrderCard({ order, onView, onReview }) {
+const deliveryStatusConfig = {
+  pending:    { label: 'Ag. Envio',   cls: 'bg-slate-100 text-slate-500' },
+  processing: { label: 'Preparando',  cls: 'bg-blue-100 text-blue-600' },
+  shipped:    { label: 'Enviado',      cls: 'bg-yellow-100 text-yellow-600' },
+  delivered:  { label: 'Entregue',    cls: 'bg-green-100 text-green-700' },
+  returned:   { label: 'Em Disputa',  cls: 'bg-red-100 text-red-600' },
+};
+
+function OrderCard({ order, onView, onReview, onDeliveryAction }) {
   const st = statusConfig[order.status] || statusConfig.pending;
   const Icon = st.icon;
+  const dSt = deliveryStatusConfig[order.delivery_status] || deliveryStatusConfig.pending;
+  const canAct = order.status === 'paid' && order.delivery_status === 'shipped';
 
   return (
     <div className="border border-slate-200 rounded-xl p-4 bg-white flex items-center gap-3">
@@ -25,11 +36,14 @@ function OrderCard({ order, onView, onReview }) {
         <ShoppingBag size={16} className="text-slate-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
           {order.order_number && (
             <span className="text-xs font-black text-primary">#{order.order_number}</span>
           )}
           <span className="text-xs text-slate-500">{new Date(order.created_date).toLocaleDateString('pt-BR')}</span>
+          {order.delivery_status && order.delivery_status !== 'pending' && (
+            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${dSt.cls}`}>{dSt.label}</span>
+          )}
         </div>
         <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
         <p className="text-xs text-slate-500">
@@ -44,7 +58,12 @@ function OrderCard({ order, onView, onReview }) {
         <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" onClick={() => onView(order)}>
           <Eye size={11} /> Ver
         </Button>
-        {order.status === 'paid' && (
+        {canAct && (
+          <Button size="sm" className="h-7 gap-1 text-xs font-bold text-white" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }} onClick={() => onDeliveryAction(order)}>
+            <Truck size={11} /> Entrega
+          </Button>
+        )}
+        {order.status === 'paid' && order.delivery_status !== 'shipped' && (
           <Button size="sm" className="h-7 gap-1 text-xs bg-primary" onClick={() => onReview(order)}>
             <Star size={11} /> Avaliar
           </Button>
@@ -62,6 +81,7 @@ export default function MyOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
+  const [deliveryOrder, setDeliveryOrder] = useState(null);
 
   useEffect(() => {
     if (associate?.id) {
@@ -133,12 +153,20 @@ export default function MyOrdersPage() {
             <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
           </div>
         ) : (
-          filtered.map(o => <OrderCard key={o.id} order={o} onView={setSelectedOrder} onReview={setReviewOrder} />)
+          filtered.map(o => <OrderCard key={o.id} order={o} onView={setSelectedOrder} onReview={setReviewOrder} onDeliveryAction={setDeliveryOrder} />)
         )}
         </div>
 
         <OrderDetailModal order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />
         <ReviewModal order={reviewOrder} isOpen={!!reviewOrder} onClose={() => setReviewOrder(null)} onSubmit={() => setReviewOrder(null)} />
+        <DeliveryActionsModal
+          order={deliveryOrder}
+          open={!!deliveryOrder}
+          onClose={() => setDeliveryOrder(null)}
+          onDone={() => {
+            base44.entities.Order.filter({ associate_id: associate.id }, '-created_date', 50).then(setOrders);
+          }}
+        />
     </div>
   );
 }

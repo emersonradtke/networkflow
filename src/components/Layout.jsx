@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import {
   LayoutDashboard, ShoppingBag, Users, User, Wallet, Bell, Settings,
   LogOut, Menu, X, Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck,
-  ExternalLink, Briefcase, Eye
+  ExternalLink, Briefcase, Eye, MessageSquare
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { getAvailableMenuItems, getRoleLabel } from '@/lib/roles-config';
@@ -61,7 +61,7 @@ export default function Layout() {
   const iconMap = {
     LayoutDashboard, ShoppingBag, Users, User, Wallet, Bell, Settings,
     Shield, Package, BarChart3, Building2, ArrowUpCircle, Truck,
-    ExternalLink, Briefcase, Eye, LogOut
+    ExternalLink, Briefcase, Eye, MessageSquare, LogOut
   };
 
   const navItems = getAvailableMenuItems(user?.role || 'guest').map(item => {

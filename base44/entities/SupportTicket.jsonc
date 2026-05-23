@@ -1,0 +1,61 @@
+{
+  "name": "SupportTicket",
+  "type": "object",
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "ID do pedido relacionado"
+    },
+    "order_number": {
+      "type": "number"
+    },
+    "associate_id": {
+      "type": "string"
+    },
+    "associate_name": {
+      "type": "string"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "not_delivered",
+        "delivery_confirmed",
+        "damaged",
+        "wrong_item",
+        "other"
+      ],
+      "default": "not_delivered",
+      "description": "Tipo do chamado"
+    },
+    "description": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o do problema informada pelo associado"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "in_progress",
+        "resolved",
+        "closed"
+      ],
+      "default": "open"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do admin sobre a tratativa"
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "order_id",
+    "associate_id",
+    "type"
+  ]
+}
