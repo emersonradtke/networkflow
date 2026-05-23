@@ -82,6 +82,48 @@
     "pix_key": {
       "type": "string"
     },
+    "pix_key_type": {
+      "type": "string",
+      "enum": [
+        "cpf",
+        "cnpj",
+        "email",
+        "phone"
+      ],
+      "description": "Tipo da chave PIX"
+    },
+    "bank_code": {
+      "type": "string",
+      "description": "C\u00f3digo FEBRABAN do banco"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "Nome do banco"
+    },
+    "bank_account_type": {
+      "type": "string",
+      "enum": [
+        "corrente",
+        "poupanca"
+      ],
+      "description": "Tipo de conta"
+    },
+    "bank_agency": {
+      "type": "string",
+      "description": "N\u00famero da ag\u00eancia"
+    },
+    "bank_agency_digit": {
+      "type": "string",
+      "description": "D\u00edgito da ag\u00eancia (opcional)"
+    },
+    "bank_account": {
+      "type": "string",
+      "description": "N\u00famero da conta corrente"
+    },
+    "bank_account_digit": {
+      "type": "string",
+      "description": "D\u00edgito da conta"
+    },
     "bank_info": {
       "type": "string"
     },

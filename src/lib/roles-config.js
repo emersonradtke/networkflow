@@ -42,6 +42,7 @@ export const ROLE_CONFIG = {
       { path: '/network', label: 'Minha Rede', icon: 'Users' },
       { path: '/orders', label: 'Meus Pedidos', icon: 'ShoppingBag' },
       { path: '/withdrawals', label: 'Saques', icon: 'ArrowUpCircle' },
+      { path: '/bank-data', label: 'Dados Bancários', icon: 'Landmark' },
       { path: '/notifications', label: 'Notificações', icon: 'Bell' }
     ]
   },

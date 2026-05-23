@@ -53,6 +53,7 @@ import AdminSupportTickets from './pages/admin/AdminSupportTickets';
 import AdminRestrictedUsers from './pages/admin/AdminRestrictedUsers';
 import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
+import BankData from './pages/BankData';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -91,6 +92,7 @@ const AuthenticatedApp = () => {
         <Route path="/network" element={<Network />} />
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route path="/withdrawals" element={<MyWithdrawals />} />
+        <Route path="/bank-data" element={<BankData />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/checkout" element={<Checkout />} />
