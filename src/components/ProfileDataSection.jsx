@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Mail, Phone, FileText } from 'lucide-react';
+import { User, Mail, Phone, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useCEP } from '@/hooks/useCEP';
 
 const STATES = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -15,7 +16,9 @@ const STATES = [
 
 export default function ProfileDataSection({ associate }) {
   const { toast } = useToast();
+  const { searchCEP, loading: cepLoading, error: cepError } = useCEP();
   const [saving, setSaving] = useState(false);
+  const [cep, setCep] = useState('');
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -47,6 +50,23 @@ export default function ProfileDataSection({ associate }) {
   }, [associate]);
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
+
+  const handleCEPSearch = async () => {
+    if (!cep) {
+      toast({ title: 'CEP obrigatório', description: 'Informe um CEP para buscar.', variant: 'destructive' });
+      return;
+    }
+    const result = await searchCEP(cep);
+    if (result) {
+      set('address', result.street);
+      set('neighborhood', result.neighborhood);
+      set('city', result.city);
+      set('state', result.state);
+      toast({ title: 'Endereço encontrado!', description: 'Preencha os dados complementares.' });
+    } else {
+      toast({ title: 'Erro', description: cepError || 'CEP não encontrado.', variant: 'destructive' });
+    }
+  };
 
   const handleSave = async () => {
     if (!form.full_name?.trim()) {
@@ -176,12 +196,43 @@ export default function ProfileDataSection({ associate }) {
           <h3 className="font-bold text-foreground text-sm">Localização</h3>
         </div>
 
+        {/* CEP Search */}
+        <div className="space-y-1.5 p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <Label className="text-xs font-bold">Buscar por CEP</Label>
+          <div className="flex gap-2">
+            <Input
+              value={cep}
+              onChange={e => setCep(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              placeholder="00000000"
+              maxLength={8}
+            />
+            <Button
+              onClick={handleCEPSearch}
+              disabled={cepLoading || !cep}
+              variant="outline"
+              className="px-4"
+            >
+              {cepLoading ? <Loader2 size={16} className="animate-spin" /> : 'Buscar'}
+            </Button>
+          </div>
+          {cepError && <p className="text-xs text-red-500 mt-1">{cepError}</p>}
+        </div>
+
         <div className="space-y-1.5">
-          <Label className="text-xs">Endereço</Label>
+          <Label className="text-xs">Endereço (Rua)</Label>
           <Input
             value={form.address}
             onChange={e => set('address', e.target.value)}
-            placeholder="Rua, número, complemento"
+            placeholder="Rua, avenida, etc"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Bairro</Label>
+          <Input
+            value={form.neighborhood || ''}
+            onChange={e => set('neighborhood', e.target.value)}
+            placeholder="Bairro"
           />
         </div>
 
