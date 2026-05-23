@@ -49,23 +49,16 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
         terms_version: currentTerm.version || 1
       });
 
-      // Recarrega os termos pendentes após aceitar
-      const response = await base44.functions.invoke('checkUserTermsStatus', { user_id: user.id });
-      const newPending = response.data?.pending_terms || [];
-      
-      if (newPending.length === 0) {
-        // Todos os termos foram aceitos
-        setAccepting(false);
-        onAccept();
-      } else {
-        // Ainda há termos pendentes
-        setPendingTerms(newPending);
-        setCurrentIndex(0);
+      const nextIndex = currentIndex + 1;
+      if (nextIndex < pendingTerms.length) {
+        setCurrentIndex(nextIndex);
         setAgreed(false);
-        setAccepting(false);
+      } else {
+        onAccept();
       }
     } catch (error) {
       console.error('Erro ao aceitar termos:', error);
+    } finally {
       setAccepting(false);
     }
   };
@@ -73,7 +66,7 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
   const typeLabel = (type) => type === 'privacy_policy' ? 'Política de Privacidade' : 'Termos de Serviço';
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && null}>
+    <Dialog open={open}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
