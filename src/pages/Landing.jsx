@@ -129,14 +129,16 @@ export default function Landing() {
       // Valida se CPF existe no sistema
       const response = await base44.functions.invoke('validateCpfForFirstAccess', { cpf: cpf.replace(/\D/g, '') });
       
-      if (response.data?.success) {
-        setValidatedCpf(cpf.replace(/\D/g, ''));
-        setFirstAccessStep('password');
-        setLoading(false);
-      } else if (response.data?.already_registered) {
-        // Usuário já tem senha cadastrada
+      console.log('CPF validation response:', response.data);
+      
+      if (response.data?.already_registered) {
+        // Usuário já tem senha cadastrada - verificar ANTES de success
         setError(response.data?.error || 'Já existe uma senha para este CPF');
         setFirstAccessStep('already_registered');
+        setLoading(false);
+      } else if (response.data?.success) {
+        setValidatedCpf(cpf.replace(/\D/g, ''));
+        setFirstAccessStep('password');
         setLoading(false);
       } else {
         setError(response.data?.error || 'CPF não encontrado ou já ativado');
