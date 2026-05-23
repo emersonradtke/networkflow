@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
@@ -50,9 +49,6 @@ export default function TermsOfUse() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-100 px-4 py-4 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => navigate(-1)} className="text-slate-500 hover:text-slate-800">
-          <ArrowLeft size={20} />
-        </button>
         <img src={LOGO_URL} alt="Bold Life" className="h-7 w-auto object-contain" />
         <h1 className="text-sm font-bold text-slate-800">Termos de Serviço</h1>
       </header>
