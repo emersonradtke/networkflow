@@ -106,7 +106,7 @@ export default function StoreBannerCarousel({ associate }) {
 
         <div className="relative flex items-center gap-4 p-6 md:p-8">
           {currentBanner.logo_url && (
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-white flex-shrink-0 shadow-lg">
               <img src={currentBanner.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
             </div>
           )}
