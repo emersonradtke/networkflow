@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ export default function ProfileDataSection({ associate }) {
   const { searchCEP, loading: cepLoading, error: cepError } = useCEP();
   const [saving, setSaving] = useState(false);
   const [cep, setCep] = useState('');
+  const numberInputRef = useRef(null);
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -28,6 +29,9 @@ export default function ProfileDataSection({ associate }) {
     company_name: '',
     person_type: 'pf',
     address: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
     city: '',
     state: '',
   });
@@ -43,6 +47,9 @@ export default function ProfileDataSection({ associate }) {
         company_name: associate.company_name || '',
         person_type: associate.person_type || 'pf',
         address: associate.address || '',
+        number: associate.number || '',
+        complement: associate.complement || '',
+        neighborhood: associate.neighborhood || '',
         city: associate.city || '',
         state: associate.state || '',
       });
@@ -62,7 +69,14 @@ export default function ProfileDataSection({ associate }) {
       set('neighborhood', result.neighborhood);
       set('city', result.city);
       set('state', result.state);
+      set('number', '');
+      set('complement', '');
       toast({ title: 'Endereço encontrado!', description: 'Preencha os dados complementares.' });
+      setTimeout(() => {
+        if (numberInputRef.current) {
+          numberInputRef.current.focus();
+        }
+      }, 100);
     } else {
       toast({ title: 'Erro', description: cepError || 'CEP não encontrado.', variant: 'destructive' });
     }
@@ -75,6 +89,10 @@ export default function ProfileDataSection({ associate }) {
     }
     if (!form.email?.trim()) {
       toast({ title: 'Campo obrigatório', description: 'Informe seu e-mail.', variant: 'destructive' });
+      return;
+    }
+    if (form.address && !form.number?.trim()) {
+      toast({ title: 'Campo obrigatório', description: 'Informe o número do endereço.', variant: 'destructive' });
       return;
     }
 
@@ -225,6 +243,26 @@ export default function ProfileDataSection({ associate }) {
             onChange={e => set('address', e.target.value)}
             placeholder="Rua, avenida, etc"
           />
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="col-span-2 space-y-1.5">
+            <Label className="text-xs">Número <span className="text-red-500">*</span></Label>
+            <Input
+              ref={numberInputRef}
+              value={form.number}
+              onChange={e => set('number', e.target.value)}
+              placeholder="123"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Complemento</Label>
+            <Input
+              value={form.complement || ''}
+              onChange={e => set('complement', e.target.value)}
+              placeholder="Apto, sala, etc"
+            />
+          </div>
         </div>
 
         <div className="space-y-1.5">
