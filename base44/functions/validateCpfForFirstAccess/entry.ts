@@ -18,9 +18,13 @@ Deno.serve(async (req) => {
 
     const associate = associates[0];
 
-    // Verifica se já tem usuário criado (adhesion_paid = true significa que pagou e deve ter usuário)
-    if (associate.adhesion_paid && associate.user_id) {
-      return Response.json({ error: 'Esta conta já foi ativada' }, { status: 400 });
+    // Verifica se já tem usuário criado
+    if (associate.user_id) {
+      return Response.json({ 
+        success: false,
+        already_registered: true,
+        error: 'Já existe uma senha cadastrada para este CPF. Use a recuperação de senha.' 
+      }, { status: 400 });
     }
 
     // CPF válido e associado existe

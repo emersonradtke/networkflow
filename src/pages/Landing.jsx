@@ -133,6 +133,11 @@ export default function Landing() {
         setValidatedCpf(cpf.replace(/\D/g, ''));
         setFirstAccessStep('password');
         setLoading(false);
+      } else if (response.data?.already_registered) {
+        // Usuário já tem senha cadastrada
+        setError(response.data?.error || 'Já existe uma senha para este CPF');
+        setFirstAccessStep('already_registered');
+        setLoading(false);
       } else {
         setError(response.data?.error || 'CPF não encontrado ou já ativado');
         setLoading(false);
@@ -326,6 +331,45 @@ export default function Landing() {
                     Voltar
                   </Button>
                 </form>
+              ) : firstAccessStep === 'already_registered' ? (
+                <div className="space-y-4">
+                  {error && (
+                    <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
+                      <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  )}
+
+                  <div className="rounded-lg p-4 bg-amber-50 border border-amber-200 flex items-start gap-3">
+                    <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900 mb-2">Conta já ativada</p>
+                      <p className="text-xs text-amber-800">Este CPF já possui uma senha cadastrada. Se você esqueceu sua senha, utilize a opção de recuperação.</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleLoginClick}
+                    className="w-full font-bold text-white text-base py-6"
+                    style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+                  >
+                    <LogIn size={18} className="mr-2" /> Entrar com seu usuário
+                  </Button>
+
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setLoginMode(null);
+                      setFirstAccessStep('cpf');
+                      setError('');
+                      setCpf('');
+                    }}
+                    variant="ghost"
+                    className="w-full text-slate-500"
+                  >
+                    Voltar
+                  </Button>
+                </div>
               ) : (
                 <form onSubmit={handleFirstAccessPasswordSubmit} className="space-y-4">
                   {error && (
