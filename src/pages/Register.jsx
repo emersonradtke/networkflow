@@ -75,6 +75,7 @@ export default function Register() {
   const [payLoading, setPayLoading] = useState(false);
   const [personType, setPersonType] = useState('pf');
   const [showPassword, setShowPassword] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState('Transforme sua rede em resultados reais. Junte-se a uma comunidade de sucesso.');
   const [form, setForm] = useState({
     full_name: '', email: '', phone: '', cpf: '', cnpj: '', company_name: ''
   });
@@ -90,7 +91,12 @@ export default function Register() {
 
   const loadData = async (code) => {
     const configs = await base44.entities.NetworkConfig.list();
-    if (configs.length > 0) setConfig(configs[0]);
+    if (configs.length > 0) {
+      setConfig(configs[0]);
+      if (configs[0].welcome_message) {
+        setWelcomeMessage(configs[0].welcome_message);
+      }
+    }
     if (code) {
       const sponsors = await base44.entities.Associate.filter({ invite_code: code, status: 'active' });
       if (sponsors.length > 0) setSponsor(sponsors[0]);
@@ -226,18 +232,18 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}>
-      {/* Left panel */}
-      <div className="hidden lg:flex flex-col items-center justify-center flex-1 p-12 text-white">
-        <img src={BRAIN_URL} alt="Bold Life Brain" className="w-52 h-52 object-contain mb-8 opacity-90" style={{ filter: 'brightness(0) invert(1)' }} />
-        <h2 className="text-4xl font-black mb-3 text-center">Bem-vindo à<br/>Bold Life</h2>
-        <p className="text-white/70 text-center text-lg max-w-xs leading-relaxed">
-          Transforme sua rede em resultados reais. Junte-se a uma comunidade de sucesso.
+    <div className="min-h-screen flex flex-col lg:flex-row items-stretch justify-center" style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}>
+      {/* Left panel - Welcome */}
+      <div className="hidden lg:flex flex-col items-center justify-center flex-1 max-w-sm p-8 text-white">
+        <img src={BRAIN_URL} alt="Bold Life Brain" className="w-40 h-40 object-contain mb-6 opacity-90" style={{ filter: 'brightness(0) invert(1)' }} />
+        <h2 className="text-3xl font-black mb-3 text-center">Bem-vindo à<br/>Bold Life</h2>
+        <p className="text-white/70 text-center text-base max-w-xs leading-relaxed">
+          {welcomeMessage}
         </p>
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 lg:max-w-md flex items-center justify-center p-6 overflow-y-auto">
+      {/* Right panel - Register */}
+      <div className="flex-1 max-w-md flex items-center justify-center p-6 overflow-y-auto">
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-3xl shadow-2xl p-8 w-full my-6">
           <div className="text-center mb-6">
             <img src={LOGO_URL} alt="Bold Life" className="h-10 w-auto object-contain mx-auto mb-3" />
