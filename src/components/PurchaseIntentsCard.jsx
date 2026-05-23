@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ExternalLink, Zap } from 'lucide-react';
+import { ExternalLink, Zap, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import PurchaseProofModal from './PurchaseProofModal';
@@ -62,6 +62,12 @@ export default function PurchaseIntentsCard({ associateId }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = async (intent) => {
+    if (!confirm('Deseja excluir esta intenção de compra?')) return;
+    await base44.entities.ExternalLinkClick.delete(intent.id);
+    setIntents(prev => prev.filter(i => i.id !== intent.id));
   };
 
   const handleConfirm = (intent) => {
@@ -147,6 +153,14 @@ export default function PurchaseIntentsCard({ associateId }) {
                   onClick={() => handleConfirm(intent)}
                 >
                   Confirmar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs h-7 text-destructive hover:text-destructive hover:bg-destructive/10 px-2"
+                  onClick={() => handleDelete(intent)}
+                >
+                  <Trash2 size={13} />
                 </Button>
               </div>
             </div>
