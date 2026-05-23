@@ -16,7 +16,7 @@ export default function TermsCheckWrapper({ children }) {
 
   const checkTermsStatus = async () => {
     try {
-      const response = await base44.functions.invoke('checkUserTermsStatus', {});
+      const response = await base44.functions.invoke('checkUserTermsStatus', { user_id: user.id });
       // Se houver termos ativos e o usuário não aceitou esta versão, mostra modal
       if (response.data?.needs_acceptance) {
         setShowTermsModal(true);

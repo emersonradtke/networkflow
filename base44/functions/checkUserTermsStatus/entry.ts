@@ -3,18 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    let user = null;
+    const { user_id } = await req.json();
 
-    // Tenta autenticação nativa primeiro
-    try {
-      user = await base44.auth.me();
-    } catch (err) {
-      // Se falhar, retorna false (sem aceitar termos é um estado válido)
-      return Response.json({ needs_acceptance: false });
-    }
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user_id) {
+      return Response.json({ error: 'user_id is required' }, { status: 400 });
     }
 
     // Obter todos os termos ativos
@@ -33,7 +25,7 @@ Deno.serve(async (req) => {
 
     for (const term of [tos, pp].filter(Boolean)) {
       const acceptances = await base44.asServiceRole.entities.UserTermsAcceptance.filter({
-        user_id: user.id,
+        user_id: user_id,
         terms_id: term.id,
         terms_version: term.version
       });
