@@ -5,9 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Clock, CheckCircle, AlertCircle, Building2, User, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { UserPlus, Clock, CheckCircle, AlertCircle, Building2, User, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
 const BRAIN_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/fa8c43cb9_BOLDLIFE-ICON1.png';
@@ -79,10 +78,6 @@ export default function Register() {
   const [form, setForm] = useState({
     full_name: '', email: '', phone: '', cpf: '', cnpj: '', company_name: ''
   });
-  const [terms, setTerms] = useState([]);
-  const [termsLoaded, setTermsLoaded] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState({});
-  const [expandedTerms, setExpandedTerms] = useState({});
   const [newAssociateId, setNewAssociateId] = useState(null);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
@@ -99,20 +94,6 @@ export default function Register() {
     if (code) {
       const sponsors = await base44.entities.Associate.filter({ invite_code: code, status: 'active' });
       if (sponsors.length > 0) setSponsor(sponsors[0]);
-    }
-    
-    // Carregar termos
-    try {
-      const response = await base44.functions.invoke('getTermsList', {});
-      const allTerms = response.data?.terms || [];
-      setTerms(allTerms.filter(t => t.is_active));
-      setTermsLoaded(true);
-      // Inicializar estado de aceite
-      const acc = {};
-      allTerms.filter(t => t.is_active).forEach(t => acc[t.id] = false);
-      setTermsAccepted(acc);
-    } catch (error) {
-      setTermsLoaded(true);
     }
   };
 
@@ -137,10 +118,6 @@ export default function Register() {
       else if (!validateCNPJ(form.cnpj)) errs.cnpj = 'CNPJ inválido';
       if (!form.company_name.trim()) errs.company_name = 'Razão social obrigatória';
     }
-
-    // Validar aceite de termos
-    const anyNotAccepted = terms.some(t => !termsAccepted[t.id]);
-    if (anyNotAccepted) errs.terms = 'Você deve aceitar todos os termos para continuar';
 
     return errs;
   };
@@ -367,48 +344,7 @@ export default function Register() {
               </div>
             )}
 
-            {/* Termos de Serviço e Privacidade */}
-            {termsLoaded && terms.length > 0 && (
-              <div className="space-y-3 mt-6 pt-4 border-t border-slate-200">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Aceitos obrigatórios</p>
-                {terms.map((term) => (
-                  <div key={term.id} className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => setExpandedTerms(e => ({ ...e, [term.id]: !e[term.id] }))}
-                      className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-                    >
-                      <span className="text-sm font-semibold text-slate-700">{term.title}</span>
-                      <ChevronDown size={16} className={`text-slate-400 transition-transform ${expandedTerms[term.id] ? 'rotate-180' : ''}`} />
-                    </button>
-                    
-                    {expandedTerms[term.id] && (
-                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 max-h-48 overflow-y-auto">
-                        <div className="prose prose-xs max-w-none text-slate-600">
-                          <ReactMarkdown>{term.content}</ReactMarkdown>
-                        </div>
-                      </div>
-                    )}
 
-                    <div className="flex items-start gap-2.5 pl-1">
-                      <Checkbox
-                        id={`accept-${term.id}`}
-                        checked={termsAccepted[term.id] || false}
-                        onCheckedChange={(checked) => setTermsAccepted(t => ({ ...t, [term.id]: checked }))}
-                        className="mt-0.5"
-                      />
-                      <Label
-                        htmlFor={`accept-${term.id}`}
-                        className="text-xs text-slate-600 cursor-pointer leading-relaxed flex-1"
-                      >
-                        Li e concordo com {term.term_type === 'privacy_policy' ? 'a Política de Privacidade' : 'os Termos de Serviço'}
-                      </Label>
-                    </div>
-                  </div>
-                ))}
-                {errors.terms && <FieldError msg={errors.terms} />}
-              </div>
-            )}
 
             {errors.submit && (
               <p className="flex items-center gap-1.5 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
