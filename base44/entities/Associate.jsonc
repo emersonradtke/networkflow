@@ -133,18 +133,6 @@
     "address": {
       "type": "string"
     },
-    "number": {
-      "type": "string",
-      "description": "N\u00famero do endere\u00e7o"
-    },
-    "complement": {
-      "type": "string",
-      "description": "Complemento do endere\u00e7o (apto, sala, etc)"
-    },
-    "neighborhood": {
-      "type": "string",
-      "description": "Bairro"
-    },
     "city": {
       "type": "string"
     },

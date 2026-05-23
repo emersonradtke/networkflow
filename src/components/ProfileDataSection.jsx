@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Mail, Phone, FileText, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { useCEP } from '@/hooks/useCEP';
 
 const STATES = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -16,10 +15,7 @@ const STATES = [
 
 export default function ProfileDataSection({ associate }) {
   const { toast } = useToast();
-  const { searchCEP, loading: cepLoading, error: cepError } = useCEP();
   const [saving, setSaving] = useState(false);
-  const [cep, setCep] = useState('');
-  const numberInputRef = useRef(null);
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -29,9 +25,6 @@ export default function ProfileDataSection({ associate }) {
     company_name: '',
     person_type: 'pf',
     address: '',
-    number: '',
-    complement: '',
-    neighborhood: '',
     city: '',
     state: '',
   });
@@ -47,9 +40,6 @@ export default function ProfileDataSection({ associate }) {
         company_name: associate.company_name || '',
         person_type: associate.person_type || 'pf',
         address: associate.address || '',
-        number: associate.number || '',
-        complement: associate.complement || '',
-        neighborhood: associate.neighborhood || '',
         city: associate.city || '',
         state: associate.state || '',
       });
@@ -58,29 +48,6 @@ export default function ProfileDataSection({ associate }) {
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 
-  const handleCEPSearch = async () => {
-    if (!cep) {
-      toast({ title: 'CEP obrigatório', description: 'Informe um CEP para buscar.', variant: 'destructive' });
-      return;
-    }
-    const result = await searchCEP(cep);
-    if (result) {
-      set('address', result.street);
-      set('neighborhood', result.neighborhood);
-      set('city', result.city);
-      set('state', result.state);
-      set('number', '');
-      set('complement', '');
-      setTimeout(() => {
-        if (numberInputRef.current) {
-          numberInputRef.current.focus();
-        }
-      }, 100);
-    } else {
-      toast({ title: 'Erro', description: cepError || 'CEP não encontrado.', variant: 'destructive' });
-    }
-  };
-
   const handleSave = async () => {
     if (!form.full_name?.trim()) {
       toast({ title: 'Campo obrigatório', description: 'Informe seu nome completo.', variant: 'destructive' });
@@ -88,10 +55,6 @@ export default function ProfileDataSection({ associate }) {
     }
     if (!form.email?.trim()) {
       toast({ title: 'Campo obrigatório', description: 'Informe seu e-mail.', variant: 'destructive' });
-      return;
-    }
-    if (form.address && !form.number?.trim()) {
-      toast({ title: 'Campo obrigatório', description: 'Informe o número do endereço.', variant: 'destructive' });
       return;
     }
 
@@ -213,63 +176,12 @@ export default function ProfileDataSection({ associate }) {
           <h3 className="font-bold text-foreground text-sm">Localização</h3>
         </div>
 
-        {/* CEP Search */}
-        <div className="space-y-1.5 p-4 rounded-xl bg-slate-50 border border-slate-200">
-          <Label className="text-xs font-bold">Buscar por CEP</Label>
-          <div className="flex gap-2">
-            <Input
-              value={cep}
-              onChange={e => setCep(e.target.value.replace(/\D/g, '').slice(0, 8))}
-              placeholder="00000000"
-              maxLength={8}
-            />
-            <Button
-              onClick={handleCEPSearch}
-              disabled={cepLoading || !cep}
-              variant="outline"
-              className="px-4"
-            >
-              {cepLoading ? <Loader2 size={16} className="animate-spin" /> : 'Buscar'}
-            </Button>
-          </div>
-          {cepError && <p className="text-xs text-red-500 mt-1">{cepError}</p>}
-        </div>
-
         <div className="space-y-1.5">
-          <Label className="text-xs">Endereço (Rua)</Label>
+          <Label className="text-xs">Endereço</Label>
           <Input
             value={form.address}
             onChange={e => set('address', e.target.value)}
-            placeholder="Rua, avenida, etc"
-          />
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 space-y-1.5">
-            <Label className="text-xs">Número <span className="text-red-500">*</span></Label>
-            <Input
-              ref={numberInputRef}
-              value={form.number}
-              onChange={e => set('number', e.target.value)}
-              placeholder="123"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Complemento</Label>
-            <Input
-              value={form.complement || ''}
-              onChange={e => set('complement', e.target.value)}
-              placeholder="Apto, sala, etc"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label className="text-xs">Bairro</Label>
-          <Input
-            value={form.neighborhood || ''}
-            onChange={e => set('neighborhood', e.target.value)}
-            placeholder="Bairro"
+            placeholder="Rua, número, complemento"
           />
         </div>
 

@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MapPin, CheckCircle2, Loader2 } from 'lucide-react';
-import { useCEP } from '@/hooks/useCEP';
+import { MapPin, CheckCircle2 } from 'lucide-react';
 
 const EMPTY_ADDR = {
   shipping_street: '', shipping_number: '', shipping_complement: '',
@@ -16,83 +15,35 @@ const EMPTY_ADDR = {
 };
 
 function AddressFields({ prefix, data, onChange, label }) {
-  const { searchCEP, loading: cepLoading, error: cepError } = useCEP();
-  const [localCep, setLocalCep] = useState('');
-  const numberInputRef = useRef(null);
-
-  const handleCEPSearch = async () => {
-    if (!localCep) return;
-    const result = await searchCEP(localCep);
-    if (result) {
-      onChange(`${prefix}_street`, result.street);
-      onChange(`${prefix}_neighborhood`, result.neighborhood);
-      onChange(`${prefix}_city`, result.city);
-      onChange(`${prefix}_state`, result.state);
-      onChange(`${prefix}_zip`, result.zipCode);
-      onChange(`${prefix}_number`, '');
-      onChange(`${prefix}_complement`, '');
-      setTimeout(() => {
-        if (numberInputRef.current) {
-          numberInputRef.current.focus();
-        }
-      }, 100);
-    }
-  };
-
   return (
     <div className="space-y-3">
       <p className="text-sm font-bold text-foreground flex items-center gap-2">
         <MapPin size={14} className="text-primary" /> {label}
       </p>
-
-      {/* CEP Search */}
-      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
-        <Label className="text-xs font-bold">Buscar por CEP</Label>
-        <div className="flex gap-2">
-          <Input
-            value={localCep}
-            onChange={e => setLocalCep(e.target.value.replace(/\D/g, '').slice(0, 8))}
-            placeholder="00000000"
-            maxLength={8}
-            className="text-sm"
-          />
-          <Button
-            type="button"
-            onClick={handleCEPSearch}
-            disabled={cepLoading || !localCep}
-            variant="outline"
-            className="px-3 text-sm"
-          >
-            {cepLoading ? <Loader2 size={14} className="animate-spin" /> : 'Buscar'}
-          </Button>
-        </div>
-        {cepError && <p className="text-xs text-red-500">{cepError}</p>}
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Rua / Logradouro</Label>
-        <Input className="mt-1" placeholder="Rua das Flores" value={data[`${prefix}_street`] || ''} onChange={e => onChange(`${prefix}_street`, e.target.value)} />
-      </div>
-
       <div className="grid grid-cols-3 gap-2">
         <div className="col-span-2">
-          <Label className="text-xs">Número <span className="text-red-500">*</span></Label>
-          <Input ref={numberInputRef} className="mt-1" placeholder="123" value={data[`${prefix}_number`] || ''} onChange={e => onChange(`${prefix}_number`, e.target.value)} />
+          <Label className="text-xs">Rua / Logradouro</Label>
+          <Input className="mt-1" placeholder="Rua das Flores" value={data[`${prefix}_street`] || ''} onChange={e => onChange(`${prefix}_street`, e.target.value)} />
         </div>
+        <div>
+          <Label className="text-xs">Número</Label>
+          <Input className="mt-1" placeholder="123" value={data[`${prefix}_number`] || ''} onChange={e => onChange(`${prefix}_number`, e.target.value)} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">Complemento</Label>
           <Input className="mt-1" placeholder="Apto 4B" value={data[`${prefix}_complement`] || ''} onChange={e => onChange(`${prefix}_complement`, e.target.value)} />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs">Bairro</Label>
-        <Input className="mt-1" placeholder="Centro" value={data[`${prefix}_neighborhood`] || ''} onChange={e => onChange(`${prefix}_neighborhood`, e.target.value)} />
+        <div>
+          <Label className="text-xs">Bairro</Label>
+          <Input className="mt-1" placeholder="Centro" value={data[`${prefix}_neighborhood`] || ''} onChange={e => onChange(`${prefix}_neighborhood`, e.target.value)} />
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
           <Label className="text-xs">CEP</Label>
-          <Input className="mt-1" placeholder="00000000" value={data[`${prefix}_zip`] || ''} onChange={e => onChange(`${prefix}_zip`, e.target.value)} />
+          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={e => onChange(`${prefix}_zip`, e.target.value)} />
         </div>
         <div>
           <Label className="text-xs">Cidade</Label>
