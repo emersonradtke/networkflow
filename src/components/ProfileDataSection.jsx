@@ -6,12 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, Mail, Phone, FileText } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-
-const STATES = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-  'MT', 'MS', 'MG', 'PA', 'PB', 'PE', 'PI', 'RJ', 'RN', 'RS',
-  'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-];
+import CepAddressInput from '@/components/CepAddressInput';
 
 export default function ProfileDataSection({ associate }) {
   const { toast } = useToast();
@@ -27,6 +22,10 @@ export default function ProfileDataSection({ associate }) {
     address: '',
     city: '',
     state: '',
+    cep: '',
+    neighborhood: '',
+    number: '',
+    complement: '',
   });
 
   useEffect(() => {
@@ -42,6 +41,10 @@ export default function ProfileDataSection({ associate }) {
         address: associate.address || '',
         city: associate.city || '',
         state: associate.state || '',
+        cep: associate.shipping_zip || '',
+        neighborhood: associate.shipping_neighborhood || '',
+        number: associate.shipping_number || '',
+        complement: associate.shipping_complement || '',
       });
     }
   }, [associate]);
@@ -176,38 +179,23 @@ export default function ProfileDataSection({ associate }) {
           <h3 className="font-bold text-foreground text-sm">Localização</h3>
         </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-xs">Endereço</Label>
-          <Input
-            value={form.address}
-            onChange={e => set('address', e.target.value)}
-            placeholder="Rua, número, complemento"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Cidade</Label>
-            <Input
-              value={form.city}
-              onChange={e => set('city', e.target.value)}
-              placeholder="São Paulo"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Estado</Label>
-            <Select value={form.state} onValueChange={v => set('state', v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="UF" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATES.map(s => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <CepAddressInput
+          cep={form.cep}
+          setCep={v => set('cep', v)}
+          address={form.address}
+          setAddress={v => set('address', v)}
+          neighborhood={form.neighborhood}
+          setNeighborhood={v => set('neighborhood', v)}
+          city={form.city}
+          setCity={v => set('city', v)}
+          state={form.state}
+          setState={v => set('state', v)}
+          number={form.number}
+          setNumber={v => set('number', v)}
+          complement={form.complement}
+          setComplement={v => set('complement', v)}
+          label="Endereço"
+        />
       </div>
 
       <Button onClick={handleSave} disabled={saving} className="w-full font-bold">
