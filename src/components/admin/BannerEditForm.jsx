@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Pipette } from 'lucide-react';
 
 export default function BannerEditForm({ banner, onSave, onCancel }) {
   const [formData, setFormData] = useState(banner || {
@@ -25,6 +25,25 @@ export default function BannerEditForm({ banner, onSave, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [eyedropperSupported] = useState(() => {
+    return 'EyeDropper' in window;
+  });
+
+  const pickColor = async (field) => {
+    if (!eyedropperSupported) {
+      alert('Seu navegador não suporta captura de cores');
+      return;
+    }
+    try {
+      const eyeDropper = new window.EyeDropper();
+      const result = await eyeDropper.open();
+      handleChange(field, result.sRGBHex);
+    } catch (err) {
+      if (err.name !== 'NotAllowedError') {
+        console.error('Erro ao capturar cor:', err);
+      }
+    }
+  };
 
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
@@ -126,21 +145,31 @@ export default function BannerEditForm({ banner, onSave, onCancel }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Cor de Fundo</Label>
-          <div className="flex gap-2">
-            <input type="color" value={formData.background_color} onChange={(e) => handleChange('background_color', e.target.value)} className="w-12 h-9 rounded cursor-pointer" />
-            <Input value={formData.background_color} onChange={(e) => handleChange('background_color', e.target.value)} />
+            <Label>Cor de Fundo</Label>
+            <div className="flex gap-2">
+              <input type="color" value={formData.background_color} onChange={(e) => handleChange('background_color', e.target.value)} className="w-12 h-9 rounded cursor-pointer" />
+              <Input value={formData.background_color} onChange={(e) => handleChange('background_color', e.target.value)} />
+              {eyedropperSupported && (
+                <Button size="icon" variant="outline" onClick={() => pickColor('background_color')} title="Capturar cor da tela">
+                  <Pipette size={16} />
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <Label>Cor do Texto</Label>
-          <div className="flex gap-2">
-            <input type="color" value={formData.text_color} onChange={(e) => handleChange('text_color', e.target.value)} className="w-12 h-9 rounded cursor-pointer" />
-            <Input value={formData.text_color} onChange={(e) => handleChange('text_color', e.target.value)} />
+          <div>
+            <Label>Cor do Texto</Label>
+            <div className="flex gap-2">
+              <input type="color" value={formData.text_color} onChange={(e) => handleChange('text_color', e.target.value)} className="w-12 h-9 rounded cursor-pointer" />
+              <Input value={formData.text_color} onChange={(e) => handleChange('text_color', e.target.value)} />
+              {eyedropperSupported && (
+                <Button size="icon" variant="outline" onClick={() => pickColor('text_color')} title="Capturar cor da tela">
+                  <Pipette size={16} />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
