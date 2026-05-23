@@ -38,11 +38,10 @@ export default function PrivacyPolicy() {
         terms_id: term.id,
         terms_version: term.version || 1
       });
-      
-      navigate('/');
     } catch (error) {
       console.error('Erro ao aceitar política:', error);
-      setAccepting(false);
+    } finally {
+      navigate('/');
     }
   };
 
