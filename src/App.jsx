@@ -54,6 +54,7 @@ import AdminRestrictedUsers from './pages/admin/AdminRestrictedUsers';
 import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
 import BankData from './pages/BankData';
+import ProfileData from './pages/ProfileData';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 
@@ -97,6 +98,7 @@ const AuthenticatedApp = () => {
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route path="/withdrawals" element={<MyWithdrawals />} />
         <Route path="/bank-data" element={<BankData />} />
+        <Route path="/profile" element={<ProfileData />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/checkout" element={<Checkout />} />
