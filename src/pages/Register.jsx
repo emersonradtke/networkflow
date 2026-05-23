@@ -153,27 +153,20 @@ export default function Register() {
     `mt-1.5 border-slate-200 ${errors[key] ? 'border-red-400 focus:ring-red-400' : ''}`;
 
   const handlePayAdhesion = async () => {
-    if (!newAssociateId || !config?.adhesion_price) return;
+    if (!newAssociateId) return;
     setPayLoading(true);
     try {
-      const res = await base44.functions.invoke('createInfinitePayCheckout', {
-        order_nsu: `ADES-${newAssociateId}`,
-        items: [{
-          description: config.adhesion_description || 'Taxa de Adesão Bold Life',
-          price: config.adhesion_price,
-          quantity: 1,
-        }],
-        customer: {
-          name: form.full_name,
-          email: form.email,
-          phone_number: form.phone.replace(/\D/g, ''),
-        },
-        redirect_url: `${window.location.origin}/dashboard`,
+      const res = await base44.functions.invoke('createAdhesionCheckout', {
+        associate_id: newAssociateId,
+        full_name: form.full_name,
+        email: form.email,
+        phone: form.phone,
       });
       const url = res.data?.url;
-      if (url) window.open(url, '_blank');
+      if (url) window.location.href = url;
+      else setErrors({ submit: 'Erro ao gerar link de pagamento' });
     } catch (e) {
-      console.error('Erro ao gerar link de pagamento', e);
+      setErrors({ submit: e.response?.data?.error || 'Erro ao gerar link de pagamento' });
     } finally {
       setPayLoading(false);
     }
@@ -204,6 +197,11 @@ export default function Register() {
                 </div>
               ))}
             </div>
+            {errors.submit && (
+              <p className="text-red-500 text-sm text-center mb-3 flex items-center justify-center gap-1">
+                <AlertCircle size={14} /> {errors.submit}
+              </p>
+            )}
             <Button
               className="w-full font-bold text-white text-base py-6 mb-3 gap-2"
               style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
