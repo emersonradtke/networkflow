@@ -191,12 +191,12 @@ export default function BankDataSection({ associate, onUpdate }) {
               <SelectValue placeholder="Selecione uma chave PIX" />
             </SelectTrigger>
             <SelectContent>
-              {associate?.cpf && (
+              {associate?.person_type === 'pf' && associate?.cpf && (
                 <SelectItem value={`cpf:${associate.cpf}`}>
                   CPF — {associate.cpf}
                 </SelectItem>
               )}
-              {associate?.cnpj && (
+              {associate?.person_type === 'pj' && associate?.cnpj && (
                 <SelectItem value={`cnpj:${associate.cnpj}`}>
                   CNPJ — {associate.cnpj}
                 </SelectItem>
