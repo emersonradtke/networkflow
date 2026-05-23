@@ -38,10 +38,12 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
   const currentTerm = pendingTerms[currentIndex];
 
   const handleAcceptCurrent = async () => {
-    if (!agreed || !currentTerm) return;
+    if (!currentTerm) return;
 
     try {
       setAccepting(true);
+      console.log(`[TERMS LOG] User accepted: ${currentTerm.title} (v${currentTerm.version || 1}) - Type: ${currentTerm.term_type} - Time: ${new Date().toISOString()}`);
+      
       await base44.functions.invoke('acceptTerms', {
         terms_id: currentTerm.id,
         terms_version: currentTerm.version || 1
@@ -114,7 +116,7 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
         <div className="flex gap-3 justify-end pt-6 border-t">
           <Button
             onClick={handleAcceptCurrent}
-            disabled={!agreed || accepting || !currentTerm}
+            disabled={accepting || !currentTerm}
             className="bg-primary hover:bg-primary/90"
           >
             {accepting ? 'Aceitando...' : (
