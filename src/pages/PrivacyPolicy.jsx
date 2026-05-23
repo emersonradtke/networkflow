@@ -40,10 +40,9 @@ export default function PrivacyPolicy() {
         terms_version: term.version || 1
       });
       
-      navigate(-1);
+      navigate('/');
     } catch (error) {
       console.error('Erro ao aceitar política:', error);
-    } finally {
       setAccepting(false);
     }
   };

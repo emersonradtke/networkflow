@@ -40,10 +40,9 @@ export default function TermsOfUse() {
         terms_version: term.version || 1
       });
       
-      navigate(-1);
+      navigate('/');
     } catch (error) {
       console.error('Erro ao aceitar termos:', error);
-    } finally {
       setAccepting(false);
     }
   };
