@@ -53,12 +53,14 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
       if (nextIndex < pendingTerms.length) {
         setCurrentIndex(nextIndex);
         setAgreed(false);
+        setAccepting(false);
       } else {
+        // Todos os termos foram aceitos
+        setAccepting(false);
         onAccept();
       }
     } catch (error) {
       console.error('Erro ao aceitar termos:', error);
-    } finally {
       setAccepting(false);
     }
   };
