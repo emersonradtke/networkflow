@@ -25,6 +25,12 @@ export default function StoreBannerCarousel({ associate }) {
 
   useEffect(() => {
     loadBanners();
+    
+    const unsubscribe = base44.entities.StoreBanner.subscribe((event) => {
+      loadBanners();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
