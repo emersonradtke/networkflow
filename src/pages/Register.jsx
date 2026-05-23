@@ -341,6 +341,11 @@ export default function Register() {
               </div>
             )}
 
+            {errors.submit && (
+              <p className="flex items-center gap-1.5 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+                <AlertCircle size={15} className="flex-shrink-0" /> {errors.submit}
+              </p>
+            )}
             <Button
               type="submit"
               disabled={loading}
