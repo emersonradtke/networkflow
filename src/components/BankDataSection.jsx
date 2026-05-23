@@ -97,16 +97,6 @@ export default function BankDataSection({ associate, onUpdate }) {
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 
-  // Auto-fill chave PIX com o dado do cadastro quando o tipo é selecionado
-  const handlePixTypeChange = (type) => {
-    let key = '';
-    if (type === 'cpf') key = associate?.cpf || '';
-    else if (type === 'cnpj') key = associate?.cnpj || '';
-    else if (type === 'email') key = associate?.email || '';
-    else if (type === 'phone') key = associate?.phone || '';
-    setForm(f => ({ ...f, pix_key_type: type, pix_key: key }));
-  };
-
   const handleBankSelect = (code) => {
     const bank = BANKS.find(b => b.code === code);
     setForm(f => ({ ...f, bank_code: code, bank_name: bank?.name || '' }));
@@ -183,41 +173,47 @@ export default function BankDataSection({ associate, onUpdate }) {
           <h3 className="font-bold text-foreground text-sm">Chave PIX</h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Tipo de chave</Label>
-            <Select value={form.pix_key_type} onValueChange={handlePixTypeChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {PIX_TYPES.map(t => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Chave PIX</Label>
-            <Input
-              value={form.pix_key}
-              onChange={e => set('pix_key', e.target.value)}
-              placeholder={
-                form.pix_key_type === 'cpf' ? 'CPF' :
-                form.pix_key_type === 'cnpj' ? 'CNPJ' :
-                form.pix_key_type === 'email' ? 'E-mail' :
-                form.pix_key_type === 'phone' ? 'Telefone com DDD' :
-                'Selecione o tipo primeiro'
-              }
-            />
-          </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Selecione uma chave PIX</Label>
+          <Select value={`${form.pix_key_type}:${form.pix_key}`} onValueChange={(val) => {
+            const [type, key] = val.split(':');
+            setForm(f => ({ ...f, pix_key_type: type, pix_key: key }));
+          }}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione uma chave PIX" />
+            </SelectTrigger>
+            <SelectContent>
+              {associate?.cpf && (
+                <SelectItem value="cpf:${associate.cpf}">
+                  CPF — {associate.cpf}
+                </SelectItem>
+              )}
+              {associate?.cnpj && (
+                <SelectItem value="cnpj:${associate.cnpj}">
+                  CNPJ — {associate.cnpj}
+                </SelectItem>
+              )}
+              {associate?.email && (
+                <SelectItem value="email:${associate.email}">
+                  E-mail — {associate.email}
+                </SelectItem>
+              )}
+              {associate?.phone && (
+                <SelectItem value="phone:${associate.phone}">
+                  Telefone — {associate.phone}
+                </SelectItem>
+              )}
+            </SelectContent>
+          </Select>
         </div>
 
-        {form.pix_key_type && (
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <AlertCircle size={12} />
-            A chave PIX foi preenchida com os dados do seu cadastro. Você pode alterar se necessário.
-          </p>
+        {form.pix_key_type && form.pix_key && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-xs font-semibold text-green-800 mb-1">Chave selecionada</p>
+            <p className="text-sm text-green-700">
+              <span className="font-semibold">{PIX_TYPES.find(t => t.value === form.pix_key_type)?.label}</span>: {form.pix_key}
+            </p>
+          </div>
         )}
       </div>
 
