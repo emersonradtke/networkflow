@@ -95,17 +95,8 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row items-stretch" style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}>
-      {/* Left panel */}
-      <div className="hidden lg:flex flex-col items-center justify-center flex-1 p-8 text-white">
-        <img src={BRAIN_URL} alt="Bold Life Brain" className="w-40 h-40 object-contain mb-6 opacity-90" style={{ filter: 'brightness(0) invert(1)' }} />
-        <h2 className="text-3xl font-black mb-3 text-center">Bem-vindo à<br/>Bold Life</h2>
-        <p className="text-white/70 text-center text-base max-w-xs leading-relaxed">
-          Transforme sua rede em resultados reais. Junte-se a uma comunidade de sucesso.
-        </p>
-      </div>
-
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto lg:max-w-md">
+      {/* Left panel - Login */}
+      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto lg:max-w-md order-2 lg:order-1">
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-3xl shadow-2xl p-8 w-full my-6">
           <div className="text-center mb-8">
             <img src={LOGO_URL} alt="Bold Life" className="h-10 w-auto object-contain mx-auto mb-4" />
@@ -213,6 +204,15 @@ export default function Landing() {
             </Link>
           </p>
         </motion.div>
+      </div>
+
+      {/* Right panel - Welcome */}
+      <div className="hidden lg:flex flex-col items-center justify-center flex-1 p-8 text-white order-1 lg:order-2">
+        <img src={BRAIN_URL} alt="Bold Life Brain" className="w-40 h-40 object-contain mb-6 opacity-90" style={{ filter: 'brightness(0) invert(1)' }} />
+        <h2 className="text-3xl font-black mb-3 text-center">Bem-vindo à<br/>Bold Life</h2>
+        <p className="text-white/70 text-center text-base max-w-xs leading-relaxed">
+          Transforme sua rede em resultados reais. Junte-se a uma comunidade de sucesso.
+        </p>
       </div>
     </div>
   );
