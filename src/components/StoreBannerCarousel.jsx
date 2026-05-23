@@ -17,7 +17,7 @@ const speedClasses = {
   fast: 'duration-300'
 };
 
-export default function StoreBannerCarousel() {
+export default function StoreBannerCarousel({ associate }) {
   const [banners, setBanners] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -38,18 +38,22 @@ export default function StoreBannerCarousel() {
   };
 
   const handleClick = async (banner) => {
+    // Abre o link imediatamente
+    window.open(banner.link, '_blank');
     try {
       const res = await base44.functions.invoke('trackExternalLinkClick', {
+        associate_id: associate?.id,
         banner_id: banner.id,
         banner_name: banner.title,
         link_type: 'banner'
       });
-      setSelectedClickId(res.data.click_id);
-      setSelectedBannerName(banner.title);
+      if (res.data?.click_id) {
+        setSelectedClickId(res.data.click_id);
+        setSelectedBannerName(banner.title);
+      }
     } catch (e) {
       console.error('Erro ao rastrear clique', e);
     }
-    window.open(banner.link, '_blank');
   };
 
   const goToPrevious = () => {

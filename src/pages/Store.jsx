@@ -66,6 +66,8 @@ export default function Store() {
   };
 
   const handleExternalLinkClick = async (product) => {
+    // Abre o link imediatamente sem bloquear o usuário
+    window.open(product.external_url, '_blank');
     try {
       const res = await base44.functions.invoke('trackExternalLinkClick', {
         associate_id: currentAssociate?.id,
@@ -73,8 +75,10 @@ export default function Store() {
         product_name: product.name,
         link_type: 'product'
       });
-      setSelectedClickId(res.data.click_id);
-      setSelectedProductName(product.name);
+      if (res.data?.click_id) {
+        setSelectedClickId(res.data.click_id);
+        setSelectedProductName(product.name);
+      }
     } catch (e) {
       console.error('Erro ao rastrear clique', e);
     }
@@ -143,7 +147,7 @@ export default function Store() {
       </div>
 
       {/* Banners */}
-      <StoreBannerCarousel />
+      <StoreBannerCarousel associate={currentAssociate} />
 
       {/* Busca */}
       <div className="relative">
@@ -289,7 +293,7 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
           <p className="font-bold text-foreground text-xs leading-tight line-clamp-2">{product.name}</p>
           <p className="text-sm font-black text-primary">R$ {product.price?.toFixed(2)}</p>
           {product.type === 'external_link' ? (
-            <Button size="sm" className="w-full text-xs h-7 gold-gradient text-background font-bold gap-1" onClick={() => { onExternalLinkClick(product); window.open(product.external_url, '_blank'); }}>
+            <Button size="sm" className="w-full text-xs h-7 gold-gradient text-background font-bold gap-1" onClick={() => onExternalLinkClick(product)}>
               <ExternalLink size={10} /> Ver
             </Button>
           ) : (
@@ -356,7 +360,7 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
         <div className="mt-3">
           <p className="text-lg font-black text-primary">R$ {product.price?.toFixed(2)}</p>
           {product.type === 'external_link' ? (
-            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={() => { onExternalLinkClick(product); window.open(product.external_url, '_blank'); }}>
+            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={() => onExternalLinkClick(product)}>
               <ExternalLink size={13} /> Ver Produto
             </Button>
           ) : (
