@@ -14,9 +14,10 @@ const BRAIN_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29d
 export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, checkUserAuth } = useAuth();
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginMode, setLoginMode] = useState(null); // 'regular' ou 'firstAccess'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [cpf, setCpf] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -68,8 +69,21 @@ export default function Landing() {
     }
   }, [justLoggedIn, isAuthenticated, navigate]);
 
+  const maskCPF = (v) => {
+    const d = v.replace(/\D/g, '').slice(0, 11);
+    return d
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
+
   const handleLoginClick = () => {
-    setShowLoginForm(true);
+    setLoginMode('regular');
+    setError('');
+  };
+
+  const handleFirstAccessClick = () => {
+    setLoginMode('firstAccess');
     setError('');
   };
 
@@ -79,20 +93,16 @@ export default function Landing() {
     setError('');
 
     try {
-      // Chama o backend function para validar credenciais
       const response = await base44.functions.invoke('loginWithCredentials', { username, password });
       
       console.log('Login response:', response.data);
       
       if (response.data?.success && response.data?.user) {
-        // Salva o usuário em sessionStorage
         sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
         console.log('User saved, triggering auth check');
         
-        // Revalidar autenticação no contexto
         await checkUserAuth();
         
-        // Flag que faz redirect no useEffect
         setJustLoggedIn(true);
       } else {
         setError(response.data?.error || 'Usuário ou senha inválidos');
@@ -101,6 +111,30 @@ export default function Landing() {
     } catch (err) {
       console.error('Login error:', err);
       setError('Usuário ou senha inválidos');
+      setLoading(false);
+    }
+  };
+
+  const handleFirstAccessSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Valida CPF + senha para primeiro acesso
+      const response = await base44.functions.invoke('loginWithCredentials', { cpf: cpf.replace(/\D/g, ''), password });
+      
+      if (response.data?.success && response.data?.user) {
+        sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
+        await checkUserAuth();
+        setJustLoggedIn(true);
+      } else {
+        setError(response.data?.error || 'CPF ou senha inválidos');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('First access error:', err);
+      setError('CPF ou senha inválidos');
       setLoading(false);
     }
   };
@@ -126,96 +160,174 @@ export default function Landing() {
           <div className="text-center mb-8">
             <img src={LOGO_URL} alt="Bold Life" className="h-10 w-auto object-contain mx-auto mb-4" />
             <h1 className="text-2xl font-black" style={{ color: '#1B2A5E' }}>
-              {showLoginForm ? 'Entrar na conta' : 'Bem-vindo'}
+              {loginMode === 'regular' ? 'Entrar na conta' : loginMode === 'firstAccess' ? 'Primeiro Acesso' : 'Bem-vindo'}
             </h1>
             <p className="text-slate-500 text-sm mt-2">
-              {showLoginForm ? 'Digite suas credenciais' : 'Construa sua rede e ganhe comissões'}
+              {loginMode === 'regular' ? 'Digite suas credenciais' : loginMode === 'firstAccess' ? 'Use seu CPF e senha' : 'Construa sua rede e ganhe comissões'}
             </p>
           </div>
 
-          {showLoginForm ? (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              {error && (
-                <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
-                  <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              )}
+          {loginMode === 'regular' ? (
+           <form onSubmit={handleLoginSubmit} className="space-y-4">
+             {error && (
+               <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
+                 <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                 <p className="text-sm text-red-700">{error}</p>
+               </div>
+             )}
 
-              <div>
-                <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Usuário</Label>
-                <Input
-                  type="text"
-                  placeholder="seu usuário"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="mt-1.5 border-slate-200"
-                  required
-                />
-              </div>
+             <div>
+               <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Usuário</Label>
+               <Input
+                 type="text"
+                 placeholder="seu usuário"
+                 value={username}
+                 onChange={(e) => setUsername(e.target.value)}
+                 className="mt-1.5 border-slate-200"
+                 required
+               />
+             </div>
 
-              <div>
-                <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Senha</Label>
-                <div className="relative mt-1.5">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="border-slate-200 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
+             <div>
+               <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Senha</Label>
+               <div className="relative mt-1.5">
+                 <Input
+                   type={showPassword ? "text" : "password"}
+                   placeholder="••••••••"
+                   value={password}
+                   onChange={(e) => setPassword(e.target.value)}
+                   className="border-slate-200 pr-10"
+                   required
+                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowPassword(!showPassword)}
+                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                 >
+                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                 </button>
+               </div>
+             </div>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full font-bold text-white text-base py-6 mt-2"
-                style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
-              >
-                {loading ? 'Entrando...' : <><LogIn size={18} className="mr-2" /> Entrar</>}
-              </Button>
+             <Button
+               type="submit"
+               disabled={loading}
+               className="w-full font-bold text-white text-base py-6 mt-2"
+               style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+             >
+               {loading ? 'Entrando...' : <><LogIn size={18} className="mr-2" /> Entrar</>}
+             </Button>
 
-              <Button
-                type="button"
-                onClick={() => {
-                  setShowLoginForm(false);
-                  setError('');
-                  setUsername('');
-                  setPassword('');
-                }}
-                variant="ghost"
-                className="w-full text-slate-500"
-              >
-                Voltar
-              </Button>
-            </form>
+             <Button
+               type="button"
+               onClick={() => {
+                 setLoginMode(null);
+                 setError('');
+                 setUsername('');
+                 setPassword('');
+               }}
+               variant="ghost"
+               className="w-full text-slate-500"
+             >
+               Voltar
+             </Button>
+           </form>
+          ) : loginMode === 'firstAccess' ? (
+           <form onSubmit={handleFirstAccessSubmit} className="space-y-4">
+             {error && (
+               <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
+                 <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                 <p className="text-sm text-red-700">{error}</p>
+               </div>
+             )}
+
+             <div className="rounded-lg p-3 bg-blue-50 border border-blue-200 flex items-start gap-2">
+               <Sparkles size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+               <p className="text-xs text-blue-700">Use seu CPF e a senha enviada por email para acessar pela primeira vez</p>
+             </div>
+
+             <div>
+               <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>CPF</Label>
+               <Input
+                 type="text"
+                 placeholder="000.000.000-00"
+                 value={cpf}
+                 onChange={(e) => setCpf(maskCPF(e.target.value))}
+                 className="mt-1.5 border-slate-200"
+                 required
+               />
+             </div>
+
+             <div>
+               <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Senha</Label>
+               <div className="relative mt-1.5">
+                 <Input
+                   type={showPassword ? "text" : "password"}
+                   placeholder="••••••••"
+                   value={password}
+                   onChange={(e) => setPassword(e.target.value)}
+                   className="border-slate-200 pr-10"
+                   required
+                 />
+                 <button
+                   type="button"
+                   onClick={() => setShowPassword(!showPassword)}
+                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                 >
+                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                 </button>
+               </div>
+             </div>
+
+             <Button
+               type="submit"
+               disabled={loading}
+               className="w-full font-bold text-white text-base py-6 mt-2"
+               style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+             >
+               {loading ? 'Entrando...' : <><LogIn size={18} className="mr-2" /> Acessar</>}
+             </Button>
+
+             <Button
+               type="button"
+               onClick={() => {
+                 setLoginMode(null);
+                 setError('');
+                 setCpf('');
+                 setPassword('');
+               }}
+               variant="ghost"
+               className="w-full text-slate-500"
+             >
+               Voltar
+             </Button>
+           </form>
           ) : (
-            <div className="space-y-3">
-              <Button
-                onClick={handleLoginClick}
-                className="w-full font-bold text-white text-base py-6"
-                style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
-              >
-                <LogIn size={18} className="mr-2" /> Entrar
-              </Button>
+           <div className="space-y-3">
+             <Button
+               onClick={handleLoginClick}
+               className="w-full font-bold text-white text-base py-6"
+               style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+             >
+               <LogIn size={18} className="mr-2" /> Entrar
+             </Button>
 
-              <Button
-                onClick={handleRegister}
-                variant="outline"
-                className="w-full font-semibold py-6 border-slate-300"
-              >
-                <UserPlus size={18} className="mr-2" /> Criar conta
-              </Button>
-            </div>
+             <Button
+               onClick={handleFirstAccessClick}
+               variant="outline"
+               className="w-full font-semibold py-6 border-slate-300"
+             >
+               <Sparkles size={18} className="mr-2" /> Primeiro Acesso
+             </Button>
+
+             <Button
+               onClick={handleRegister}
+               variant="outline"
+               className="w-full font-semibold py-6 border-slate-300"
+             >
+               <UserPlus size={18} className="mr-2" /> Criar conta
+             </Button>
+           </div>
           )}
 
           <p className="text-xs text-slate-400 text-center mt-8">
