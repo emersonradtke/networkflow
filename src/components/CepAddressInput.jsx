@@ -49,7 +49,6 @@ export default function CepAddressInput({
         setCity(response.data.city);
         setState(response.data.state);
         setAddressFound(true);
-        toast({ title: 'Endereço encontrado!', description: 'Preencha os demais dados.' });
       } else {
         toast({ title: 'CEP não encontrado', description: response.data.error, variant: 'destructive' });
         setAddressFound(false);
