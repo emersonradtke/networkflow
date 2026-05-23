@@ -141,6 +141,7 @@ export default function Register() {
       });
 
       setNewAssociateId(res.data?.associate_id);
+      setErrors({});
       setStep('pending');
     } catch (error) {
       setErrors({ submit: error.response?.data?.error || 'Erro ao registrar' });
