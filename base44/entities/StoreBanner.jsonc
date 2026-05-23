@@ -65,6 +65,11 @@
       "type": "number",
       "default": 0,
       "description": "Percentual de comiss\u00e3o para cliques confirmados"
+    },
+    "auto_rotate_seconds": {
+      "type": "number",
+      "default": 5,
+      "description": "Tempo em segundos para rotacionar automaticamente (0 = desabilitar)"
     }
   },
   "required": [

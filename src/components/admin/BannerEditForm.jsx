@@ -19,6 +19,7 @@ export default function BannerEditForm({ banner, onSave, onCancel }) {
     animation: 'fade',
     animation_speed: 'normal',
     commission_percent: 0,
+    auto_rotate_seconds: 5,
     is_active: true,
     position: 0
   });
@@ -203,9 +204,17 @@ export default function BannerEditForm({ banner, onSave, onCancel }) {
         </div>
       </div>
 
-      <div>
-        <Label>Comissão (%)</Label>
-        <Input type="number" value={formData.commission_percent} onChange={(e) => handleChange('commission_percent', parseFloat(e.target.value))} min="0" max="100" />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Comissão (%)</Label>
+          <Input type="number" value={formData.commission_percent} onChange={(e) => handleChange('commission_percent', parseFloat(e.target.value))} min="0" max="100" />
+        </div>
+
+        <div>
+          <Label>Rotação Automática (segundos)</Label>
+          <Input type="number" value={formData.auto_rotate_seconds} onChange={(e) => handleChange('auto_rotate_seconds', parseFloat(e.target.value))} min="0" step="1" />
+          <p className="text-xs text-muted-foreground mt-1">0 = desabilitado</p>
+        </div>
       </div>
 
       {error && <div className="text-sm text-destructive">{error}</div>}

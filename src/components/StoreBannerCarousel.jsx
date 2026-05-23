@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PurchaseProofModal from '@/components/PurchaseProofModal';
 
 const animationClasses = {
@@ -27,6 +26,21 @@ export default function StoreBannerCarousel({ associate }) {
   useEffect(() => {
     loadBanners();
   }, []);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    
+    const currentBanner = banners[currentIndex];
+    const rotateSeconds = currentBanner?.auto_rotate_seconds || 5;
+    
+    if (rotateSeconds <= 0) return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % banners.length);
+    }, rotateSeconds * 1000);
+
+    return () => clearInterval(timer);
+  }, [banners, currentIndex]);
 
   const loadBanners = async () => {
     try {
@@ -56,13 +70,7 @@ export default function StoreBannerCarousel({ associate }) {
     }
   };
 
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
-  };
 
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % banners.length);
-  };
 
   if (loading || banners.length === 0) return null;
 
@@ -79,10 +87,10 @@ export default function StoreBannerCarousel({ associate }) {
         onClose={() => setSelectedClickId(null)}
       />
     )}
-    <div className="w-full max-w-2xl mb-6">
+    <div className="w-full mb-6">
       <div
         onClick={() => handleClick(currentBanner)}
-        className={`relative w-full rounded-xl overflow-hidden cursor-pointer transition ${animClass} ${speedClass}`}
+        className={`relative w-full rounded-lg overflow-hidden cursor-pointer transition ${animClass} ${speedClass}`}
         style={{
           backgroundColor: currentBanner.background_color,
           color: currentBanner.text_color
@@ -96,46 +104,27 @@ export default function StoreBannerCarousel({ associate }) {
           />
         )}
 
-        <div className="relative flex items-center gap-4 p-4">
+        <div className="relative flex items-center gap-4 p-6 md:p-8">
           {currentBanner.logo_url && (
-            <div className="w-16 h-16 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-white/10 flex-shrink-0">
               <img src={currentBanner.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg md:text-xl font-bold leading-tight">{currentBanner.title}</h2>
+            <h2 className="text-xl md:text-2xl font-bold leading-tight">{currentBanner.title}</h2>
             {currentBanner.description && (
-              <p className="text-xs md:text-sm opacity-90 mt-1">{currentBanner.description}</p>
+              <p className="text-sm md:text-base opacity-90 mt-2">{currentBanner.description}</p>
             )}
           </div>
         </div>
 
         {banners.length > 1 && (
-          <>
-            <button
-              onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
-              className="absolute left-1 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-70 hover:opacity-100 transition"
-              style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-            >
-              <ChevronLeft size={16} className="text-white" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); goToNext(); }}
-              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-full opacity-70 hover:opacity-100 transition"
-              style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-            >
-              <ChevronRight size={16} className="text-white" />
-            </button>
-          </>
-        )}
-
-        {banners.length > 1 && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-1">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
             {banners.map((_, idx) => (
               <button
                 key={idx}
                 onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                className={`w-1.5 h-1.5 rounded-full transition ${idx === currentIndex ? 'opacity-100' : 'opacity-50'}`}
+                className={`w-2 h-2 rounded-full transition ${idx === currentIndex ? 'opacity-100' : 'opacity-50'}`}
                 style={{ backgroundColor: currentBanner.text_color }}
               />
             ))}
