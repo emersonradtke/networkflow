@@ -15,10 +15,15 @@ export default function Landing() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, checkUserAuth } = useAuth();
   const [loginMode, setLoginMode] = useState(null); // 'regular' ou 'firstAccess'
+  const [firstAccessStep, setFirstAccessStep] = useState('cpf'); // 'cpf' ou 'password'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [cpf, setCpf] = useState('');
+  const [validatedCpf, setValidatedCpf] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [justLoggedIn, setJustLoggedIn] = useState(false);
@@ -115,26 +120,65 @@ export default function Landing() {
     }
   };
 
-  const handleFirstAccessSubmit = async (e) => {
+  const handleFirstAccessCpfSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // Valida CPF + senha para primeiro acesso
-      const response = await base44.functions.invoke('loginWithCredentials', { cpf: cpf.replace(/\D/g, ''), password });
+      // Valida se CPF existe no sistema
+      const response = await base44.functions.invoke('validateCpfForFirstAccess', { cpf: cpf.replace(/\D/g, '') });
+      
+      if (response.data?.success) {
+        setValidatedCpf(cpf.replace(/\D/g, ''));
+        setFirstAccessStep('password');
+        setLoading(false);
+      } else {
+        setError(response.data?.error || 'CPF não encontrado ou já ativado');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('CPF validation error:', err);
+      setError('Erro ao validar CPF');
+      setLoading(false);
+    }
+  };
+
+  const handleFirstAccessPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    if (newPassword !== confirmPassword) {
+      setError('As senhas não conferem');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Cria usuário com a nova senha usando CPF
+      const response = await base44.functions.invoke('createFirstAccessUser', { 
+        cpf: validatedCpf, 
+        password: newPassword 
+      });
       
       if (response.data?.success && response.data?.user) {
         sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
         await checkUserAuth();
         setJustLoggedIn(true);
       } else {
-        setError(response.data?.error || 'CPF ou senha inválidos');
+        setError(response.data?.error || 'Erro ao criar acesso');
         setLoading(false);
       }
     } catch (err) {
-      console.error('First access error:', err);
-      setError('CPF ou senha inválidos');
+      console.error('First access password error:', err);
+      setError('Erro ao criar acesso');
       setLoading(false);
     }
   };
@@ -233,75 +277,136 @@ export default function Landing() {
              </Button>
            </form>
           ) : loginMode === 'firstAccess' ? (
-           <form onSubmit={handleFirstAccessSubmit} className="space-y-4">
-             {error && (
-               <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
-                 <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
-                 <p className="text-sm text-red-700">{error}</p>
-               </div>
-             )}
+            <>
+              {firstAccessStep === 'cpf' ? (
+                <form onSubmit={handleFirstAccessCpfSubmit} className="space-y-4">
+                  {error && (
+                    <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
+                      <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  )}
 
-             <div className="rounded-lg p-3 bg-blue-50 border border-blue-200 flex items-start gap-2">
-               <Sparkles size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
-               <p className="text-xs text-blue-700">Use seu CPF e a senha enviada por email para acessar pela primeira vez</p>
-             </div>
+                  <div className="rounded-lg p-3 bg-blue-50 border border-blue-200 flex items-start gap-2">
+                    <Sparkles size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700">Informe seu CPF para validar sua conta</p>
+                  </div>
 
-             <div>
-               <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>CPF</Label>
-               <Input
-                 type="text"
-                 placeholder="000.000.000-00"
-                 value={cpf}
-                 onChange={(e) => setCpf(maskCPF(e.target.value))}
-                 className="mt-1.5 border-slate-200"
-                 required
-               />
-             </div>
+                  <div>
+                    <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>CPF</Label>
+                    <Input
+                      type="text"
+                      placeholder="000.000.000-00"
+                      value={cpf}
+                      onChange={(e) => setCpf(maskCPF(e.target.value))}
+                      className="mt-1.5 border-slate-200"
+                      required
+                    />
+                  </div>
 
-             <div>
-               <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Senha</Label>
-               <div className="relative mt-1.5">
-                 <Input
-                   type={showPassword ? "text" : "password"}
-                   placeholder="••••••••"
-                   value={password}
-                   onChange={(e) => setPassword(e.target.value)}
-                   className="border-slate-200 pr-10"
-                   required
-                 />
-                 <button
-                   type="button"
-                   onClick={() => setShowPassword(!showPassword)}
-                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                 >
-                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                 </button>
-               </div>
-             </div>
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full font-bold text-white text-base py-6 mt-2"
+                    style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+                  >
+                    {loading ? 'Validando...' : <>Continuar</>}
+                  </Button>
 
-             <Button
-               type="submit"
-               disabled={loading}
-               className="w-full font-bold text-white text-base py-6 mt-2"
-               style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
-             >
-               {loading ? 'Entrando...' : <><LogIn size={18} className="mr-2" /> Acessar</>}
-             </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setLoginMode(null);
+                      setError('');
+                      setCpf('');
+                    }}
+                    variant="ghost"
+                    className="w-full text-slate-500"
+                  >
+                    Voltar
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleFirstAccessPasswordSubmit} className="space-y-4">
+                  {error && (
+                    <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
+                      <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  )}
 
-             <Button
-               type="button"
-               onClick={() => {
-                 setLoginMode(null);
-                 setError('');
-                 setCpf('');
-                 setPassword('');
-               }}
-               variant="ghost"
-               className="w-full text-slate-500"
-             >
-               Voltar
-             </Button>
-           </form>
+                  <div className="rounded-lg p-3 bg-green-50 border border-green-200 flex items-start gap-2">
+                    <Sparkles size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-green-700">CPF validado! Agora crie sua senha de acesso</p>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Nova Senha</Label>
+                    <div className="relative mt-1.5">
+                      <Input
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="border-slate-200 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Confirmar Senha</Label>
+                    <div className="relative mt-1.5">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="border-slate-200 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full font-bold text-white text-base py-6 mt-2"
+                    style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+                  >
+                    {loading ? 'Criando acesso...' : <><LogIn size={18} className="mr-2" /> Acessar</>}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setFirstAccessStep('cpf');
+                      setError('');
+                      setNewPassword('');
+                      setConfirmPassword('');
+                    }}
+                    variant="ghost"
+                    className="w-full text-slate-500"
+                  >
+                    Voltar
+                  </Button>
+                </form>
+              )}
+            </>
           ) : (
            <div className="space-y-3">
              <Button
