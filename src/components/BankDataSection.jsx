@@ -184,22 +184,22 @@ export default function BankDataSection({ associate, onUpdate }) {
             </SelectTrigger>
             <SelectContent>
               {associate?.cpf && (
-                <SelectItem value="cpf:${associate.cpf}">
+                <SelectItem value={`cpf:${associate.cpf}`}>
                   CPF — {associate.cpf}
                 </SelectItem>
               )}
               {associate?.cnpj && (
-                <SelectItem value="cnpj:${associate.cnpj}">
+                <SelectItem value={`cnpj:${associate.cnpj}`}>
                   CNPJ — {associate.cnpj}
                 </SelectItem>
               )}
               {associate?.email && (
-                <SelectItem value="email:${associate.email}">
+                <SelectItem value={`email:${associate.email}`}>
                   E-mail — {associate.email}
                 </SelectItem>
               )}
               {associate?.phone && (
-                <SelectItem value="phone:${associate.phone}">
+                <SelectItem value={`phone:${associate.phone}`}>
                   Telefone — {associate.phone}
                 </SelectItem>
               )}
