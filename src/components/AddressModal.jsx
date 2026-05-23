@@ -31,7 +31,6 @@ function AddressFields({ prefix, data, onChange, label }) {
       onChange(`${prefix}_zip`, result.zipCode);
       onChange(`${prefix}_number`, '');
       onChange(`${prefix}_complement`, '');
-      setLocalCep('');
       setTimeout(() => {
         if (numberInputRef.current) {
           numberInputRef.current.focus();
