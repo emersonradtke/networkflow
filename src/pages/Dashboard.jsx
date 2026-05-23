@@ -173,6 +173,20 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Invite Link */}
+      <div className="dark-card rounded-2xl p-5 glow-gold">
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-3">Seu Link de Convite</p>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-secondary rounded-lg px-3 py-2.5 text-sm text-muted-foreground truncate border border-border">
+            {window.location.origin}/register?ref={associate.invite_code}
+          </div>
+          <Button size="sm" className="gold-gradient text-background font-bold gap-1.5 shrink-0" onClick={copyInviteLink}>
+            {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
+            {copied ? 'Copiado!' : 'Copiar'}
+          </Button>
+        </div>
+      </div>
+
       {/* Cartão BoldLife */}
       <BoldLifeCardSection 
         associate={associate} 
@@ -200,20 +214,6 @@ export default function Dashboard() {
         <StatCard title="Total Ganho" value={`R$ ${(associate.total_earned || 0).toFixed(2)}`} icon={TrendingUp} color="green" />
         <StatCard title="Diretos" value={networkCount} icon={Users} color="blue" />
         <StatCard title="Pontos" value={`${(associate.total_pontos || 0).toLocaleString('pt-BR')}`} icon={Gift} color="purple" />
-      </div>
-
-      {/* Invite Link */}
-      <div className="dark-card rounded-2xl p-5 glow-gold">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-3">Seu Link de Convite</p>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 bg-secondary rounded-lg px-3 py-2.5 text-sm text-muted-foreground truncate border border-border">
-            {window.location.origin}/register?ref={associate.invite_code}
-          </div>
-          <Button size="sm" className="gold-gradient text-background font-bold gap-1.5 shrink-0" onClick={copyInviteLink}>
-            {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
-            {copied ? 'Copiado!' : 'Copiar'}
-          </Button>
-        </div>
       </div>
 
       {/* Recent Commissions */}
