@@ -20,6 +20,8 @@ export default function TermsCheckWrapper({ children }) {
       // Se houver termos ativos e o usuário não aceitou esta versão, mostra modal
       if (response.data?.needs_acceptance) {
         setShowTermsModal(true);
+      } else {
+        setShowTermsModal(false);
       }
       setTermsLoaded(true);
     } catch (error) {
