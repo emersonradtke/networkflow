@@ -66,7 +66,11 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
   const typeLabel = (type) => type === 'privacy_policy' ? 'Política de Privacidade' : 'Termos de Serviço';
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        onAccept();
+      }
+    }}>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
