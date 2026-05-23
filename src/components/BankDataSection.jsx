@@ -108,6 +108,14 @@ export default function BankDataSection({ associate, onUpdate }) {
   );
 
   const validate = () => {
+    if (form.pix_key_type === 'cpf' && form.pix_key !== associate?.cpf) {
+      toast({ title: 'PIX inválido', description: 'A chave PIX CPF deve ser igual ao seu CPF cadastrado.', variant: 'destructive' });
+      return false;
+    }
+    if (form.pix_key_type === 'cnpj' && form.pix_key !== associate?.cnpj) {
+      toast({ title: 'PIX inválido', description: 'A chave PIX CNPJ deve ser igual ao seu CNPJ cadastrado.', variant: 'destructive' });
+      return false;
+    }
     if (form.bank_code && (!form.bank_account || !form.bank_account_digit)) {
       toast({ title: 'Dados bancários incompletos', description: 'Informe a conta corrente e o dígito.', variant: 'destructive' });
       return false;
