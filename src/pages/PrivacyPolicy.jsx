@@ -72,14 +72,7 @@ export default function PrivacyPolicy() {
             <div className="prose prose-sm max-w-none text-slate-700">
               <ReactMarkdown>{term.content}</ReactMarkdown>
             </div>
-            <div className="border-t pt-6 mt-8 flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => navigate(-1)}
-                disabled={accepting}
-              >
-                Voltar
-              </Button>
+            <div className="border-t pt-6 mt-8 flex justify-end">
               <Button
                 onClick={handleAccept}
                 disabled={accepting}
