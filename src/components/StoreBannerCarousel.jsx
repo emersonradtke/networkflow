@@ -79,7 +79,7 @@ export default function StoreBannerCarousel({ associate }) {
         onClose={() => setSelectedClickId(null)}
       />
     )}
-    <div className="w-full max-w-xl mx-auto mb-6">
+    <div className="w-full max-w-2xl mb-6">
       <div
         onClick={() => handleClick(currentBanner)}
         className={`relative w-full rounded-xl overflow-hidden cursor-pointer transition ${animClass} ${speedClass}`}

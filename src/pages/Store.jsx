@@ -147,7 +147,9 @@ export default function Store() {
       </div>
 
       {/* Banners */}
-      <StoreBannerCarousel associate={currentAssociate} />
+      <div className="flex justify-start">
+        <StoreBannerCarousel associate={currentAssociate} />
+      </div>
 
       {/* Busca */}
       <div className="relative">
