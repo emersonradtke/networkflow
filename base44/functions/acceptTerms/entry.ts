@@ -5,24 +5,22 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { terms_id, terms_version } = await req.json();
 
     if (!terms_id || !terms_version) {
       return Response.json({ error: 'Missing terms_id or terms_version' }, { status: 400 });
     }
 
-    // Registrar aceite do termo
-    await base44.asServiceRole.entities.UserTermsAcceptance.create({
-      user_id: user.id,
-      user_email: user.email || user.username,
-      terms_id: terms_id,
-      terms_version: terms_version,
-      accepted_at: new Date().toISOString()
-    });
+    // Registrar aceite do termo (se autenticado)
+    if (user) {
+      await base44.asServiceRole.entities.UserTermsAcceptance.create({
+        user_id: user.id,
+        user_email: user.email || user.username,
+        terms_id: terms_id,
+        terms_version: terms_version,
+        accepted_at: new Date().toISOString()
+      });
+    }
 
     return Response.json({ success: true });
   } catch (error) {
