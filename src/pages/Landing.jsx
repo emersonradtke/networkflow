@@ -203,7 +203,14 @@ export default function Landing() {
           )}
 
           <p className="text-xs text-slate-400 text-center mt-8">
-            Ao entrar, você concorda com nossos Termos de Serviço
+            Ao entrar, você concorda com nossos{' '}
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">
+              Termos de Serviço
+            </a>
+            {' '}e{' '}
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">
+              Política de Privacidade
+            </a>
           </p>
         </motion.div>
       </div>

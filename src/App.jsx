@@ -54,6 +54,8 @@ import AdminRestrictedUsers from './pages/admin/AdminRestrictedUsers';
 import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
 import BankData from './pages/BankData';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -81,6 +83,8 @@ const AuthenticatedApp = () => {
       {/* Public */}
       <Route path="/" element={<Landing />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfUse />} />
       
       {/* Role-based redirect */}
       <Route path="/role-redirect" element={<RoleRedirect />} />
