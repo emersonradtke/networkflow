@@ -32,7 +32,7 @@ export default function TermsCheckWrapper({ children }) {
 
   const handleAcceptTerms = () => {
     setShowTermsModal(false);
-    setTermsLoaded(false); // Recarregar status
+    setTermsLoaded(true); // Mantém como carregado - todos os termos já foram aceitos
   };
 
   return (
