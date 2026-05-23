@@ -30,12 +30,12 @@ Deno.serve(async (req) => {
     // Gera username baseado no CPF (primeiros 10 dígitos ou email)
     const username = associate.email ? associate.email.split('@')[0] : cpf.slice(0, 10);
 
-    // Invoca função para criar usuário direto
+    // Invoca função para criar usuário direto com role de associado
     const createUserResponse = await base44.asServiceRole.functions.invoke('createDirectUser', {
       username,
       cpf,
       password,
-      role: 'user',
+      role: 'associate',
       associate_id: associate.id
     });
 
