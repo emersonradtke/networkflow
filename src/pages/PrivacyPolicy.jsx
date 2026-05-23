@@ -14,9 +14,10 @@ export default function PrivacyPolicy() {
   useEffect(() => {
     const load = async () => {
       try {
-        const response = await base44.functions.invoke('checkUserTermsStatus', {});
-        const t = response.data?.current_privacy;
-        setTerm(t || null);
+        const response = await base44.functions.invoke('getTermsList', {});
+        const all = response.data?.terms || [];
+        const t = all.find(x => x.is_active && x.term_type === 'privacy_policy') || null;
+        setTerm(t);
       } catch {
         setTerm(null);
       } finally {

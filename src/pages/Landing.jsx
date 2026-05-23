@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -204,13 +204,13 @@ export default function Landing() {
 
           <p className="text-xs text-slate-400 text-center mt-8">
             Ao entrar, você concorda com nossos{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">
+            <Link to="/terms" className="underline hover:text-slate-600">
               Termos de Serviço
-            </a>
+            </Link>
             {' '}e{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-600">
+            <Link to="/privacy" className="underline hover:text-slate-600">
               Política de Privacidade
-            </a>
+            </Link>
           </p>
         </motion.div>
       </div>
