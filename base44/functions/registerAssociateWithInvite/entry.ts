@@ -55,8 +55,14 @@ Deno.serve(async (req) => {
       adhesion_paid: false,
     });
 
-    // Enviar convite Base44
-    await base44.users.inviteUser(finalEmail, 'user');
+    // Enviar convite Base44 (apenas para emails reais, não gerados automaticamente)
+    if (email?.trim() && !finalEmail.endsWith('@boldlife.local')) {
+      try {
+        await base44.users.inviteUser(finalEmail, 'user');
+      } catch (inviteErr) {
+        console.warn('Falha ao enviar convite, continuando:', inviteErr.message);
+      }
+    }
 
     // Criar PendingUserSetup com role customizado
     await base44.asServiceRole.entities.PendingUserSetup.create({
