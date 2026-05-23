@@ -1,10 +1,30 @@
+import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import ReactMarkdown from 'react-markdown';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
+  const [term, setTerm] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const response = await base44.functions.invoke('checkUserTermsStatus', {});
+        const t = response.data?.current_privacy;
+        setTerm(t || null);
+      } catch {
+        setTerm(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -16,64 +36,26 @@ export default function PrivacyPolicy() {
         <h1 className="text-sm font-bold text-slate-800">Política de Privacidade</h1>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 text-slate-700 text-sm leading-relaxed">
-        <p className="text-xs text-slate-400">Última atualização: maio de 2026</p>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">1. Quem somos</h2>
-          <p>
-            A <strong>Bold Life</strong> é uma plataforma de associados que oferece produtos, serviços e oportunidades de geração de renda por meio de rede de indicações.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">2. Dados que coletamos</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>Nome completo, e-mail e telefone</li>
-            <li>CPF ou CNPJ para fins de conformidade fiscal</li>
-            <li>Endereço para entrega de produtos</li>
-            <li>Dados bancários para pagamento de comissões (PIX, conta corrente)</li>
-            <li>Histórico de pedidos e interações na plataforma</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">3. Como usamos seus dados</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>Processar pedidos e pagamentos</li>
-            <li>Calcular e pagar comissões</li>
-            <li>Enviar notificações sobre sua conta</li>
-            <li>Cumprir obrigações legais e fiscais</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">4. Compartilhamento de dados</h2>
-          <p>
-            Não vendemos seus dados. Podemos compartilhá-los com parceiros de pagamento e logística estritamente para processar transações.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">5. Segurança</h2>
-          <p>
-            Utilizamos criptografia e boas práticas de segurança para proteger suas informações. O acesso é restrito a pessoal autorizado.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">6. Seus direitos (LGPD)</h2>
-          <p>
-            Você pode solicitar acesso, correção ou exclusão de seus dados a qualquer momento entrando em contato conosco pelo app.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">7. Contato</h2>
-          <p>
-            Para dúvidas sobre privacidade, entre em contato pelo suporte disponível na plataforma Bold Life.
-          </p>
-        </section>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : term ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-lg font-bold text-slate-800">{term.title}</h2>
+              <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">v{term.version}</span>
+            </div>
+            <div className="prose prose-sm max-w-none text-slate-700">
+              <ReactMarkdown>{term.content}</ReactMarkdown>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16 text-slate-400 text-sm">
+            Nenhuma política de privacidade publicada ainda.
+          </div>
+        )}
       </div>
     </div>
   );

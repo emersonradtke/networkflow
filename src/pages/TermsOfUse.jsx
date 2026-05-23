@@ -1,10 +1,30 @@
+import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
+import ReactMarkdown from 'react-markdown';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
 
 export default function TermsOfUse() {
   const navigate = useNavigate();
+  const [term, setTerm] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const response = await base44.functions.invoke('checkUserTermsStatus', {});
+        const t = response.data?.current_terms;
+        setTerm(t || null);
+      } catch {
+        setTerm(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -16,59 +36,26 @@ export default function TermsOfUse() {
         <h1 className="text-sm font-bold text-slate-800">Termos de Serviço</h1>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 text-slate-700 text-sm leading-relaxed">
-        <p className="text-xs text-slate-400">Última atualização: maio de 2026</p>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">1. Aceitação dos Termos</h2>
-          <p>
-            Ao utilizar a plataforma <strong>Bold Life</strong>, você concorda com estes Termos de Serviço. Caso não concorde, não utilize a plataforma.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">2. Cadastro e Adesão</h2>
-          <p>
-            Para se tornar associado, é necessário realizar o cadastro completo com dados verdadeiros e efetuar o pagamento da taxa de adesão. O cadastro é pessoal e intransferível.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">3. Comissões e Pagamentos</h2>
-          <p>
-            As comissões são calculadas conforme as regras da rede disponíveis na plataforma. A Bold Life se reserva o direito de alterar percentuais e regras mediante comunicação prévia.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">4. Conduta do Associado</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>É proibido fornecer informações falsas no cadastro</li>
-            <li>É proibido usar a plataforma para atividades ilegais</li>
-            <li>O associado é responsável pelas informações que fornece</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">5. Encerramento de Conta</h2>
-          <p>
-            A Bold Life pode suspender ou encerrar contas que violem estes termos, sem prejuízo das comissões já creditadas.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">6. Limitação de Responsabilidade</h2>
-          <p>
-            A Bold Life não se responsabiliza por ganhos futuros, nem por interrupções temporárias do serviço por razões técnicas ou de força maior.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="font-bold text-base text-slate-800 mb-2">7. Foro</h2>
-          <p>
-            Estes termos são regidos pela legislação brasileira. Fica eleito o foro da comarca de domicílio da Bold Life para dirimir quaisquer disputas.
-          </p>
-        </section>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : term ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-lg font-bold text-slate-800">{term.title}</h2>
+              <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">v{term.version}</span>
+            </div>
+            <div className="prose prose-sm max-w-none text-slate-700">
+              <ReactMarkdown>{term.content}</ReactMarkdown>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16 text-slate-400 text-sm">
+            Nenhum termo de serviço publicado ainda.
+          </div>
+        )}
       </div>
     </div>
   );

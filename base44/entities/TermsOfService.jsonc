@@ -15,6 +15,15 @@
       "default": 1,
       "description": "Vers\u00e3o do termo"
     },
+    "term_type": {
+      "type": "string",
+      "enum": [
+        "terms_of_service",
+        "privacy_policy"
+      ],
+      "default": "terms_of_service",
+      "description": "Tipo do termo: termos de servi\u00e7o ou pol\u00edtica de privacidade"
+    },
     "is_active": {
       "type": "boolean",
       "default": true,

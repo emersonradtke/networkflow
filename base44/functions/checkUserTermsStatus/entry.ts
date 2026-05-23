@@ -17,28 +17,39 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Obter termos ativos
+    // Obter todos os termos ativos
     const activeTerms = await base44.asServiceRole.entities.TermsOfService.filter({ is_active: true });
-    
+
     if (activeTerms.length === 0) {
       return Response.json({ needs_acceptance: false });
     }
 
-    const currentTerms = activeTerms[0];
+    // Separar por tipo
+    const tos = activeTerms.find(t => (t.term_type || 'terms_of_service') === 'terms_of_service');
+    const pp = activeTerms.find(t => t.term_type === 'privacy_policy');
 
-    // Verificar se o usuário já aceitou esta versão
-    const acceptances = await base44.asServiceRole.entities.UserTermsAcceptance.filter({
-      user_id: user.id,
-      terms_id: currentTerms.id,
-      terms_version: currentTerms.version
-    });
+    // Verificar aceites do usuário para cada tipo
+    const pendingTerms = [];
 
-    const needsAcceptance = acceptances.length === 0;
+    for (const term of [tos, pp].filter(Boolean)) {
+      const acceptances = await base44.asServiceRole.entities.UserTermsAcceptance.filter({
+        user_id: user.id,
+        terms_id: term.id,
+        terms_version: term.version
+      });
+      if (acceptances.length === 0) {
+        pendingTerms.push(term);
+      }
+    }
+
+    const needsAcceptance = pendingTerms.length > 0;
 
     return Response.json({
       needs_acceptance: needsAcceptance,
-      current_terms: currentTerms,
-      last_acceptance: acceptances[0] || null
+      current_terms: tos || null,
+      current_privacy: pp || null,
+      pending_terms: pendingTerms,
+      last_acceptance: null
     });
   } catch (error) {
     console.error('Error checking terms status:', error);
