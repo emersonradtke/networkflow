@@ -28,13 +28,23 @@ export default function Landing() {
   const [error, setError] = useState('');
   const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('Construa sua rede e ganhe comissões');
+  const [adhesionPaid, setAdhesionPaid] = useState(false);
 
   useEffect(() => {
     loadWelcomeMessage();
+    // Se veio do pagamento da adesão, deslogar usuário atual e mostrar Primeiro Acesso
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('adhesion_paid') === 'true') {
+      sessionStorage.removeItem('directUser');
+      setAdhesionPaid(true);
+      setLoginMode('firstAccess');
+    }
   }, []);
 
   useEffect(() => {
-    if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated) {
+    const params = new URLSearchParams(window.location.search);
+    const isAdhesionReturn = params.get('adhesion_paid') === 'true';
+    if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated && !isAdhesionReturn) {
       // Se autenticado, redireciona baseado no role
       const directUserData = sessionStorage.getItem('directUser');
       if (directUserData) {
@@ -294,7 +304,13 @@ export default function Landing() {
                     </div>
                   )}
 
-                  <div className="rounded-lg p-3 bg-blue-50 border border-blue-200 flex items-start gap-2">
+                  {adhesionPaid && (
+                    <div className="rounded-lg p-3 bg-green-50 border border-green-200 flex items-start gap-2">
+                      <Sparkles size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-green-700 font-medium">🎉 Pagamento confirmado! Agora ative seu acesso com seu CPF.</p>
+                    </div>
+                  )}
+                   <div className="rounded-lg p-3 bg-blue-50 border border-blue-200 flex items-start gap-2">
                     <Sparkles size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-blue-700">Informe seu CPF para validar sua conta</p>
                   </div>

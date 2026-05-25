@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
         price: Math.round(adhesionPrice * 100),
         quantity: 1,
       }],
-      redirect_url: `${req.headers.get('origin') || 'https://app.boldlife.com.br'}/dashboard`,
+      redirect_url: `${req.headers.get('origin') || 'https://app.boldlife.com.br'}/?adhesion_paid=true`,
     };
 
     if (full_name || email || phone) {
