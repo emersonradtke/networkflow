@@ -186,9 +186,23 @@ export default function Landing() {
       });
       
       if (response.data?.success && response.data?.user) {
-        sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
-        await checkUserAuth();
-        setJustLoggedIn(true);
+        // Login automático com as credenciais recém-criadas
+        const username = response.data.user.username;
+        const loginResponse = await base44.functions.invoke('loginWithCredentials', {
+          username,
+          password: newPassword
+        });
+
+        if (loginResponse.data?.success && loginResponse.data?.user) {
+          sessionStorage.setItem('directUser', JSON.stringify(loginResponse.data.user));
+          await checkUserAuth();
+          setJustLoggedIn(true);
+        } else {
+          // Mesmo sem login automático, redireciona para tela de login
+          setError('Acesso criado! Faça login com seu usuário e senha.');
+          setLoginMode('regular');
+          setLoading(false);
+        }
       } else {
         setError(response.data?.error || 'Erro ao criar acesso');
         setLoading(false);

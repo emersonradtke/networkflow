@@ -24,37 +24,49 @@ Deno.serve(async (req) => {
 
     // Verifica se já foi ativado
     if (associate.user_id) {
-      return Response.json({ error: 'Esta conta já foi ativada' }, { status: 400 });
+      return Response.json({ error: 'Esta conta já foi ativada', already_registered: true }, { status: 400 });
     }
 
-    // Gera username baseado no CPF (primeiros 10 dígitos ou email)
+    // Gera username baseado no email ou CPF
     const username = associate.email ? associate.email.split('@')[0] : cpf.slice(0, 10);
 
-    // Invoca função para criar usuário direto com role de associado
-    const createUserResponse = await base44.asServiceRole.functions.invoke('createDirectUser', {
-      username,
+    // Verificar se username já existe
+    const existingUsers = await base44.asServiceRole.entities.DirectUser.filter({ username });
+    const finalUsername = existingUsers.length > 0 ? `${username}_${cpf.slice(-4)}` : username;
+
+    // Gera hash da senha
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    // Cria DirectUser diretamente usando service role (sem precisar de admin logado)
+    const newDirectUser = await base44.asServiceRole.entities.DirectUser.create({
+      username: finalUsername,
+      email: associate.email || `${finalUsername}@boldlife.local`,
       cpf,
-      password,
-      role: 'associate',
-      associate_id: associate.id
+      password_hash: hashHex,
+      role: 'user',
+      is_active: true
     });
 
-    if (createUserResponse.data?.success) {
-      return Response.json({
-        success: true,
-        user: {
-          id: associate.id,
-          email: associate.email,
-          full_name: associate.full_name,
-          role: 'user',
-          cpf
-        }
-      });
-    } else {
-      return Response.json({ 
-        error: createUserResponse.data?.error || 'Erro ao criar acesso' 
-      }, { status: 400 });
-    }
+    // Atualiza associate com user_id do DirectUser
+    await base44.asServiceRole.entities.Associate.update(associate.id, {
+      user_id: newDirectUser.id
+    });
+
+    return Response.json({
+      success: true,
+      user: {
+        id: newDirectUser.id,
+        username: finalUsername,
+        email: associate.email,
+        full_name: associate.full_name,
+        role: 'user',
+        cpf
+      }
+    });
   } catch (error) {
     console.error('Create first access user error:', error);
     return Response.json({ error: error.message }, { status: 500 });
