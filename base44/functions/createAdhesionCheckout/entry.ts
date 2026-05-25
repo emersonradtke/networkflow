@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
       handle: 'boldlife',
       order_nsu: `ADES-${associate_id}`,
       items: [{
-        description: adhesionDesc,
+        description: adhesionDesc.slice(0, 128),
         price: Math.round(adhesionPrice * 100),
         quantity: 1,
       }],
