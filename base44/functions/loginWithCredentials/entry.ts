@@ -10,16 +10,22 @@ Deno.serve(async (req) => {
 
     const base44 = createClientFromRequest(req);
     
-    // Buscar usuário direto na base sem autenticação
+    // Buscar usuário direto na base sem autenticação - busca por username
     let users = [];
     try {
-      users = await base44.asServiceRole.entities.DirectUser.list();
+      users = await base44.asServiceRole.entities.DirectUser.filter({ username });
     } catch (e) {
-      console.error('Error listing users:', e);
-      return Response.json({ error: 'Erro ao validar usuário' }, { status: 500 });
+      console.error('Error filtering users by username:', e);
+      // Fallback: tenta buscar por CPF se username falhar
+      try {
+        users = await base44.asServiceRole.entities.DirectUser.filter({ cpf: username });
+      } catch (e2) {
+        console.error('Error filtering users by cpf:', e2);
+        return Response.json({ error: 'Erro ao validar usuário' }, { status: 500 });
+      }
     }
     
-    const user = users.find(u => u.username === username);
+    const user = users[0];
     
     if (!user) {
       return Response.json({ error: 'Usuário ou senha inválidos' }, { status: 401 });

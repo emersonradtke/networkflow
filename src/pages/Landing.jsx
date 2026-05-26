@@ -142,9 +142,9 @@ export default function Landing() {
       console.log('CPF validation response:', response.data);
       
       if (response.data?.already_registered) {
-        // Usuário já tem senha cadastrada - verificar ANTES de success
-        setError(response.data?.error || 'Já existe uma senha para este CPF');
-        setFirstAccessStep('already_registered');
+        // Usuário já tem senha cadastrada - direcionar para login normal
+        setLoginMode('regular');
+        setError('Este CPF já possui senha cadastrada. Faça login com seu usuário e senha.');
         setLoading(false);
       } else if (response.data?.success) {
         setValidatedCpf(cpf.replace(/\D/g, ''));

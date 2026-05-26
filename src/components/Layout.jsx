@@ -39,20 +39,14 @@ export default function Layout() {
         const directUser = JSON.parse(directUserData);
         setUser(directUser);
         
-        // Buscar Associate pelo email do DirectUser
+        // Buscar Associate pelo id do DirectUser (user_id)
         try {
-          const associates = await base44.entities.Associate.filter({ email: directUser.email });
-          if (associates.length > 0) {
-            setAssociate(associates[0]);
-            // Buscar notificações do Associate
-            const notifs = await base44.entities.Notification.filter({ 
-              associate_id: associates[0].id, 
-              is_read: false 
-            });
-            setUnreadCount(notifs.length);
+          const res = await base44.functions.invoke('getAssociateByDirectUserId', { direct_user_id: directUser.id });
+          if (res.data?.associate) {
+            setAssociate(res.data.associate);
           }
         } catch (assocErr) {
-          console.warn('Failed to load associate for legacy user:', assocErr);
+          console.warn('Failed to load associate for direct user:', assocErr);
         }
       }
     }
@@ -135,7 +129,7 @@ export default function Layout() {
         </div>
         <button
           className="flex items-center gap-2 text-slate-400 hover:text-red-500 text-sm transition-colors w-full"
-          onClick={() => base44.auth.logout()}
+          onClick={() => { sessionStorage.removeItem('directUser'); base44.auth.logout('/'); }}
         >
           <LogOut size={14} /> Sair
         </button>
