@@ -22,18 +22,6 @@ Deno.serve(async (req) => {
 
     const associate = associates[0];
 
-    // Verifica se já foi ativado
-    if (associate.user_id) {
-      return Response.json({ error: 'Esta conta já foi ativada', already_registered: true }, { status: 400 });
-    }
-
-    // Gera username baseado no email ou CPF
-    const username = associate.email ? associate.email.split('@')[0] : cpf.slice(0, 10);
-
-    // Verificar se username já existe
-    const existingUsers = await base44.asServiceRole.entities.DirectUser.filter({ username });
-    const finalUsername = existingUsers.length > 0 ? `${username}_${cpf.slice(-4)}` : username;
-
     // Gera hash da senha
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
@@ -41,29 +29,51 @@ Deno.serve(async (req) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // Cria DirectUser diretamente usando service role (sem precisar de admin logado)
-    const newDirectUser = await base44.asServiceRole.entities.DirectUser.create({
-      username: finalUsername,
-      email: associate.email || `${finalUsername}@boldlife.local`,
-      cpf,
-      password_hash: hashHex,
-      role: 'user',
-      is_active: true
-    });
+    // Verifica se já existe um DirectUser para este CPF
+    const existingDirectUsers = await base44.asServiceRole.entities.DirectUser.filter({ cpf });
 
-    // Atualiza associate com user_id do DirectUser
-    await base44.asServiceRole.entities.Associate.update(associate.id, {
-      user_id: newDirectUser.id
-    });
+    let directUser;
+
+    if (existingDirectUsers.length > 0) {
+      // Já existe — apenas atualiza a senha e garante role correto
+      directUser = existingDirectUsers[0];
+      await base44.asServiceRole.entities.DirectUser.update(directUser.id, {
+        password_hash: hashHex,
+        role: 'associate',
+        is_active: true
+      });
+      directUser = { ...directUser, password_hash: hashHex, role: 'associate' };
+    } else {
+      // Não existe — cria novo DirectUser
+      const username = associate.email ? associate.email.split('@')[0] : cpf.slice(0, 10);
+
+      // Verifica se username já está em uso
+      const existingByUsername = await base44.asServiceRole.entities.DirectUser.filter({ username });
+      const finalUsername = existingByUsername.length > 0 ? `${username}_${cpf.slice(-4)}` : username;
+
+      directUser = await base44.asServiceRole.entities.DirectUser.create({
+        username: finalUsername,
+        email: associate.email || `${finalUsername}@boldlife.local`,
+        cpf,
+        password_hash: hashHex,
+        role: 'associate',
+        is_active: true
+      });
+
+      // Vincula o DirectUser ao Associate
+      await base44.asServiceRole.entities.Associate.update(associate.id, {
+        user_id: directUser.id
+      });
+    }
 
     return Response.json({
       success: true,
       user: {
-        id: newDirectUser.id,
-        username: finalUsername,
+        id: directUser.id,
+        username: directUser.username,
         email: associate.email,
         full_name: associate.full_name,
-        role: 'user',
+        role: 'associate',
         cpf
       }
     });

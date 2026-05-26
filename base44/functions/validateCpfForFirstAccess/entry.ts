@@ -18,16 +18,8 @@ Deno.serve(async (req) => {
 
     const associate = associates[0];
 
-    // Verifica se já tem usuário criado
-    if (associate.user_id) {
-      return Response.json({ 
-        success: false,
-        already_registered: true,
-        error: 'Já existe uma senha cadastrada para este CPF. Use a recuperação de senha.' 
-      }, { status: 400 });
-    }
-
-    // CPF válido e associado existe
+    // CPF válido — pode prosseguir para definir senha
+    // (não importa se já tem user_id — o createFirstAccessUser vai criar ou atualizar)
     return Response.json({ success: true, associate_id: associate.id });
   } catch (error) {
     console.error('CPF validation error:', error);
