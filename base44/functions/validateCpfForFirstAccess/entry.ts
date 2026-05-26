@@ -16,11 +16,18 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'CPF não encontrado no sistema' }, { status: 404 });
     }
 
-    const associate = associates[0];
+    // Verifica se já existe DirectUser com senha cadastrada
+    const existingDirectUsers = await base44.asServiceRole.entities.DirectUser.filter({ cpf });
 
-    // CPF válido — pode prosseguir para definir senha
-    // (não importa se já tem user_id — o createFirstAccessUser vai criar ou atualizar)
-    return Response.json({ success: true, associate_id: associate.id });
+    if (existingDirectUsers.length > 0 && existingDirectUsers[0].password_hash) {
+      return Response.json({ 
+        success: false,
+        already_registered: true
+      });
+    }
+
+    // CPF válido e sem senha cadastrada — pode prosseguir para definir senha
+    return Response.json({ success: true, associate_id: associates[0].id });
   } catch (error) {
     console.error('CPF validation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
