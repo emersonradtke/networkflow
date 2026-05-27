@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ROLE_CONFIG } from '@/lib/roles-config';
 
 const AVAILABLE_PERMISSIONS = [
   'all',
@@ -43,28 +42,17 @@ export default function RolePermissionManager() {
   const loadRoles = async () => {
     setLoading(true);
     try {
-      // Carregar roles customizados da entidade
-      const customRoles = await base44.entities.Role.list('-created_date', 100);
+      const allRoles = await base44.entities.Role.list('-created_date', 100);
       
-      // Converter ROLE_CONFIG para formato de role
-      const systemRoles = Object.entries(ROLE_CONFIG).map(([key, config]) => ({
-        id: `system_${key}`,
-        name: key,
-        label: config.label,
-        description: config.description || '',
-        color: config.color || 'bg-blue-100 text-blue-800',
-        permissions: config.permissions || [],
-        is_system: true
-      }));
+      // Deduplicar por name — manter apenas o primeiro encontrado por nome
+      const seen = new Set();
+      const uniqueRoles = allRoles.filter(r => {
+        if (seen.has(r.name)) return false;
+        seen.add(r.name);
+        return true;
+      });
 
-      // Combinar roles do sistema com customizados (customizados sobrescrevem sistema)
-      const customRoleNames = new Set(customRoles.map(r => r.name));
-      const allRoles = [
-        ...systemRoles.filter(r => !customRoleNames.has(r.name)),
-        ...customRoles
-      ];
-
-      setRoles(allRoles);
+      setRoles(uniqueRoles);
     } catch (error) {
       console.error('Erro ao carregar roles:', error);
       toast.error('Erro ao carregar roles');

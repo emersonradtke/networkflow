@@ -40,8 +40,15 @@ export default function UserManagement() {
     try {
       const userList = await base44.entities.DirectUser.list();
       setUsers(userList);
-      const roleList = await base44.entities.Role.list();
-      setRoles(roleList);
+      const allRoles = await base44.entities.Role.list();
+      // Deduplicar por name
+      const seen = new Set();
+      const uniqueRoles = allRoles.filter(r => {
+        if (seen.has(r.name)) return false;
+        seen.add(r.name);
+        return true;
+      });
+      setRoles(uniqueRoles);
     } catch (err) {
       console.error('Erro ao carregar dados', err);
     }
