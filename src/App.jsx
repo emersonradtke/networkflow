@@ -127,11 +127,11 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <TermsCheckWrapper>
-          <Router>
+        <Router>
+          <TermsCheckWrapper>
             <AuthenticatedApp />
-          </Router>
-        </TermsCheckWrapper>
+          </TermsCheckWrapper>
+        </Router>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

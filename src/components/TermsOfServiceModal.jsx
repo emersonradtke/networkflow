@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import ReactMarkdown from 'react-markdown';
-import { AlertCircle } from 'lucide-react';
+import { ScrollText, Shield } from 'lucide-react';
 
 export default function TermsOfServiceModal({ open, onAccept, user }) {
   const [pendingTerms, setPendingTerms] = useState([]);
@@ -15,10 +15,10 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
   const [accepting, setAccepting] = useState(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && user) {
       fetchPendingTerms();
     }
-  }, [open]);
+  }, [open, user]);
 
   const fetchPendingTerms = async () => {
     try {
@@ -36,22 +36,22 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
   };
 
   const currentTerm = pendingTerms[currentIndex];
+  const isLast = currentIndex + 1 >= pendingTerms.length;
+  const typeLabel = (type) => type === 'privacy_policy' ? 'Política de Privacidade' : 'Termos de Serviço';
+  const TypeIcon = currentTerm?.term_type === 'privacy_policy' ? Shield : ScrollText;
 
   const handleAcceptCurrent = async () => {
     if (!currentTerm) return;
 
     try {
       setAccepting(true);
-      console.log(`[TERMS LOG] User accepted: ${currentTerm.title} (v${currentTerm.version || 1}) - Type: ${currentTerm.term_type} - Time: ${new Date().toISOString()}`);
-      
       await base44.functions.invoke('acceptTerms', {
         terms_id: currentTerm.id,
         terms_version: currentTerm.version || 1
       });
 
-      const nextIndex = currentIndex + 1;
-      if (nextIndex < pendingTerms.length) {
-        setCurrentIndex(nextIndex);
+      if (!isLast) {
+        setCurrentIndex(currentIndex + 1);
         setAgreed(false);
       } else {
         onAccept();
@@ -63,71 +63,75 @@ export default function TermsOfServiceModal({ open, onAccept, user }) {
     }
   };
 
-  const typeLabel = (type) => type === 'privacy_policy' ? 'Política de Privacidade' : 'Termos de Serviço';
-
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        onAccept();
-      }
-    }}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+    // onOpenChange intencional sem handler: modal não pode ser fechado sem aceitar
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent
+        className="max-w-2xl max-h-[85vh] flex flex-col"
+        // Remove o X de fechar do Radix UI
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
-          <DialogTitle>
-            {currentTerm?.title || 'Termos de Serviço'}
-          </DialogTitle>
-          <DialogDescription>
+          <div className="flex items-center gap-2 mb-1">
+            <TypeIcon className="w-5 h-5 text-primary" />
+            <DialogTitle>
+              {currentTerm?.title || 'Termos de Serviço'}
+            </DialogTitle>
+          </div>
+          <DialogDescription className="flex items-center gap-2">
             {currentTerm ? `${typeLabel(currentTerm.term_type)} — Versão ${currentTerm.version || 1}` : ''}
             {pendingTerms.length > 1 && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                ({currentIndex + 1} de {pendingTerms.length})
+              <span className="ml-1 text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                {currentIndex + 1} de {pendingTerms.length}
               </span>
             )}
           </DialogDescription>
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-12">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : currentTerm ? (
-          <div className="flex-1 overflow-y-auto">
-            <div className="prose prose-sm max-w-none mb-6">
-              <ReactMarkdown>{currentTerm.content}</ReactMarkdown>
+          <>
+            <div className="flex-1 overflow-y-auto border rounded-lg p-4 bg-muted/30 min-h-0">
+              <div className="prose prose-sm max-w-none">
+                <ReactMarkdown>{currentTerm.content}</ReactMarkdown>
+              </div>
             </div>
 
-            <div className="border-t pt-6">
+            <div className="border-t pt-4 space-y-4">
               <div className="flex items-start gap-3">
                 <Checkbox
                   id="agree-terms"
                   checked={agreed}
                   onCheckedChange={setAgreed}
-                  className="mt-1"
+                  className="mt-0.5"
                 />
-                <Label htmlFor="agree-terms" className="cursor-pointer text-sm">
+                <Label htmlFor="agree-terms" className="cursor-pointer text-sm leading-snug">
                   Li e concordo com {currentTerm.term_type === 'privacy_policy' ? 'a Política de Privacidade' : 'os Termos de Serviço'} acima
                 </Label>
               </div>
+
+              <Button
+                onClick={handleAcceptCurrent}
+                disabled={accepting || !agreed}
+                className="w-full font-semibold"
+              >
+                {accepting ? 'Salvando...' : isLast ? 'Aceitar e Continuar' : 'Aceitar e Ver Próximo'}
+              </Button>
+
+              <p className="text-xs text-muted-foreground text-center">
+                É necessário aceitar todos os termos para utilizar o aplicativo.
+              </p>
             </div>
-          </div>
+          </>
         ) : (
-          <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-yellow-700">Nenhum termo pendente encontrado.</p>
+          <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+            Nenhum termo pendente.
           </div>
         )}
-
-        <div className="flex gap-3 justify-end pt-6 border-t">
-          <Button
-            onClick={handleAcceptCurrent}
-            disabled={accepting || !currentTerm}
-            className="bg-primary hover:bg-primary/90"
-          >
-            {accepting ? 'Aceitando...' : (
-              currentIndex + 1 < pendingTerms.length ? 'Aceitar e Continuar' : 'Aceitar e Entrar'
-            )}
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );

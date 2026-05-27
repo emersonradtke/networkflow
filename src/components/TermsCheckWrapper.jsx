@@ -6,39 +6,42 @@ import TermsOfServiceModal from './TermsOfServiceModal';
 export default function TermsCheckWrapper({ children }) {
   const { user, isAuthenticated, isLoadingAuth } = useAuth();
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [termsLoaded, setTermsLoaded] = useState(false);
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && user && !isLoadingAuth && !termsLoaded) {
+    if (isAuthenticated && user && !isLoadingAuth && !checked) {
       checkTermsStatus();
     }
-  }, [isAuthenticated, user, isLoadingAuth, termsLoaded]);
+    // Se deslogar, resetar para checar novamente no próximo login
+    if (!isAuthenticated && !isLoadingAuth) {
+      setChecked(false);
+      setShowTermsModal(false);
+    }
+  }, [isAuthenticated, user, isLoadingAuth, checked]);
 
   const checkTermsStatus = async () => {
     try {
-      const response = await base44.functions.invoke('checkUserTermsStatus', { user_id: user.id });
-      // Se houver termos ativos e o usuário não aceitou esta versão, mostra modal
+      // Usa o id do usuário (Base44 nativo ou DirectUser)
+      const userId = user.id;
+      const response = await base44.functions.invoke('checkUserTermsStatus', { user_id: userId });
       if (response.data?.needs_acceptance) {
         setShowTermsModal(true);
-      } else {
-        setShowTermsModal(false);
       }
-      setTermsLoaded(true);
     } catch (error) {
       console.error('Erro ao verificar termos:', error);
-      setTermsLoaded(true);
+    } finally {
+      setChecked(true);
     }
   };
 
   const handleAcceptTerms = () => {
     setShowTermsModal(false);
-    setTermsLoaded(true); // Mantém como carregado - todos os termos já foram aceitos
   };
 
   return (
     <>
       {children}
-      {user && (
+      {user && showTermsModal && (
         <TermsOfServiceModal
           open={showTermsModal}
           onAccept={handleAcceptTerms}
