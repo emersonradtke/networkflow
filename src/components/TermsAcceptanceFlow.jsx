@@ -151,31 +151,31 @@ export default function TermsAcceptanceFlow({ pendingTerms, userId, onComplete }
         terms_version: term.version || 1,
         user_id: userId
       });
-
-      const newAccepted = new Set(acceptedIds);
-      newAccepted.add(term.id);
-      setAcceptedIds(newAccepted);
-
-      // Verificar se ainda há pendentes
-      const stillPending = pendingTerms.filter(t => !newAccepted.has(t.id));
-      if (stillPending.length === 0) {
-        onComplete();
-        return;
-      }
-
-      // Ir para o próximo pendente ou volta para lista
-      const nextPendingIndex = pendingTerms.findIndex(t => !newAccepted.has(t.id));
-      if (nextPendingIndex >= 0) {
-        setSelectedIndex(nextPendingIndex);
-        // Se só resta 1, vai direto; senão vai para lista
-        if (stillPending.length > 1) {
-          setView('list');
-        }
-      }
     } catch (error) {
       console.error('Erro ao aceitar termo:', error);
+      // Não bloqueia o fluxo — continua marcando como aceito localmente
     } finally {
       setAccepting(false);
+    }
+
+    const newAccepted = new Set(acceptedIds);
+    newAccepted.add(term.id);
+    setAcceptedIds(newAccepted);
+
+    // Verificar se ainda há pendentes
+    const stillPending = pendingTerms.filter(t => !newAccepted.has(t.id));
+    if (stillPending.length === 0) {
+      onComplete();
+      return;
+    }
+
+    // Ir para o próximo pendente ou volta para lista
+    const nextPendingIndex = pendingTerms.findIndex(t => !newAccepted.has(t.id));
+    if (nextPendingIndex >= 0) {
+      setSelectedIndex(nextPendingIndex);
+      if (stillPending.length > 1) {
+        setView('list');
+      }
     }
   };
 
