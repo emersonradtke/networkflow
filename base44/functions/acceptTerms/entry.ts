@@ -5,27 +5,53 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
 
-    const { terms_id, terms_version } = await req.json();
+    const body = await req.json();
+    const { terms_id, terms_version, user_id } = body;
 
     if (!terms_id || !terms_version) {
       return Response.json({ error: 'Missing terms_id or terms_version' }, { status: 400 });
     }
 
-    // Registrar aceite do termo (se autenticado)
-    if (user && user.email) {
-      try {
-        await base44.asServiceRole.entities.UserTermsAcceptance.create({
-          user_id: user.id || user.email,
-          user_email: user.email,
-          terms_id: terms_id,
-          terms_version: terms_version,
-          accepted_at: new Date().toISOString()
-        });
-      } catch (acceptError) {
-        console.error('Error creating acceptance record:', acceptError);
-        // Não falhar se não conseguir registrar, apenas log
-      }
+    // Determinar user_id (usuário autenticado ou DirectUser)
+    const effectiveUserId = user?.id || user_id;
+    const effectiveEmail = user?.email || '';
+
+    if (!effectiveUserId) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Buscar dados do termo para snapshot
+    const term = await base44.asServiceRole.entities.TermsOfService.filter({ id: terms_id });
+    const termData = term[0] || null;
+
+    // Extrair dados de auditoria do request
+    const ipAddress = req.headers.get('x-forwarded-for') ||
+      req.headers.get('x-real-ip') ||
+      req.headers.get('cf-connecting-ip') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+
+    // Detectar tipo de dispositivo pelo user agent
+    let deviceType = 'desktop';
+    const ua = userAgent.toLowerCase();
+    if (/mobile|android|iphone|ipod/.test(ua)) deviceType = 'mobile';
+    else if (/tablet|ipad/.test(ua)) deviceType = 'tablet';
+
+    // Gerar session ID único
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    await base44.asServiceRole.entities.UserTermsAcceptance.create({
+      user_id: effectiveUserId,
+      user_email: effectiveEmail,
+      terms_id: terms_id,
+      terms_version: terms_version,
+      terms_title: termData?.title || '',
+      terms_category: termData?.category || termData?.term_type || '',
+      accepted_at: new Date().toISOString(),
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      device_type: deviceType,
+      session_id: sessionId
+    });
 
     return Response.json({ success: true });
   } catch (error) {

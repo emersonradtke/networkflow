@@ -9,42 +9,40 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    // Obter todos os termos ativos
-    const activeTerms = await base44.asServiceRole.entities.TermsOfService.filter({ is_active: true });
+    // Buscar todos os documentos obrigatórios e ativos
+    const allTerms = await base44.asServiceRole.entities.TermsOfService.list('-created_date', 200);
+    // is_mandatory: undefined/null/true => obrigatório. Só false == não obrigatório.
+    const mandatoryActive = allTerms.filter(t =>
+      t.is_active === true && t.is_mandatory !== false
+    );
 
-    if (activeTerms.length === 0) {
-      return Response.json({ needs_acceptance: false });
+    if (mandatoryActive.length === 0) {
+      return Response.json({ needs_acceptance: false, pending_terms: [] });
     }
 
-    // Separar por tipo
-    const tos = activeTerms.find(t => (t.term_type || 'terms_of_service') === 'terms_of_service');
-    const pp = activeTerms.find(t => t.term_type === 'privacy_policy');
-
-    // Verificar aceites do usuário para cada tipo
+    // Para cada documento obrigatório ativo, verificar se o usuário já aceitou a versão atual
     const pendingTerms = [];
 
-    for (const term of [tos, pp].filter(Boolean)) {
+    for (const term of mandatoryActive) {
       const acceptances = await base44.asServiceRole.entities.UserTermsAcceptance.filter({
         user_id: user_id,
         terms_id: term.id,
         terms_version: term.version
       });
+
       if (acceptances.length === 0) {
         pendingTerms.push(term);
       }
     }
 
-    const needsAcceptance = pendingTerms.length > 0;
-
     return Response.json({
-      needs_acceptance: needsAcceptance,
-      current_terms: tos || null,
-      current_privacy: pp || null,
+      needs_acceptance: pendingTerms.length > 0,
       pending_terms: pendingTerms,
-      last_acceptance: null
+      total_mandatory: mandatoryActive.length,
+      total_pending: pendingTerms.length
     });
   } catch (error) {
     console.error('Error checking terms status:', error);
-    return Response.json({ needs_acceptance: false }, { status: 200 });
+    return Response.json({ needs_acceptance: false, pending_terms: [] }, { status: 200 });
   }
 });

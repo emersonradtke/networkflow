@@ -16,12 +16,36 @@
     },
     "terms_version": {
       "type": "number",
-      "description": "Vers\u00e3o numerada do termo aceito"
+      "description": "Vers\u00e3o do termo aceita"
+    },
+    "terms_title": {
+      "type": "string",
+      "description": "T\u00edtulo do documento aceito (snapshot)"
+    },
+    "terms_category": {
+      "type": "string",
+      "description": "Categoria do documento aceito (snapshot)"
     },
     "accepted_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Data e hora de aceite"
+      "description": "Data e hora do aceite"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP do usu\u00e1rio no momento do aceite"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "User-Agent do navegador"
+    },
+    "device_type": {
+      "type": "string",
+      "description": "Tipo de dispositivo (desktop, mobile, tablet)"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Identificador da sess\u00e3o"
     }
   },
   "required": [

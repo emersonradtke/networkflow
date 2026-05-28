@@ -26,7 +26,7 @@ import Layout from './components/Layout';
 
 // Components
 import RoleRedirect from './components/RoleRedirect';
-import TermsCheckWrapper from './components/TermsCheckWrapper';
+import TermsCheckWrapper from './components/TermsCheckWrapper.jsx';
 
 // User Pages
 import Landing from './pages/Landing';
