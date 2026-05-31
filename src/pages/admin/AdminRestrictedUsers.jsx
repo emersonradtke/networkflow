@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { UserPlus, Trash2, Shield, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,7 @@ const ALL_PAGES = [
 const emptyForm = { email: '', role: ROLES.EMPLOYEE };
 
 export default function AdminRestrictedUsers() {
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -47,13 +49,12 @@ export default function AdminRestrictedUsers() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user?.id]);
 
   const load = async () => {
-    // Buscar usuários não-admin e não-associate
-    const all = await base44.entities.User.list();
-    const restricted = all.filter(u => u.role && u.role !== 'admin' && u.role !== 'associate');
-    setUsers(restricted);
+    if (!user?.id) return;
+    const res = await base44.functions.invoke('getRestrictedUsers', { user_id: user.id });
+    setUsers(res.data?.users || []);
     setLoading(false);
   };
 
