@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Users, ChevronDown, ChevronRight, Crown, TrendingUp, ShoppingBag, CheckCircle, XCircle, Clock, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import NetworkOrgChart from '@/components/NetworkOrgChart';
 
 export default function Network() {
   const { associate } = useOutletContext();
@@ -187,7 +188,13 @@ export default function Network() {
       </div>
 
       {/* Toggle view */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => setView('orgchart')}
+          className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${view === 'orgchart' ? 'gold-gradient text-background' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
+        >
+          Organograma
+        </button>
         <button
           onClick={() => setView('tree')}
           className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${view === 'tree' ? 'gold-gradient text-background' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
@@ -201,6 +208,15 @@ export default function Network() {
           Lista Detalhada
         </button>
       </div>
+
+      {/* Organograma */}
+      {view === 'orgchart' && (
+        <NetworkOrgChart
+          associate={associate}
+          network={network}
+          maxLevel={config?.max_levels || 5}
+        />
+      )}
 
       {/* Árvore */}
       {view === 'tree' && (
