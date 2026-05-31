@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
     const allTerms = await base44.asServiceRole.entities.TermsOfService.list('-created_date', 200);
     // is_mandatory: undefined/null/true => obrigatório. Só false == não obrigatório.
     const mandatoryActive = allTerms.filter(t =>
-      t.is_active === true && t.is_mandatory !== false
+      t.is_active !== false && t.is_mandatory !== false
     );
 
     if (mandatoryActive.length === 0) {
@@ -23,14 +23,14 @@ Deno.serve(async (req) => {
     // Para cada documento obrigatório ativo, verificar se o usuário já aceitou a versão atual
     const pendingTerms = [];
 
-    for (const term of mandatoryActive) {
-      const acceptances = await base44.asServiceRole.entities.UserTermsAcceptance.filter({
-        user_id: user_id,
-        terms_id: term.id,
-        terms_version: term.version
-      });
+    // Buscar todas as aceitações do usuário de uma vez
+    const allAcceptances = await base44.asServiceRole.entities.UserTermsAcceptance.filter({ user_id: user_id }, '-created_date', 500);
 
-      if (acceptances.length === 0) {
+    for (const term of mandatoryActive) {
+      const hasAccepted = allAcceptances.some(a =>
+        a.terms_id === term.id && Number(a.terms_version) === Number(term.version)
+      );
+      if (!hasAccepted) {
         pendingTerms.push(term);
       }
     }

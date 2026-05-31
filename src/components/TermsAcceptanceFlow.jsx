@@ -78,7 +78,7 @@ function PendingList({ pendingTerms, onSelectTerm, acceptedIds }) {
 }
 
 // Tela: leitura e aceite de um documento
-function DocumentReader({ term, onAccept, onBack, accepting, isLast }) {
+function DocumentReader({ term, onAccept, onBack, accepting, isLast, error }) {
   const [agreed, setAgreed] = useState(false);
   const meta = getCategoryMeta(term);
   const Icon = meta.icon;
@@ -116,6 +116,9 @@ function DocumentReader({ term, onAccept, onBack, accepting, isLast }) {
           </Label>
         </div>
 
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
+        )}
         <Button
           onClick={() => onAccept(term)}
           disabled={accepting || !agreed}
@@ -143,39 +146,42 @@ export default function TermsAcceptanceFlow({ pendingTerms, userId, onComplete }
     setView('document');
   };
 
+  const [acceptError, setAcceptError] = useState('');
+
   const handleAccept = async (term) => {
     setAccepting(true);
+    setAcceptError('');
     try {
       await base44.functions.invoke('acceptTerms', {
         terms_id: term.id,
         terms_version: term.version || 1,
         user_id: userId
       });
+
+      const newAccepted = new Set(acceptedIds);
+      newAccepted.add(term.id);
+      setAcceptedIds(newAccepted);
+
+      // Verificar se ainda há pendentes
+      const stillPending = pendingTerms.filter(t => !newAccepted.has(t.id));
+      if (stillPending.length === 0) {
+        onComplete();
+        return;
+      }
+
+      // Ir para o próximo pendente ou volta para lista
+      const nextPendingIndex = pendingTerms.findIndex(t => !newAccepted.has(t.id));
+      if (nextPendingIndex >= 0) {
+        setSelectedIndex(nextPendingIndex);
+        if (stillPending.length > 1) {
+          setView('list');
+        }
+      }
     } catch (error) {
       console.error('Erro ao aceitar termo:', error);
-      // Não bloqueia o fluxo — continua marcando como aceito localmente
+      setAcceptError('Erro ao registrar aceite. Tente novamente.');
     } finally {
       setAccepting(false);
-    }
-
-    const newAccepted = new Set(acceptedIds);
-    newAccepted.add(term.id);
-    setAcceptedIds(newAccepted);
-
-    // Verificar se ainda há pendentes
-    const stillPending = pendingTerms.filter(t => !newAccepted.has(t.id));
-    if (stillPending.length === 0) {
-      onComplete();
-      return;
-    }
-
-    // Ir para o próximo pendente ou volta para lista
-    const nextPendingIndex = pendingTerms.findIndex(t => !newAccepted.has(t.id));
-    if (nextPendingIndex >= 0) {
-      setSelectedIndex(nextPendingIndex);
-      if (stillPending.length > 1) {
-        setView('list');
-      }
     }
   };
 
@@ -228,6 +234,7 @@ export default function TermsAcceptanceFlow({ pendingTerms, userId, onComplete }
               onBack={() => setView('list')}
               accepting={accepting}
               isLast={isLastPending}
+              error={acceptError}
             />
           ) : null}
         </div>

@@ -36,6 +36,7 @@ export default function TermsCheckWrapper({ children }) {
 
   const handleComplete = () => {
     setPendingTerms([]);
+    setChecked(true);
   };
 
   // Enquanto carrega a verificação, não bloquear (loading state do auth já cuida disso)
