@@ -30,7 +30,15 @@ export default function BankData() {
     loadAssociate(outletAssociate);
   }, [outletAssociate]);
 
-  const handleUpdate = () => loadAssociate(outletAssociate);
+  const handleUpdate = async () => {
+    // Recarrega direto do banco para pegar dados atualizados
+    if (associate?.id) {
+      const fresh = await base44.entities.Associate.filter({ id: associate.id });
+      if (fresh.length > 0) setAssociate(fresh[0]);
+    } else {
+      loadAssociate(outletAssociate);
+    }
+  };
 
   if (!associate) return null;
 

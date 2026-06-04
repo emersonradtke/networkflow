@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -121,15 +122,29 @@ export default function BankDataSection({ associate, onUpdate }) {
   const currentPixValue = resolvedPixValue;
 
   const handleSave = async () => {
-    if (!associate?.id) {
+    if (!associate?.id && !associate?.cpf && !associate?.email) {
       toast({ title: 'Erro', description: 'Cadastro não identificado. Saia e entre novamente.', variant: 'destructive' });
       return;
     }
     setSaving(true);
     try {
-      await base44.entities.Associate.update(associate.id, form);
-      toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
-      onUpdate && onUpdate();
+      const resp = await fetch(`/functions/saveBankData`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          associate_id: associate.id || null,
+          cpf: associate.cpf || null,
+          email: associate.email || null,
+          bankData: form,
+        }),
+      });
+      const result = await resp.json();
+      if (result?.error) {
+        toast({ title: 'Erro ao salvar', description: result.error, variant: 'destructive' });
+      } else {
+        toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
+        onUpdate && onUpdate();
+      }
     } catch (err) {
       toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
     }
