@@ -3,16 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user_id } = await req.json();
-
-    if (!user_id) {
-      return Response.json({ error: 'user_id required' }, { status: 400 });
-    }
+    const user = await base44.auth.me();
 
     // Verificar se o solicitante é admin
-    const callerList = await base44.asServiceRole.entities.DirectUser.filter({ id: user_id });
-    const caller = callerList[0];
-    if (!caller || caller.role !== 'admin') {
+    if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
