@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Settings, Save, Plus, Minus, LayoutGrid, Gift } from 'lucide-react';
+import { Settings, Save, Plus, Minus, LayoutGrid, Gift, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,9 @@ export default function AdminSettings() {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [reorganizing, setReorganizing] = useState(false);
+  const [originalLevels, setOriginalLevels] = useState(null);
+  const [levelChanged, setLevelChanged] = useState(false);
 
   useEffect(() => { loadConfig(); }, []);
 
@@ -36,6 +39,7 @@ export default function AdminSettings() {
     if (configs.length > 0) {
       setConfig(configs[0]);
       setForm({ ...form, ...configs[0] });
+      setOriginalLevels(configs[0].max_levels || 5);
     }
   };
 
@@ -49,6 +53,10 @@ export default function AdminSettings() {
     }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+    if (originalLevels !== null && form.max_levels !== originalLevels) {
+      setLevelChanged(true);
+    }
+    setOriginalLevels(form.max_levels);
     loadConfig();
     setSaving(false);
   };
@@ -175,9 +183,34 @@ export default function AdminSettings() {
           <Textarea className="bg-secondary border-border text-foreground resize-none" rows={4} placeholder="Mensagem exibida para novos associados após o cadastro..." value={form.welcome_message} onChange={e => setForm({...form, welcome_message: e.target.value})} />
         </div>
 
-        <Button type="submit" disabled={saving} className="gold-gradient text-background font-bold gap-2 px-8">
-          <Save size={16} /> {saved ? 'Salvo!' : saving ? 'Salvando...' : 'Salvar Configurações'}
-        </Button>
+        <div className="flex items-center gap-4 flex-wrap">
+          <Button type="submit" disabled={saving} className="gold-gradient text-background font-bold gap-2 px-8">
+            <Save size={16} /> {saved ? 'Salvo!' : saving ? 'Salvando...' : 'Salvar Configurações'}
+          </Button>
+          {levelChanged && (
+            <div className="flex items-center gap-3 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-xl">
+              <p className="text-xs text-yellow-800">Nível alterado — recalcule os níveis da rede para aplicar a mudança.</p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={reorganizing}
+                className="gap-1.5 border-yellow-400 text-yellow-800 hover:bg-yellow-100"
+                onClick={async () => {
+                  setReorganizing(true);
+                  try {
+                    await base44.functions.invoke('reorganizeNetwork', { action: 'recalc_all_levels' });
+                    setLevelChanged(false);
+                  } catch (e) { console.error(e); }
+                  setReorganizing(false);
+                }}
+              >
+                <RefreshCw size={13} className={reorganizing ? 'animate-spin' : ''} />
+                {reorganizing ? 'Reorganizando...' : 'Reorganizar Rede'}
+              </Button>
+            </div>
+          )}
+        </div>
       </form>
         </TabsContent>
 
