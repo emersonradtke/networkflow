@@ -110,19 +110,21 @@ export default function AdminAssociates() {
   };
 
   const openEdit = (a) => {
-    setEditForm({
-      full_name: a.full_name || '',
-      email: a.email || '',
-      phone: a.phone ? maskPhone(a.phone) : '',
-      cpf: a.cpf ? maskCPF(a.cpf) : '',
-      pix_key: a.pix_key || '',
-      address: a.address || '',
-      city: a.city || '',
-      state: a.state || '',
-      status: a.status || 'pending',
-    });
-    setErrors({});
-    setEditAssociate(a);
+   setEditForm({
+     full_name: a.full_name || '',
+     email: a.email || '',
+     phone: a.phone ? maskPhone(a.phone) : '',
+     cpf: a.cpf ? maskCPF(a.cpf) : '',
+     cnpj: a.cnpj || '',
+     person_type: a.person_type || 'pf',
+     pix_key: a.pix_key || '',
+     address: a.address || '',
+     city: a.city || '',
+     state: a.state || '',
+     status: a.status || 'pending',
+   });
+   setErrors({});
+   setEditAssociate(a);
   };
 
   const saveEdit = async (e) => {
@@ -300,16 +302,28 @@ export default function AdminAssociates() {
                 />
                 {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
               </div>
-              <div>
-                <Label>CPF</Label>
-                <Input
-                  className={`mt-1.5 ${errors.cpf ? 'border-red-400' : ''}`}
-                  value={editForm.cpf || ''}
-                  placeholder="000.000.000-00"
-                  onChange={e => setEditForm(f => ({...f, cpf: maskCPF(e.target.value)}))}
-                />
-                {errors.cpf && <p className="text-xs text-red-500 mt-1">{errors.cpf}</p>}
-              </div>
+              {editForm.person_type === 'pf' ? (
+                <div>
+                  <Label>CPF</Label>
+                  <Input
+                    className={`mt-1.5 ${errors.cpf ? 'border-red-400' : ''}`}
+                    value={editForm.cpf || ''}
+                    placeholder="000.000.000-00"
+                    disabled
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">CPF não pode ser alterado.</p>
+                </div>
+              ) : (
+                <div>
+                  <Label>CNPJ</Label>
+                  <Input
+                    className="mt-1.5"
+                    value={editForm.cnpj || ''}
+                    disabled
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">CNPJ não pode ser alterado.</p>
+                </div>
+              )}
               <div className="col-span-2">
                 <Label>Chave Pix</Label>
                 <Input className="mt-1.5" placeholder="CPF, email, telefone ou chave aleatória" value={editForm.pix_key || ''} onChange={e => setEditForm(f => ({...f, pix_key: e.target.value}))} />
