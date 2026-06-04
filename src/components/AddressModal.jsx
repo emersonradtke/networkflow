@@ -31,6 +31,21 @@ function AddressFields({ prefix, data, onChange, label, onSearchCep, loadingCep 
         <MapPin size={14} className="text-primary" /> {label}
       </p>
       <div className="grid grid-cols-3 gap-2">
+        <div className="relative">
+          <Label className="text-xs">CEP</Label>
+          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={handleCepChange} disabled={loadingCep} />
+          {loadingCep && <Loader size={14} className="absolute right-3 top-7 animate-spin text-primary" />}
+        </div>
+        <div>
+          <Label className="text-xs">Cidade</Label>
+          <Input className="mt-1" placeholder="São Paulo" value={data[`${prefix}_city`] || ''} onChange={e => onChange(`${prefix}_city`, e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Estado (UF)</Label>
+          <Input className="mt-1" placeholder="SP" maxLength={2} value={data[`${prefix}_state`] || ''} onChange={e => onChange(`${prefix}_state`, e.target.value.toUpperCase())} />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
         <div className="col-span-2">
           <Label className="text-xs">Rua / Logradouro</Label>
           <Input className="mt-1" placeholder="Rua das Flores" value={data[`${prefix}_street`] || ''} onChange={e => onChange(`${prefix}_street`, e.target.value)} />
@@ -48,21 +63,6 @@ function AddressFields({ prefix, data, onChange, label, onSearchCep, loadingCep 
         <div>
           <Label className="text-xs">Bairro</Label>
           <Input className="mt-1" placeholder="Centro" value={data[`${prefix}_neighborhood`] || ''} onChange={e => onChange(`${prefix}_neighborhood`, e.target.value)} />
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="relative">
-          <Label className="text-xs">CEP</Label>
-          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={handleCepChange} disabled={loadingCep} />
-          {loadingCep && <Loader size={14} className="absolute right-3 top-7 animate-spin text-primary" />}
-        </div>
-        <div>
-          <Label className="text-xs">Cidade</Label>
-          <Input className="mt-1" placeholder="São Paulo" value={data[`${prefix}_city`] || ''} onChange={e => onChange(`${prefix}_city`, e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs">Estado (UF)</Label>
-          <Input className="mt-1" placeholder="SP" maxLength={2} value={data[`${prefix}_state`] || ''} onChange={e => onChange(`${prefix}_state`, e.target.value.toUpperCase())} />
         </div>
       </div>
     </div>
