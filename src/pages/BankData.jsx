@@ -5,24 +5,38 @@ import BankDataSection from '@/components/BankDataSection';
 
 export default function BankData() {
   const { associate: outletAssociate } = useOutletContext();
-  const [associate, setAssociate] = useState(outletAssociate);
+  const [associate, setAssociate] = useState(null);
 
-  // Se o associate do outlet não tem id (DirectUser legado), buscar pelo CPF
-  useEffect(() => {
-    if (outletAssociate && !outletAssociate.id && outletAssociate.cpf) {
-      base44.entities.Associate.filter({ cpf: outletAssociate.cpf }).then(res => {
-        if (res.length > 0) setAssociate(res[0]);
-      });
-    } else {
-      setAssociate(outletAssociate);
+  const loadAssociate = async (src) => {
+    if (!src) return;
+    // Se já tem id, usa direto
+    if (src.id) {
+      setAssociate(src);
+      return;
     }
+    // DirectUser legado: buscar por CPF ou email
+    let found = [];
+    if (src.cpf) found = await base44.entities.Associate.filter({ cpf: src.cpf });
+    if (!found.length && src.email) found = await base44.entities.Associate.filter({ email: src.email });
+    if (found.length > 0) {
+      setAssociate(found[0]);
+    } else {
+      // Fallback: usar o objeto original mesmo sem id
+      setAssociate(src);
+    }
+  };
+
+  useEffect(() => {
+    loadAssociate(outletAssociate);
   }, [outletAssociate]);
+
+  const handleUpdate = () => loadAssociate(outletAssociate);
 
   if (!associate) return null;
 
   return (
     <div className="max-w-xl mx-auto">
-      <BankDataSection associate={associate} onUpdate={() => {}} />
+      <BankDataSection associate={associate} onUpdate={handleUpdate} />
     </div>
   );
 }
