@@ -31,9 +31,17 @@ export default function BankData() {
   }, [outletAssociate]);
 
   const handleUpdate = (savedData) => {
-    // Atualiza o associate local com os dados recém salvos, sem ir ao banco
-    if (savedData) {
-      setAssociate(prev => ({ ...prev, ...savedData }));
+    if (!savedData) return;
+    // Atualiza o associate local
+    setAssociate(prev => ({ ...prev, ...savedData }));
+    // Atualiza o sessionStorage para DirectUser legado
+    const directUserData = sessionStorage.getItem('directUser');
+    if (directUserData) {
+      const directUser = JSON.parse(directUserData);
+      if (directUser._associate) {
+        directUser._associate = { ...directUser._associate, ...savedData };
+        sessionStorage.setItem('directUser', JSON.stringify(directUser));
+      }
     }
   };
 
