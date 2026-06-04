@@ -175,7 +175,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
               )}
             </div>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0 items-center">
             <Button 
               onClick={() => setShowModal(true)}
               className="bg-primary hover:bg-primary/90 font-bold gap-2"
@@ -186,10 +186,11 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
             <Button 
               onClick={handleRemoveCard}
               disabled={requestLoading}
-              variant="outline"
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              Remover
+              size="sm"
+              variant="ghost"
+              className="text-xs text-muted-foreground hover:text-foreground"
+           >
+              Não Tenho
             </Button>
           </div>
         </div>
