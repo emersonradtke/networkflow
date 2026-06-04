@@ -3,21 +3,27 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { cpf } = await req.json();
+    const { cpf, person_type } = await req.json();
 
-    if (!cpf || cpf.length !== 11) {
-      return Response.json({ error: 'CPF inválido' }, { status: 400 });
+    const isPf = person_type === 'pf' || !person_type;
+    const document = cpf;
+    const docType = isPf ? 'CPF' : 'CNPJ';
+    const docLength = isPf ? 11 : 14;
+
+    if (!document || document.length !== docLength) {
+      return Response.json({ error: `${docType} inválido` }, { status: 400 });
     }
 
-    // Busca associado pelo CPF
-    const associates = await base44.asServiceRole.entities.Associate.filter({ cpf });
+    // Busca associado pelo CPF ou CNPJ
+    const searchKey = isPf ? { cpf: document } : { cnpj: document };
+    const associates = await base44.asServiceRole.entities.Associate.filter(searchKey);
     
     if (!associates || associates.length === 0) {
-      return Response.json({ error: 'CPF não encontrado no sistema' }, { status: 404 });
+      return Response.json({ error: `${docType} não encontrado no sistema` }, { status: 404 });
     }
 
     // Verifica se já existe DirectUser com senha cadastrada
-    const existingDirectUsers = await base44.asServiceRole.entities.DirectUser.filter({ cpf });
+    const existingDirectUsers = await base44.asServiceRole.entities.DirectUser.filter({ cpf: document });
 
     if (existingDirectUsers.length > 0 && existingDirectUsers[0].password_hash) {
       return Response.json({ 
@@ -26,10 +32,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // CPF válido e sem senha cadastrada — pode prosseguir para definir senha
+    // Documento válido e sem senha cadastrada — pode prosseguir para definir senha
     return Response.json({ success: true, associate_id: associates[0].id });
   } catch (error) {
-    console.error('CPF validation error:', error);
+    console.error('Document validation error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
