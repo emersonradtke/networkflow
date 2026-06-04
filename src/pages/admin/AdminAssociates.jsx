@@ -52,18 +52,7 @@ export default function AdminAssociates() {
   const [errors, setErrors] = useState({});
   const [placingAssociate, setPlacingAssociate] = useState(null);
 
-  useEffect(() => {
-    loadAssociates();
-    
-    // Subscribe para atualizar em tempo real quando pagamento é confirmado
-    const unsubscribe = base44.entities.Associate.subscribe((event) => {
-      if (event.type === 'update' && event.data?.status === 'active' && event.data?.adhesion_paid) {
-        loadAssociates();
-      }
-    });
-    
-    return unsubscribe;
-  }, []);
+  useEffect(() => { loadAssociates(); }, []);
 
   const loadAssociates = async () => {
     const data = await base44.entities.Associate.list('-created_date');
