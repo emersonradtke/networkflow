@@ -9,7 +9,7 @@ import { add } from 'date-fns';
 export default function SubscriptionPaymentModal({ isOpen, onClose, associate, onSuccess, networkConfig }) {
   const [step, setStep] = useState('confirm'); // confirm, processing, success
   const [loading, setLoading] = useState(false);
-  const subscriptionPrice = networkConfig?.adhesion_price || 0;
+  const subscriptionPrice = networkConfig?.adhesion_price;
 
   const handlePayment = async () => {
     setLoading(true);
@@ -97,7 +97,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
                 <Button variant="outline" onClick={onClose} className="flex-1">
                   Cancelar
                 </Button>
-                <Button onClick={handlePayment} disabled={loading} className="flex-1 bg-primary">
+                <Button onClick={handlePayment} disabled={loading || !subscriptionPrice} className="flex-1 bg-primary">
                   {loading ? (
                     <>
                       <Loader2 size={16} className="mr-2 animate-spin" />
