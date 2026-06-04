@@ -6,9 +6,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { add } from 'date-fns';
 
-export default function SubscriptionPaymentModal({ isOpen, onClose, associate, onSuccess }) {
+export default function SubscriptionPaymentModal({ isOpen, onClose, associate, onSuccess, networkConfig }) {
   const [step, setStep] = useState('confirm'); // confirm, processing, success
   const [loading, setLoading] = useState(false);
+  const subscriptionPrice = networkConfig?.adhesion_price || 0;
 
   const handlePayment = async () => {
     setLoading(true);
@@ -18,7 +19,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
       const response = await base44.functions.invoke('createInfinitePayCheckout', {
         associate_id: associate.id,
         type: 'subscription',
-        amount: 99.90 // valor da assinatura
+        amount: subscriptionPrice
       });
 
       if (response.data?.checkout_url) {
@@ -71,7 +72,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Valor da assinatura:</span>
-                      <span className="font-semibold">R$ 99,90</span>
+                      <span className="font-semibold">R$ {subscriptionPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Período:</span>
@@ -79,7 +80,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
                     </div>
                     <div className="border-t pt-2 mt-2 flex justify-between">
                       <span className="font-semibold">Total:</span>
-                      <span className="font-bold text-lg">R$ 99,90</span>
+                      <span className="font-bold text-lg">R$ {subscriptionPrice.toFixed(2)}</span>
                     </div>
                   </div>
                 </CardContent>

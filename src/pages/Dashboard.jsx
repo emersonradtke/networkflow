@@ -171,6 +171,7 @@ export default function Dashboard() {
             isOpen={showSubscriptionModal}
             onClose={() => setShowSubscriptionModal(false)}
             associate={associate}
+            networkConfig={networkConfig}
             onSuccess={loadData}
           />
         </div>
