@@ -11,7 +11,7 @@ import MyOrders from '@/components/MyOrders';
 import PendingPlacements from '@/components/PendingPlacements';
 import AddressModal from '@/components/AddressModal';
 import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
-
+import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
 import BoldLifeCardSection from '@/components/BoldLifeCardSection';
 
 export default function Dashboard() {
@@ -21,7 +21,7 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
-
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [networkConfig, setNetworkConfig] = useState(null);
   const [freshStatus, setFreshStatus] = useState(null);
@@ -152,10 +152,28 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Payment Button */}
+          <Button 
+            onClick={() => setShowSubscriptionModal(true)}
+            className="w-full font-bold text-white text-base py-6"
+            style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+          >
+            <CreditCard size={18} className="mr-2" />
+            Pagar Adesão — R$ {networkConfig.adhesion_price?.toFixed(2)}
+          </Button>
+
           {/* Alternative Link */}
           <Link to="/wallet" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-            Pagar Adesão — R$ {networkConfig.adhesion_price?.toFixed(2)} → Ir para o Painel
+            Pagar depois → Ir para o Painel
           </Link>
+
+          <SubscriptionPaymentModal
+            isOpen={showSubscriptionModal}
+            onClose={() => setShowSubscriptionModal(false)}
+            associate={associate}
+            networkConfig={networkConfig}
+            onSuccess={loadData}
+          />
         </div>
       </div>
     );
