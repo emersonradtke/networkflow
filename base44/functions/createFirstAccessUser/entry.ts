@@ -3,18 +3,20 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { cpf, password } = await req.json();
+    const { cpf, password, person_type } = await req.json();
 
     if (!cpf || !password) {
-      return Response.json({ error: 'CPF e senha são obrigatórios' }, { status: 400 });
+      return Response.json({ error: 'Documento e senha são obrigatórios' }, { status: 400 });
     }
 
     if (password.length < 6) {
       return Response.json({ error: 'Senha deve ter pelo menos 6 caracteres' }, { status: 400 });
     }
 
-    // Busca associado pelo CPF
-    const associates = await base44.asServiceRole.entities.Associate.filter({ cpf });
+    // Busca associado pelo CPF ou CNPJ
+    const isPf = person_type === 'pf' || !person_type;
+    const searchKey = isPf ? { cpf } : { cnpj: cpf };
+    const associates = await base44.asServiceRole.entities.Associate.filter(searchKey);
     
     if (!associates || associates.length === 0) {
       return Response.json({ error: 'Associado não encontrado' }, { status: 404 });
