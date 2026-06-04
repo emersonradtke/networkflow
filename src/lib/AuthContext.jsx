@@ -94,57 +94,44 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
       setIsLoadingAuth(true);
       
-      // PRIORITY 1: Try Base44 native auth first
+      // PRIORITY 1: Verificar DirectUser legado PRIMEIRO (rápido, sem chamada de rede)
+      const directUserData = sessionStorage.getItem('directUser');
+      if (directUserData) {
+        const directUser = JSON.parse(directUserData);
+        setUser(directUser);
+        if (directUser._associate) setAssociate(directUser._associate);
+        setIsAuthenticated(true);
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+        return;
+      }
+      
+      // PRIORITY 2: Tentar Base44 nativo
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         setIsAuthenticated(true);
         
-        // Apply pending user setups (role assignment, associate linking)
-        try {
-          await base44.functions.invoke('applyAllPendingSetups', {});
-        } catch (setupError) {
-          console.warn('Failed to apply pending setups:', setupError);
-        }
+        try { await base44.functions.invoke('applyAllPendingSetups', {}); } catch {}
         
-        // Carregar Associate vinculado (se existir)
         try {
           const res = await base44.functions.invoke('getAssociateByUserId', {});
-          if (res.data?.associate) {
-            setAssociate(res.data.associate);
-          }
-        } catch (assocError) {
-          console.warn('Failed to load associate:', assocError);
-        }
+          if (res.data?.associate) setAssociate(res.data.associate);
+        } catch {}
         
         setIsLoadingAuth(false);
         setAuthChecked(true);
         return;
-      } catch (nativeAuthError) {
-        // Continues to PRIORITY 2
-      }
+      } catch {}
       
-      // PRIORITY 2: Fall back to legacy DirectUser (for migration period)
-      const directUserData = sessionStorage.getItem('directUser');
-      if (directUserData) {
-        const directUser = JSON.parse(directUserData);
-        setUser(directUser);
-        setIsAuthenticated(true);
-        setIsLoadingAuth(false);
-        setAuthChecked(true);
-        return;
-      }
-      
-      // No auth found
+      // Sem auth
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
       
     } catch (error) {
-      console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);

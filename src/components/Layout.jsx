@@ -22,29 +22,35 @@ export default function Layout() {
   useEffect(() => { loadUser(); }, []);
 
   const loadUser = async () => {
+    // PRIORITY 1: DirectUser legado (rápido, sem esperar timeout de rede)
+    const directUserData = sessionStorage.getItem('directUser');
+    if (directUserData) {
+      const directUser = JSON.parse(directUserData);
+      setUser(directUser);
+      if (directUser._associate) {
+        setAssociate(directUser._associate);
+        // Carregar notificações pelo associate
+        try {
+          const notifs = await base44.entities.Notification.filter({ associate_id: directUser._associate.id, is_read: false });
+          setUnreadCount(notifs.length);
+        } catch {}
+      }
+      return;
+    }
+
+    // PRIORITY 2: Base44 nativo
     try {
-      // Tenta Base44 nativo primeiro
       const me = await base44.auth.me();
       setUser(me);
       if (me) {
         const associates = await base44.entities.Associate.filter({ user_id: me.id });
-        if (associates.length > 0) setAssociate(associates[0]);
-        const notifs = await base44.entities.Notification.filter({ associate_id: me.id, is_read: false });
-        setUnreadCount(notifs.length);
-      }
-    } catch (err) {
-      // Fallback para DirectUser legado
-      const directUserData = sessionStorage.getItem('directUser');
-      if (directUserData) {
-        const directUser = JSON.parse(directUserData);
-        setUser(directUser);
-        
-        // Usar associate pré-carregado no login se disponível
-        if (directUser._associate) {
-          setAssociate(directUser._associate);
+        if (associates.length > 0) {
+          setAssociate(associates[0]);
+          const notifs = await base44.entities.Notification.filter({ associate_id: associates[0].id, is_read: false });
+          setUnreadCount(notifs.length);
         }
       }
-    }
+    } catch {}
   };
 
   const iconMap = {
