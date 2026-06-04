@@ -16,12 +16,15 @@ export default function Landing() {
   const { isAuthenticated, isLoadingAuth, isLoadingPublicSettings, checkUserAuth } = useAuth();
   const [loginMode, setLoginMode] = useState(null); // 'regular' ou 'firstAccess'
   const [firstAccessStep, setFirstAccessStep] = useState('cpf'); // 'cpf' ou 'password'
+  const [personType, setPersonType] = useState('pf'); // 'pf' ou 'pj'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [cpf, setCpf] = useState('');
+  const [cnpj, setCnpj] = useState('');
   const [validatedCpf, setValidatedCpf] = useState(null);
+  const [validatedCnpj, setValidatedCnpj] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -90,6 +93,14 @@ export default function Landing() {
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   };
 
+  const maskCNPJ = (v) => {
+    const d = v.replace(/\D/g, '').slice(0, 14);
+    return d
+      .replace(/(\d{2})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
+
   const handleLoginClick = () => {
     setLoginMode('regular');
     setError('');
@@ -140,26 +151,34 @@ export default function Landing() {
     setError('');
 
     try {
-      // Valida se CPF existe no sistema
-      const response = await base44.functions.invoke('validateCpfForFirstAccess', { cpf: cpf.replace(/\D/g, '') });
+      const document = personType === 'pf' ? cpf.replace(/\D/g, '') : cnpj.replace(/\D/g, '');
       
-      console.log('CPF validation response:', response.data);
+      // Valida se CPF/CNPJ existe no sistema
+      const response = await base44.functions.invoke('validateCpfForFirstAccess', { 
+        cpf: document,
+        person_type: personType
+      });
+      
+      console.log('Document validation response:', response.data);
       
       if (response.data?.already_registered) {
-        // Usuário já tem senha cadastrada - mostrar aviso e direcionar para login
         setFirstAccessStep('already_registered');
         setLoading(false);
       } else if (response.data?.success) {
-        setValidatedCpf(cpf.replace(/\D/g, ''));
+        if (personType === 'pf') {
+          setValidatedCpf(document);
+        } else {
+          setValidatedCnpj(document);
+        }
         setFirstAccessStep('password');
         setLoading(false);
       } else {
-        setError(response.data?.error || 'CPF não encontrado ou já ativado');
+        setError(response.data?.error || `${personType === 'pf' ? 'CPF' : 'CNPJ'} não encontrado ou já ativado`);
         setLoading(false);
       }
     } catch (err) {
-      console.error('CPF validation error:', err);
-      setError('Erro ao validar CPF');
+      console.error('Document validation error:', err);
+      setError(`Erro ao validar ${personType === 'pf' ? 'CPF' : 'CNPJ'}`);
       setLoading(false);
     }
   };
@@ -182,10 +201,11 @@ export default function Landing() {
     }
 
     try {
-      // Cria usuário com a nova senha usando CPF
+      // Cria usuário com a nova senha usando CPF ou CNPJ
       const response = await base44.functions.invoke('createFirstAccessUser', { 
-        cpf: validatedCpf, 
-        password: newPassword 
+        cpf: validatedCpf || validatedCnpj, 
+        password: newPassword,
+        person_type: personType
       });
       
       if (response.data?.success && response.data?.user) {
@@ -319,58 +339,109 @@ export default function Landing() {
             <>
               {firstAccessStep === 'cpf' ? (
                 <form onSubmit={handleFirstAccessCpfSubmit} className="space-y-4">
-                  {error && (
-                    <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
-                      <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-red-700">{error}</p>
-                    </div>
-                  )}
+                   {error && (
+                     <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>
+                       <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+                       <p className="text-sm text-red-700">{error}</p>
+                     </div>
+                   )}
 
-                  {adhesionPaid && (
-                    <div className="rounded-lg p-3 bg-green-50 border border-green-200 flex items-start gap-2">
-                      <Sparkles size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-green-700 font-medium">🎉 Pagamento confirmado! Agora ative seu acesso com seu CPF.</p>
-                    </div>
-                  )}
+                   {adhesionPaid && (
+                     <div className="rounded-lg p-3 bg-green-50 border border-green-200 flex items-start gap-2">
+                       <Sparkles size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
+                       <p className="text-xs text-green-700 font-medium">🎉 Pagamento confirmado! Agora ative seu acesso.</p>
+                     </div>
+                   )}
                    <div className="rounded-lg p-3 bg-blue-50 border border-blue-200 flex items-start gap-2">
-                    <Sparkles size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-700">Informe seu CPF para validar sua conta</p>
-                  </div>
+                     <Sparkles size={16} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                     <p className="text-xs text-blue-700">Selecione seu tipo de pessoa e informe o documento para validar sua conta</p>
+                   </div>
 
-                  <div>
-                    <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>CPF</Label>
-                    <Input
-                      type="text"
-                      placeholder="000.000.000-00"
-                      value={cpf}
-                      onChange={(e) => setCpf(maskCPF(e.target.value))}
-                      className="mt-1.5 border-slate-200"
-                      required
-                    />
-                  </div>
+                   <div className="flex gap-3">
+                     <label className="flex items-center gap-2 flex-1 p-3 border-2 rounded-lg cursor-pointer transition-all" style={{ borderColor: personType === 'pf' ? '#3B9EE2' : '#e2e8f0', background: personType === 'pf' ? '#f0f9ff' : 'transparent' }}>
+                       <input
+                         type="radio"
+                         name="person_type"
+                         value="pf"
+                         checked={personType === 'pf'}
+                         onChange={(e) => {
+                           setPersonType(e.target.value);
+                           setCpf('');
+                           setCnpj('');
+                           setError('');
+                         }}
+                         className="w-4 h-4"
+                       />
+                       <span className="text-sm font-semibold" style={{ color: personType === 'pf' ? '#1B2A5E' : '#64748b' }}>Pessoa Física</span>
+                     </label>
+                     <label className="flex items-center gap-2 flex-1 p-3 border-2 rounded-lg cursor-pointer transition-all" style={{ borderColor: personType === 'pj' ? '#3B9EE2' : '#e2e8f0', background: personType === 'pj' ? '#f0f9ff' : 'transparent' }}>
+                       <input
+                         type="radio"
+                         name="person_type"
+                         value="pj"
+                         checked={personType === 'pj'}
+                         onChange={(e) => {
+                           setPersonType(e.target.value);
+                           setCpf('');
+                           setCnpj('');
+                           setError('');
+                         }}
+                         className="w-4 h-4"
+                       />
+                       <span className="text-sm font-semibold" style={{ color: personType === 'pj' ? '#1B2A5E' : '#64748b' }}>Pessoa Jurídica</span>
+                     </label>
+                   </div>
 
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full font-bold text-white text-base py-6 mt-2"
-                    style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
-                  >
-                    {loading ? 'Validando...' : <>Continuar</>}
-                  </Button>
+                   {personType === 'pf' ? (
+                     <div>
+                       <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>CPF</Label>
+                       <Input
+                         type="text"
+                         placeholder="000.000.000-00"
+                         value={cpf}
+                         onChange={(e) => setCpf(maskCPF(e.target.value))}
+                         className="mt-1.5 border-slate-200"
+                         required
+                       />
+                     </div>
+                   ) : (
+                     <div>
+                       <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>CNPJ</Label>
+                       <Input
+                         type="text"
+                         placeholder="00.000.000/0000-00"
+                         value={cnpj}
+                         onChange={(e) => setCnpj(maskCNPJ(e.target.value))}
+                         className="mt-1.5 border-slate-200"
+                         required
+                       />
+                     </div>
+                   )}
 
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      setLoginMode(null);
-                      setError('');
-                      setCpf('');
-                    }}
-                    variant="ghost"
-                    className="w-full text-slate-500"
-                  >
-                    Voltar
-                  </Button>
-                </form>
+                   <Button
+                     type="submit"
+                     disabled={loading || (personType === 'pf' ? !cpf : !cnpj)}
+                     className="w-full font-bold text-white text-base py-6 mt-2"
+                     style={{ background: (loading || (personType === 'pf' ? !cpf : !cnpj)) ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+                   >
+                     {loading ? 'Validando...' : <>Continuar</>}
+                   </Button>
+
+                   <Button
+                     type="button"
+                     onClick={() => {
+                       setLoginMode(null);
+                       setError('');
+                       setCpf('');
+                       setCnpj('');
+                       setPersonType('pf');
+                     }}
+                     variant="ghost"
+                     className="w-full text-slate-500"
+                   >
+                     Voltar
+                   </Button>
+                 </form>
               ) : firstAccessStep === 'already_registered' ? (
                 <div className="space-y-4">
                   {error && (
@@ -384,7 +455,7 @@ export default function Landing() {
                     <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-semibold text-amber-900 mb-2">Conta já ativada</p>
-                      <p className="text-xs text-amber-800">Este CPF já possui uma senha cadastrada. Se você esqueceu sua senha, utilize a opção de recuperação.</p>
+                      <p className="text-xs text-amber-800">Este documento já possui uma senha cadastrada. Se você esqueceu sua senha, utilize a opção de recuperação.</p>
                     </div>
                   </div>
 
@@ -421,7 +492,7 @@ export default function Landing() {
 
                   <div className="rounded-lg p-3 bg-green-50 border border-green-200 flex items-start gap-2">
                     <Sparkles size={16} className="text-green-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-green-700">CPF validado! Agora crie sua senha de acesso</p>
+                    <p className="text-xs text-green-700">{personType === 'pf' ? 'CPF' : 'CNPJ'} validado! Agora crie sua senha de acesso</p>
                   </div>
 
                   <div>
