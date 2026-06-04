@@ -79,6 +79,16 @@ export default function ProfileDataSection({ associate }) {
         <p className="text-sm text-muted-foreground mt-1">Visualize e atualize suas informações pessoais.</p>
       </div>
 
+      {/* Documento */}
+      <div className="dark-card rounded-2xl p-5 space-y-2">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">
+          {form.person_type === 'pf' ? 'CPF' : 'CNPJ'}
+        </p>
+        <p className="text-2xl font-black text-foreground">
+          {form.person_type === 'pf' ? form.cpf : form.cnpj}
+        </p>
+      </div>
+
       {/* Informações Pessoais */}
       <div className="dark-card rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
