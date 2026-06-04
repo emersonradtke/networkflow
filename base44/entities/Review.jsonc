@@ -4,18 +4,19 @@
   "properties": {
     "order_id": {
       "type": "string",
-      "description": "ID do pedido avaliado"
+      "description": "FK \u2192 Order"
     },
     "associate_id": {
       "type": "string",
-      "description": "ID do associado que fez a avalia\u00e7\u00e3o"
+      "description": "FK \u2192 Associate (quem fez a avalia\u00e7\u00e3o)"
     },
     "product_id": {
       "type": "string",
-      "description": "ID do produto avaliado"
+      "description": "FK \u2192 Product"
     },
     "product_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "rating": {
       "type": "number",

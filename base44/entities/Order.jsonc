@@ -4,23 +4,27 @@
   "properties": {
     "order_number": {
       "type": "number",
-      "description": "N\u00famero incremental do pedido"
+      "description": "N\u00famero incremental do pedido (\u00fanico)"
     },
     "cart_id": {
       "type": "string",
       "description": "ID do carrinho \u2014 agrupa itens do mesmo checkout"
     },
     "associate_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 Associate"
     },
     "associate_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "product_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 Product"
     },
     "product_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "product_type": {
       "type": "string",
@@ -67,10 +71,12 @@
       "type": "string"
     },
     "shipping_method_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 ShippingMethod"
     },
     "shipping_method_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "shipping_cost": {
       "type": "number",

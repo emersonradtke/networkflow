@@ -3,7 +3,8 @@
   "type": "object",
   "properties": {
     "associate_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 Associate"
     },
     "title": {
       "type": "string"

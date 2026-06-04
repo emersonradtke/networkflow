@@ -4,10 +4,7 @@
   "properties": {
     "associate_id": {
       "type": "string",
-      "description": "ID do associado"
-    },
-    "associate_name": {
-      "type": "string"
+      "description": "FK \u2192 Associate"
     },
     "month": {
       "type": "string",

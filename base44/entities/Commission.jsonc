@@ -3,27 +3,32 @@
   "type": "object",
   "properties": {
     "order_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 Order"
     },
     "beneficiary_id": {
       "type": "string",
-      "description": "ID do associado que recebe a comiss\u00e3o"
+      "description": "FK \u2192 Associate (quem recebe a comiss\u00e3o)"
     },
     "beneficiary_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "originator_id": {
       "type": "string",
-      "description": "ID do associado que gerou a venda"
+      "description": "FK \u2192 Associate (quem gerou a venda)"
     },
     "originator_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "product_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 Product"
     },
     "product_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "network_level": {
       "type": "number",

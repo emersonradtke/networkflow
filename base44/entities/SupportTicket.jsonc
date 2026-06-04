@@ -4,19 +4,18 @@
   "properties": {
     "order_id": {
       "type": "string",
-      "description": "ID do pedido relacionado"
+      "description": "FK \u2192 Order (relacionado ao pedido)"
     },
     "order_number": {
       "type": "number"
     },
     "associate_id": {
-      "type": "string"
-    },
-    "associate_name": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 Associate"
     },
     "product_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome do produto"
     },
     "type": {
       "type": "string",

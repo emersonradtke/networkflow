@@ -4,7 +4,7 @@
   "properties": {
     "associate_id": {
       "type": "string",
-      "description": "ID do associado"
+      "description": "FK \u2192 Associate"
     },
     "status": {
       "type": "string",

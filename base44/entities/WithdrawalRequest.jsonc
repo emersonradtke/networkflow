@@ -3,10 +3,12 @@
   "type": "object",
   "properties": {
     "associate_id": {
-      "type": "string"
+      "type": "string",
+      "description": "FK \u2192 Associate"
     },
     "associate_name": {
-      "type": "string"
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
     },
     "amount": {
       "type": "number"

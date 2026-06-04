@@ -1,0 +1,66 @@
+{
+  "name": "AssociateAddress",
+  "type": "object",
+  "properties": {
+    "associate_id": {
+      "type": "string",
+      "description": "ID do associado"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "shipping",
+        "billing",
+        "residence"
+      ],
+      "description": "Tipo de endere\u00e7o"
+    },
+    "street": {
+      "type": "string",
+      "description": "Rua/Logradouro"
+    },
+    "number": {
+      "type": "string",
+      "description": "N\u00famero"
+    },
+    "complement": {
+      "type": "string",
+      "description": "Complemento (apto, sala, etc)"
+    },
+    "neighborhood": {
+      "type": "string",
+      "description": "Bairro"
+    },
+    "city": {
+      "type": "string",
+      "description": "Cidade"
+    },
+    "state": {
+      "type": "string",
+      "description": "Estado (UF)"
+    },
+    "zip": {
+      "type": "string",
+      "description": "CEP"
+    },
+    "is_primary": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se \u00e9 o endere\u00e7o principal"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data de cria\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "associate_id",
+    "type",
+    "street",
+    "number",
+    "city",
+    "state",
+    "zip"
+  ]
+}

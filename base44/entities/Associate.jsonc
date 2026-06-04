@@ -4,7 +4,7 @@
   "properties": {
     "user_id": {
       "type": "string",
-      "description": "ID do usu\u00e1rio vinculado"
+      "description": "ID do usu\u00e1rio vinculado (FK \u2192 User)"
     },
     "full_name": {
       "type": "string"
@@ -16,10 +16,12 @@
       "type": "string"
     },
     "cpf": {
-      "type": "string"
+      "type": "string",
+      "description": "\u00danico por associado"
     },
     "cnpj": {
-      "type": "string"
+      "type": "string",
+      "description": "\u00danico para PJ"
     },
     "company_name": {
       "type": "string",
@@ -47,7 +49,7 @@
     },
     "sponsor_id": {
       "type": "string",
-      "description": "ID do associado que fez o convite"
+      "description": "FK \u2192 Associate (self-referential, sem ciclos)"
     },
     "sponsor_name": {
       "type": "string"
@@ -77,7 +79,8 @@
       "default": false
     },
     "adhesion_payment_id": {
-      "type": "string"
+      "type": "string",
+      "description": "ID do pagamento de ades\u00e3o"
     },
     "pix_key": {
       "type": "string"
@@ -131,7 +134,8 @@
       "type": "string"
     },
     "address": {
-      "type": "string"
+      "type": "string",
+      "description": "Endere\u00e7o gen\u00e9rico (legado, usar AssociateAddress)"
     },
     "city": {
       "type": "string"
@@ -141,7 +145,7 @@
     },
     "shipping_street": {
       "type": "string",
-      "description": "Endere\u00e7o de entrega - Rua"
+      "description": "Endere\u00e7o de entrega - Rua (legado, usar AssociateAddress type=shipping)"
     },
     "shipping_number": {
       "type": "string",
@@ -170,7 +174,7 @@
     },
     "billing_street": {
       "type": "string",
-      "description": "Endere\u00e7o de faturamento - Rua"
+      "description": "Endere\u00e7o de faturamento - Rua (legado, usar AssociateAddress type=billing)"
     },
     "billing_number": {
       "type": "string"
