@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, Building2, Key, AlertCircle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { CheckCircle, Building2, Key, ChevronsUpDown, Check } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
-// Tabela FEBRABAN — principais bancos do Brasil
 const BANKS = [
   { code: '001', name: 'Banco do Brasil' },
   { code: '033', name: 'Santander' },
@@ -16,7 +18,6 @@ const BANKS = [
   { code: '077', name: 'Banco Inter' },
   { code: '084', name: 'Uniprime' },
   { code: '085', name: 'Cooperativa Central de Crédito - AILOS' },
-  { code: '094', name: 'Banco Finaxis' },
   { code: '097', name: 'Credisis' },
   { code: '099', name: 'Uniprime Norte do Paraná' },
   { code: '104', name: 'Caixa Econômica Federal' },
@@ -27,7 +28,6 @@ const BANKS = [
   { code: '212', name: 'Banco Original' },
   { code: '218', name: 'BS2' },
   { code: '237', name: 'Bradesco' },
-  { code: '246', name: 'Banco ABC Brasil' },
   { code: '260', name: 'Nu Pagamentos (Nubank)' },
   { code: '290', name: 'PagBank (PagSeguro)' },
   { code: '318', name: 'BMG' },
@@ -39,21 +39,14 @@ const BANKS = [
   { code: '389', name: 'Banco Mercantil do Brasil' },
   { code: '422', name: 'Banco Safra' },
   { code: '505', name: 'Credit Suisse' },
-  { code: '604', name: 'Industrial do Brasil' },
-  { code: '611', name: 'Banco Paulista' },
   { code: '623', name: 'Banco Pan' },
   { code: '633', name: 'Banco Rendimento' },
-  { code: '634', name: 'Banco Triângulo' },
   { code: '637', name: 'Sofisa Direto' },
-  { code: '641', name: 'Banco Alvorada' },
   { code: '655', name: 'Votorantim' },
   { code: '707', name: 'Daycoval' },
   { code: '735', name: 'Neon' },
-  { code: '739', name: 'Cetelem' },
-  { code: '745', name: 'Citibank' },
   { code: '748', name: 'Sicredi' },
   { code: '756', name: 'Sicoob (Bancoob)' },
-  { code: '757', name: 'KEB Hana Bank' },
 ];
 
 const PIX_TYPES = [
@@ -66,7 +59,7 @@ const PIX_TYPES = [
 export default function BankDataSection({ associate, onUpdate }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
-  const [bankSearch, setBankSearch] = useState('');
+  const [bankOpen, setBankOpen] = useState(false);
   const [form, setForm] = useState({
     pix_key_type: '',
     pix_key: '',
@@ -100,39 +93,38 @@ export default function BankDataSection({ associate, onUpdate }) {
   const handleBankSelect = (code) => {
     const bank = BANKS.find(b => b.code === code);
     setForm(f => ({ ...f, bank_code: code, bank_name: bank?.name || '' }));
+    setBankOpen(false);
   };
 
-  const filteredBanks = BANKS.filter(b =>
-    b.name.toLowerCase().includes(bankSearch.toLowerCase()) ||
-    b.code.includes(bankSearch)
-  );
+  const handlePixSelect = (val) => {
+    const [type, ...keyParts] = val.split(':');
+    const key = keyParts.join(':'); // email pode conter ':'
+    setForm(f => ({ ...f, pix_key_type: type, pix_key: key }));
+  };
 
-  const validate = () => {
-    if (form.pix_key_type === 'cpf' && form.pix_key !== associate?.cpf) {
-      toast({ title: 'PIX inválido', description: 'A chave PIX CPF deve ser igual ao seu CPF cadastrado.', variant: 'destructive' });
-      return false;
-    }
-    if (form.pix_key_type === 'cnpj' && form.pix_key !== associate?.cnpj) {
-      toast({ title: 'PIX inválido', description: 'A chave PIX CNPJ deve ser igual ao seu CNPJ cadastrado.', variant: 'destructive' });
-      return false;
+  const pixOptions = [
+    associate?.cpf ? { value: `cpf:${associate.cpf}`, label: `CPF — ${associate.cpf}` } : null,
+    associate?.cnpj ? { value: `cnpj:${associate.cnpj}`, label: `CNPJ — ${associate.cnpj}` } : null,
+    associate?.email ? { value: `email:${associate.email}`, label: `E-mail — ${associate.email}` } : null,
+    associate?.phone ? { value: `phone:${associate.phone}`, label: `Telefone — ${associate.phone}` } : null,
+  ].filter(Boolean);
+
+  const currentPixValue = form.pix_key_type && form.pix_key ? `${form.pix_key_type}:${form.pix_key}` : '';
+
+  const handleSave = async () => {
+    if (form.bank_code && !form.bank_agency) {
+      toast({ title: 'Dados bancários incompletos', description: 'Informe o número da agência.', variant: 'destructive' });
+      return;
     }
     if (form.bank_code && (!form.bank_account || !form.bank_account_digit)) {
       toast({ title: 'Dados bancários incompletos', description: 'Informe a conta corrente e o dígito.', variant: 'destructive' });
-      return false;
-    }
-    if (form.bank_code && !form.bank_agency) {
-      toast({ title: 'Dados bancários incompletos', description: 'Informe o número da agência.', variant: 'destructive' });
-      return false;
+      return;
     }
     if (form.bank_code && !form.bank_account_type) {
       toast({ title: 'Dados bancários incompletos', description: 'Selecione o tipo de conta.', variant: 'destructive' });
-      return false;
+      return;
     }
-    return true;
-  };
 
-  const handleSave = async () => {
-    if (!validate()) return;
     setSaving(true);
     await base44.entities.Associate.update(associate.id, form);
     toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
@@ -183,33 +175,17 @@ export default function BankDataSection({ associate, onUpdate }) {
 
         <div className="space-y-1.5">
           <Label className="text-xs">Selecione uma chave PIX</Label>
-          <Select value={`${form.pix_key_type}:${form.pix_key}`} onValueChange={(val) => {
-            const [type, key] = val.split(':');
-            setForm(f => ({ ...f, pix_key_type: type, pix_key: key }));
-          }}>
+          <Select value={currentPixValue} onValueChange={handlePixSelect}>
             <SelectTrigger>
               <SelectValue placeholder="Selecione uma chave PIX" />
             </SelectTrigger>
             <SelectContent>
-              {associate?.person_type === 'pf' && associate?.cpf && (
-                <SelectItem value={`cpf:${associate.cpf}`}>
-                  CPF — {associate.cpf}
-                </SelectItem>
-              )}
-              {associate?.person_type === 'pj' && associate?.cnpj && (
-                <SelectItem value={`cnpj:${associate.cnpj}`}>
-                  CNPJ — {associate.cnpj}
-                </SelectItem>
-              )}
-              {associate?.email && (
-                <SelectItem value={`email:${associate.email}`}>
-                  E-mail — {associate.email}
-                </SelectItem>
-              )}
-              {associate?.phone && (
-                <SelectItem value={`phone:${associate.phone}`}>
-                  Telefone — {associate.phone}
-                </SelectItem>
+              {pixOptions.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-muted-foreground">Nenhuma chave disponível. Complete seu perfil.</div>
+              ) : (
+                pixOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))
               )}
             </SelectContent>
           </Select>
@@ -232,29 +208,48 @@ export default function BankDataSection({ associate, onUpdate }) {
           <h3 className="font-bold text-foreground text-sm">Conta Bancária</h3>
         </div>
 
-        {/* Busca e seleção do banco */}
+        {/* Banco com pesquisa dentro do popover */}
         <div className="space-y-1.5">
           <Label className="text-xs">Banco <span className="text-muted-foreground">(FEBRABAN)</span></Label>
-          <Input
-            placeholder="Pesquisar banco por nome ou código..."
-            value={bankSearch}
-            onChange={e => setBankSearch(e.target.value)}
-            className="mb-1"
-          />
-          <Select value={form.bank_code} onValueChange={handleBankSelect}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o banco">
-                {form.bank_code ? `${form.bank_code} - ${form.bank_name}` : 'Selecione o banco'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
-              {filteredBanks.map(b => (
-                <SelectItem key={b.code} value={b.code}>
-                  {b.code} — {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={bankOpen} onOpenChange={setBankOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={bankOpen}
+                className="w-full justify-between font-normal h-9 text-sm"
+              >
+                {form.bank_code
+                  ? `${form.bank_code} — ${form.bank_name}`
+                  : 'Selecione o banco...'}
+                <ChevronsUpDown size={14} className="ml-2 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" style={{ width: 'var(--radix-popover-trigger-width)' }}>
+              <Command>
+                <CommandInput placeholder="Pesquisar banco por nome ou código..." />
+                <CommandList className="max-h-56">
+                  <CommandEmpty>Banco não encontrado.</CommandEmpty>
+                  <CommandGroup>
+                    {BANKS.map(b => (
+                      <CommandItem
+                        key={b.code}
+                        value={`${b.code} ${b.name}`}
+                        onSelect={() => handleBankSelect(b.code)}
+                        className="text-sm"
+                      >
+                        <Check
+                          size={14}
+                          className={cn('mr-2 shrink-0', form.bank_code === b.code ? 'opacity-100' : 'opacity-0')}
+                        />
+                        {b.code} — {b.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Tipo de conta */}
