@@ -113,25 +113,19 @@ export default function BankDataSection({ associate, onUpdate }) {
 
   const handleSave = async () => {
     setSaving(true);
-    // Resolver o ID do associate se não vier direto (DirectUser legado)
-    let associateId = associate.id;
-    if (!associateId) {
-      const cpf = associate.cpf;
-      const email = associate.email;
-      let found = [];
-      if (cpf) found = await base44.entities.Associate.filter({ cpf });
-      if (!found.length && email) found = await base44.entities.Associate.filter({ email });
-      associateId = found[0]?.id;
-    }
-    if (!associateId) {
-      toast({ title: 'Erro', description: 'Não foi possível identificar seu cadastro. Faça login novamente.', variant: 'destructive' });
-      setSaving(false);
-      return;
-    }
+    const res = await base44.functions.invoke('saveBankData', {
+      associate_id: associate.id || null,
+      cpf: associate.cpf || null,
+      email: associate.email || null,
+      bankData: form,
+    });
 
-    await base44.entities.Associate.update(associateId, form);
-    toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
-    onUpdate && onUpdate();
+    if (res.data?.error) {
+      toast({ title: 'Erro ao salvar', description: res.data.error, variant: 'destructive' });
+    } else {
+      toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
+      onUpdate && onUpdate();
+    }
     setSaving(false);
   };
 
