@@ -28,11 +28,18 @@ export default function Layout() {
       const directUser = JSON.parse(directUserData);
       setUser(directUser);
       if (directUser._associate) {
-        setAssociate(directUser._associate);
-        // Carregar notificações pelo associate
         try {
-          const notifs = await base44.entities.Notification.filter({ associate_id: directUser._associate.id, is_read: false });
-          setUnreadCount(notifs.length);
+          // Validar que o associate ainda existe
+          const associates = await base44.entities.Associate.filter({ id: directUser._associate.id });
+          if (associates.length > 0) {
+            setAssociate(associates[0]);
+            const notifs = await base44.entities.Notification.filter({ associate_id: directUser._associate.id, is_read: false });
+            setUnreadCount(notifs.length);
+          } else {
+            // Associate foi deletado, limpar dados
+            setAssociate(null);
+            sessionStorage.removeItem('directUser');
+          }
         } catch {}
       }
       return;
@@ -48,6 +55,8 @@ export default function Layout() {
           setAssociate(associates[0]);
           const notifs = await base44.entities.Notification.filter({ associate_id: associates[0].id, is_read: false });
           setUnreadCount(notifs.length);
+        } else {
+          setAssociate(null);
         }
       }
     } catch {}
