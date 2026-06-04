@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard } from 'lucide-react';
+const LOGO_URL = 'https://res.cloudinary.com/dm5qnmz7b/image/upload/v1721593625/boldlife/logo_v2.webp';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -101,21 +102,67 @@ export default function Dashboard() {
     );
   }
 
-  if (effectiveStatus === 'awaiting_placement') {
+  if (effectiveStatus !== 'active') {
     return (
-      <div className="max-w-lg mx-auto text-center py-16">
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1B2A5E20,#3B9EE220)' }}>
-          <Users size={36} className="text-primary" />
-        </div>
-        <h2 className="text-2xl font-black text-foreground mb-2">Aguardando Colocação</h2>
-        <p className="text-muted-foreground mb-6">
-          Seu patrocinador atingiu o limite de membros diretos. O administrador está buscando uma posição para você na rede. Você será notificado assim que confirmado.
-        </p>
-        {associate.sponsor_name && (
-          <div className="dark-card rounded-xl p-4 text-left">
-            <p className="text-sm text-muted-foreground">Indicado por: <span className="font-semibold text-primary">{associate.sponsor_name}</span></p>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-8 text-center space-y-6">
+          {/* Icon */}
+          <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}>
+            <Clock size={48} className="text-white" />
           </div>
-        )}
+
+          {/* Logo */}
+          <img src={LOGO_URL} alt="Bold Life" className="h-8 w-auto object-contain mx-auto" />
+
+          {/* Title */}
+          <h1 className="text-2xl font-black text-foreground">Cadastro Realizado!</h1>
+
+          {/* Description */}
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Sua conta está <span className="text-primary font-semibold">pendente de ativação</span>. Realize o pagamento da adesão de <span className="font-bold text-foreground">R$ 99,90</span> para ter acesso completo à plataforma.
+          </p>
+
+          {/* Next Steps */}
+          <div className="bg-blue-50 border-l-4 border-primary rounded-lg p-4 text-left space-y-3">
+            <p className="text-sm font-bold text-primary">Próximos passos:</p>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="flex items-start gap-2">
+                <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                <span>Realize o pagamento da taxa de adesão</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                <span>Aguarde a confirmação do pagamento</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                <span>Acesse a loja e comece a ganhar!</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Button */}
+          <Button 
+            onClick={() => setShowSubscriptionModal(true)}
+            className="w-full font-bold text-white text-base py-6"
+            style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+          >
+            <CreditCard size={18} className="mr-2" />
+            Pagar Adesão — R$ 99,90
+          </Button>
+
+          {/* Alternative Link */}
+          <Link to="/wallet" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+            Pagar depois → Ir para o Painel
+          </Link>
+
+          <SubscriptionPaymentModal
+            isOpen={showSubscriptionModal}
+            onClose={() => setShowSubscriptionModal(false)}
+            associate={associate}
+            onSuccess={loadData}
+          />
+        </div>
       </div>
     );
   }
