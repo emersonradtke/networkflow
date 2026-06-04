@@ -46,6 +46,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Usuário ou senha inválidos' }, { status: 401 });
     }
 
+    // Buscar o associate vinculado a este DirectUser
+    let associate = null;
+    try {
+      const associates = await base44.asServiceRole.entities.Associate.filter({ user_id: user.id });
+      if (associates.length > 0) {
+        associate = associates[0];
+      }
+    } catch (assocErr) {
+      console.warn('Could not load associate:', assocErr.message);
+    }
+
     return Response.json({ 
       success: true,
       token: 'auth_token_validated',
@@ -54,7 +65,8 @@ Deno.serve(async (req) => {
         username: user.username,
         email: user.email,
         role: user.role || 'associate',
-        cpf: user.cpf
+        cpf: user.cpf,
+        _associate: associate
       }
     });
   } catch (error) {

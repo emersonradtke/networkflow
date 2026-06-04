@@ -12,8 +12,8 @@ export default function TermsCheckWrapper({ children }) {
   useEffect(() => {
     if (isLoadingAuth) return;
 
-    // Não verificar para admin
-    if (isAuthenticated && user?.role === 'admin') {
+    // Não verificar para admin ou usuários DirectUser (legado sem sessão Base44)
+    if (isAuthenticated && (user?.role === 'admin' || sessionStorage.getItem('directUser'))) {
       setChecked(true);
       return;
     }

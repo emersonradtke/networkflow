@@ -39,14 +39,9 @@ export default function Layout() {
         const directUser = JSON.parse(directUserData);
         setUser(directUser);
         
-        // Buscar Associate pelo id do DirectUser (user_id)
-        try {
-          const res = await base44.functions.invoke('getAssociateByDirectUserId', { direct_user_id: directUser.id });
-          if (res.data?.associate) {
-            setAssociate(res.data.associate);
-          }
-        } catch (assocErr) {
-          console.warn('Failed to load associate for direct user:', assocErr);
+        // Usar associate pré-carregado no login se disponível
+        if (directUser._associate) {
+          setAssociate(directUser._associate);
         }
       }
     }

@@ -113,12 +113,18 @@ export default function Landing() {
       console.log('Login response:', response.data);
       
       if (response.data?.success && response.data?.user) {
-        sessionStorage.setItem('directUser', JSON.stringify(response.data.user));
+        const userData = response.data.user;
+        sessionStorage.setItem('directUser', JSON.stringify(userData));
         console.log('User saved, triggering auth check');
         
         await checkUserAuth();
-        
-        setJustLoggedIn(true);
+
+        // Redirecionar diretamente
+        if (userData.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       } else {
         setError(response.data?.error || 'Usuário ou senha inválidos');
         setLoading(false);
@@ -193,9 +199,14 @@ export default function Landing() {
         });
 
         if (loginResponse.data?.success && loginResponse.data?.user) {
-          sessionStorage.setItem('directUser', JSON.stringify(loginResponse.data.user));
+          const loginUserData = loginResponse.data.user;
+          sessionStorage.setItem('directUser', JSON.stringify(loginUserData));
           await checkUserAuth();
-          setJustLoggedIn(true);
+          if (loginUserData.role === 'admin') {
+            navigate('/admin', { replace: true });
+          } else {
+            navigate('/dashboard', { replace: true });
+          }
         } else {
           // Mesmo sem login automático, redireciona para tela de login
           setError('Acesso criado! Faça login com seu usuário e senha.');
