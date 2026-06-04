@@ -6,11 +6,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { add } from 'date-fns';
 
-export default function SubscriptionPaymentModal({ isOpen, onClose, associate, networkConfig, onSuccess }) {
+export default function SubscriptionPaymentModal({ isOpen, onClose, associate, onSuccess }) {
   const [step, setStep] = useState('confirm'); // confirm, processing, success
   const [loading, setLoading] = useState(false);
-
-  const adhesionFee = networkConfig?.adhesion_fee || 99.90;
 
   const handlePayment = async () => {
     setLoading(true);
@@ -20,7 +18,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, n
       const response = await base44.functions.invoke('createInfinitePayCheckout', {
         associate_id: associate.id,
         type: 'subscription',
-        amount: adhesionFee
+        amount: 99.90 // valor da assinatura
       });
 
       if (response.data?.checkout_url) {
@@ -73,7 +71,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, n
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Valor da assinatura:</span>
-                      <span className="font-semibold">R$ {adhesionFee.toFixed(2)}</span>
+                      <span className="font-semibold">R$ 99,90</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Período:</span>
@@ -81,7 +79,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, n
                     </div>
                     <div className="border-t pt-2 mt-2 flex justify-between">
                       <span className="font-semibold">Total:</span>
-                      <span className="font-bold text-lg">R$ {adhesionFee.toFixed(2)}</span>
+                      <span className="font-bold text-lg">R$ 99,90</span>
                     </div>
                   </div>
                 </CardContent>
