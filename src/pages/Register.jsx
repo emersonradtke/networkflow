@@ -111,7 +111,7 @@ export default function Register() {
   const validate = () => {
     const errs = {};
     if (!form.full_name.trim()) errs.full_name = 'Nome obrigatório';
-    if (!form.email.trim()) errs.email = 'E-mail obrigatório';
+    if (!form.email || !form.email.trim()) errs.email = 'E-mail é obrigatório';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'E-mail inválido';
     if (!form.phone.trim()) errs.phone = 'Telefone obrigatório';
     else if (!validatePhone(form.phone)) errs.phone = 'Telefone inválido';
@@ -303,10 +303,10 @@ export default function Register() {
               </div>
             )}
 
-            {/* Email (opcional) */}
+            {/* Email */}
             <div>
-              <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail</Label>
-              <Input className={fieldCls('email')} type="email" placeholder="seuemail@exemplo.com" value={form.email} onChange={e => setField('email', e.target.value)} />
+              <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>E-mail *</Label>
+              <Input className={fieldCls('email')} type="email" placeholder="seuemail@exemplo.com" value={form.email} onChange={e => setField('email', e.target.value)} required />
               {errors.email && <FieldError msg={errors.email} />}
             </div>
 

@@ -25,8 +25,14 @@ Deno.serve(async (req) => {
       }, { status: 400 });
     }
 
-    if (!email?.trim()) {
+    if (!email || !email.trim()) {
       return Response.json({ error: 'E-mail é obrigatório' }, { status: 400 });
+    }
+
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return Response.json({ error: 'E-mail inválido' }, { status: 400 });
     }
 
     const finalEmail = email.trim();
