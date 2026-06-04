@@ -103,6 +103,17 @@ export default function Dashboard() {
   }
 
   if (effectiveStatus !== 'active') {
+    if (!networkConfig) {
+      return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Carregando dados...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-8 text-center space-y-6">
@@ -119,7 +130,7 @@ export default function Dashboard() {
 
           {/* Description */}
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Sua conta está <span className="text-primary font-semibold">pendente de ativação</span>. Realize o pagamento da adesão de <span className="font-bold text-foreground">R$ {(networkConfig?.adhesion_fee || 0).toFixed(2)}</span> para ter acesso completo à plataforma.
+            Sua conta está <span className="text-primary font-semibold">pendente de ativação</span>. Realize o pagamento da adesão de <span className="font-bold text-foreground">R$ {networkConfig.adhesion_fee?.toFixed(2)}</span> para ter acesso completo à plataforma.
           </p>
 
           {/* Next Steps */}
@@ -148,7 +159,7 @@ export default function Dashboard() {
             style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
           >
             <CreditCard size={18} className="mr-2" />
-            Pagar Adesão — R$ {(networkConfig?.adhesion_fee || 0).toFixed(2)}
+            Pagar Adesão — R$ {networkConfig.adhesion_fee?.toFixed(2)}
           </Button>
 
           {/* Alternative Link */}
