@@ -293,7 +293,7 @@ export default function Landing() {
                   <p className="text-lg font-bold text-foreground mt-3">R$ 99,90</p>
                 </div>
                 <Button 
-                  onClick={() => {}} 
+                  onClick={() => setShowPaymentScreen(true)} 
                   className="w-full bg-primary hover:bg-primary/90 font-bold"
                 >
                   <CreditCard size={18} className="mr-2" />
