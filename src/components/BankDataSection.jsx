@@ -109,7 +109,16 @@ export default function BankDataSection({ associate, onUpdate }) {
     associate?.phone ? { value: `phone:${associate.phone}`, label: `Telefone — ${associate.phone}` } : null,
   ].filter(Boolean);
 
-  const currentPixValue = form.pix_key_type && form.pix_key ? `${form.pix_key_type}:${form.pix_key}` : '';
+  // Se tem chave mas sem tipo, tenta encontrar no pixOptions pela chave
+  const resolvedPixValue = (() => {
+    if (form.pix_key_type && form.pix_key) return `${form.pix_key_type}:${form.pix_key}`;
+    if (form.pix_key) {
+      const match = pixOptions.find(o => o.value.endsWith(`:${form.pix_key}`));
+      return match ? match.value : '';
+    }
+    return '';
+  })();
+  const currentPixValue = resolvedPixValue;
 
   const handleSave = async () => {
     if (!associate?.id) {
