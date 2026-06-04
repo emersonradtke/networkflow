@@ -147,7 +147,7 @@ export default function BankDataSection({ associate, onUpdate }) {
       } else {
         toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
         setSavedForm({ ...form });
-        onUpdate && onUpdate();
+        onUpdate && onUpdate({ ...form });
       }
     } catch (err) {
       toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
