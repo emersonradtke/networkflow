@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,44 +55,26 @@ const PIX_TYPES = [
   { value: 'phone', label: 'Telefone' },
 ];
 
+function buildForm(associate) {
+  return {
+    pix_key_type: associate.pix_key_type || '',
+    pix_key: associate.pix_key || '',
+    bank_code: associate.bank_code || '',
+    bank_name: associate.bank_name || '',
+    bank_account_type: associate.bank_account_type || '',
+    bank_agency: associate.bank_agency || '',
+    bank_agency_digit: associate.bank_agency_digit || '',
+    bank_account: associate.bank_account || '',
+    bank_account_digit: associate.bank_account_digit || '',
+  };
+}
+
 export default function BankDataSection({ associate, onUpdate }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [bankOpen, setBankOpen] = useState(false);
-  const [savedForm, setSavedForm] = useState(null);
-  const [form, setForm] = useState({
-    pix_key_type: '',
-    pix_key: '',
-    bank_code: '',
-    bank_name: '',
-    bank_account_type: '',
-    bank_agency: '',
-    bank_agency_digit: '',
-    bank_account: '',
-    bank_account_digit: '',
-  });
-
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
-    // Só inicializa uma vez com os dados do associate
-    if (associate && !initialized) {
-      const data = {
-        pix_key_type: associate.pix_key_type || '',
-        pix_key: associate.pix_key || '',
-        bank_code: associate.bank_code || '',
-        bank_name: associate.bank_name || '',
-        bank_account_type: associate.bank_account_type || '',
-        bank_agency: associate.bank_agency || '',
-        bank_agency_digit: associate.bank_agency_digit || '',
-        bank_account: associate.bank_account || '',
-        bank_account_digit: associate.bank_account_digit || '',
-      };
-      setForm(data);
-      setSavedForm(data);
-      setInitialized(true);
-    }
-  }, [associate, initialized]);
+  // Form é inicializado uma única vez com os dados do associate
+  const [form, setForm] = useState(() => buildForm(associate));
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 
@@ -106,7 +86,7 @@ export default function BankDataSection({ associate, onUpdate }) {
 
   const handlePixSelect = (val) => {
     const [type, ...keyParts] = val.split(':');
-    const key = keyParts.join(':'); // email pode conter ':'
+    const key = keyParts.join(':');
     setForm(f => ({ ...f, pix_key_type: type, pix_key: key }));
   };
 
@@ -117,20 +97,13 @@ export default function BankDataSection({ associate, onUpdate }) {
     associate?.phone ? { value: `phone:${associate.phone}`, label: `Telefone — ${associate.phone}` } : null,
   ].filter(Boolean);
 
-  // Se tem chave mas sem tipo, tenta encontrar no pixOptions pela chave
-  const resolvedPixValue = (() => {
-    if (form.pix_key_type && form.pix_key) return `${form.pix_key_type}:${form.pix_key}`;
-    if (form.pix_key) {
-      const match = pixOptions.find(o => o.value.endsWith(`:${form.pix_key}`));
-      return match ? match.value : '';
-    }
-    return '';
-  })();
-  const currentPixValue = resolvedPixValue;
+  const currentPixValue = (form.pix_key_type && form.pix_key)
+    ? `${form.pix_key_type}:${form.pix_key}`
+    : '';
 
   const handleSave = async () => {
     if (!associate?.id && !associate?.cpf && !associate?.email) {
-      toast({ title: 'Erro', description: 'Cadastro não identificado. Saia e entre novamente.', variant: 'destructive' });
+      toast({ title: 'Erro', description: 'Cadastro não identificado.', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -150,7 +123,6 @@ export default function BankDataSection({ associate, onUpdate }) {
         toast({ title: 'Erro ao salvar', description: result.error, variant: 'destructive' });
       } else {
         toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
-        setSavedForm({ ...form });
         onUpdate && onUpdate({ ...form });
       }
     } catch (err) {
@@ -159,9 +131,8 @@ export default function BankDataSection({ associate, onUpdate }) {
     setSaving(false);
   };
 
-  const displayed = savedForm || {};
-  const hasBankData = displayed.bank_code && displayed.bank_account;
-  const hasPixData = displayed.pix_key;
+  const hasBankData = form.bank_code && form.bank_account;
+  const hasPixData = form.pix_key;
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -178,7 +149,7 @@ export default function BankDataSection({ associate, onUpdate }) {
               <CheckCircle size={16} className="text-green-600 shrink-0" />
               <div>
                 <p className="text-xs font-semibold text-green-800">PIX cadastrado</p>
-                <p className="text-xs text-green-600 truncate">{displayed.pix_key}</p>
+                <p className="text-xs text-green-600 truncate">{form.pix_key}</p>
               </div>
             </div>
           )}
@@ -186,8 +157,8 @@ export default function BankDataSection({ associate, onUpdate }) {
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 flex-1">
               <Building2 size={16} className="text-blue-600 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-blue-800">{displayed.bank_name}</p>
-                <p className="text-xs text-blue-600">Ag {displayed.bank_agency} · Cc {displayed.bank_account}-{displayed.bank_account_digit}</p>
+                <p className="text-xs font-semibold text-blue-800">{form.bank_name}</p>
+                <p className="text-xs text-blue-600">Ag {form.bank_agency} · Cc {form.bank_account}-{form.bank_account_digit}</p>
               </div>
             </div>
           )}
@@ -200,7 +171,6 @@ export default function BankDataSection({ associate, onUpdate }) {
           <Key size={16} className="text-primary" />
           <h3 className="font-bold text-foreground text-sm">Chave PIX</h3>
         </div>
-
         <div className="space-y-1.5">
           <Label className="text-xs">Selecione uma chave PIX</Label>
           <Select value={currentPixValue} onValueChange={handlePixSelect}>
@@ -218,7 +188,6 @@ export default function BankDataSection({ associate, onUpdate }) {
             </SelectContent>
           </Select>
         </div>
-
         {form.pix_key_type && form.pix_key && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-xs font-semibold text-green-800 mb-1">Chave selecionada</p>
@@ -236,20 +205,13 @@ export default function BankDataSection({ associate, onUpdate }) {
           <h3 className="font-bold text-foreground text-sm">Conta Bancária</h3>
         </div>
 
-        {/* Banco com pesquisa dentro do popover */}
         <div className="space-y-1.5">
           <Label className="text-xs">Banco <span className="text-muted-foreground">(FEBRABAN)</span></Label>
           <Popover open={bankOpen} onOpenChange={setBankOpen}>
             <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={bankOpen}
-                className="w-full justify-between font-normal h-9 text-sm"
-              >
-                {form.bank_code
-                  ? `${form.bank_code} — ${form.bank_name}`
-                  : 'Selecione o banco...'}
+              <Button variant="outline" role="combobox" aria-expanded={bankOpen}
+                className="w-full justify-between font-normal h-9 text-sm">
+                {form.bank_code ? `${form.bank_code} — ${form.bank_name}` : 'Selecione o banco...'}
                 <ChevronsUpDown size={14} className="ml-2 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -260,16 +222,9 @@ export default function BankDataSection({ associate, onUpdate }) {
                   <CommandEmpty>Banco não encontrado.</CommandEmpty>
                   <CommandGroup>
                     {BANKS.map(b => (
-                      <CommandItem
-                        key={b.code}
-                        value={`${b.code} ${b.name}`}
-                        onSelect={() => handleBankSelect(b.code)}
-                        className="text-sm"
-                      >
-                        <Check
-                          size={14}
-                          className={cn('mr-2 shrink-0', form.bank_code === b.code ? 'opacity-100' : 'opacity-0')}
-                        />
+                      <CommandItem key={b.code} value={`${b.code} ${b.name}`}
+                        onSelect={() => handleBankSelect(b.code)} className="text-sm">
+                        <Check size={14} className={cn('mr-2 shrink-0', form.bank_code === b.code ? 'opacity-100' : 'opacity-0')} />
                         {b.code} — {b.name}
                       </CommandItem>
                     ))}
@@ -280,7 +235,6 @@ export default function BankDataSection({ associate, onUpdate }) {
           </Popover>
         </div>
 
-        {/* Tipo de conta */}
         <div className="space-y-1.5">
           <Label className="text-xs">Tipo de conta <span className="text-red-500">*</span></Label>
           <Select value={form.bank_account_type} onValueChange={v => set('bank_account_type', v)}>
@@ -294,47 +248,33 @@ export default function BankDataSection({ associate, onUpdate }) {
           </Select>
         </div>
 
-        {/* Agência */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">Agência <span className="text-red-500">*</span></Label>
-            <Input
-              value={form.bank_agency}
+            <Input value={form.bank_agency}
               onChange={e => set('bank_agency', e.target.value.replace(/\D/g, ''))}
-              placeholder="0001"
-              maxLength={6}
-            />
+              placeholder="0001" maxLength={6} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Dígito da agência <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-            <Input
-              value={form.bank_agency_digit}
+            <Input value={form.bank_agency_digit}
               onChange={e => set('bank_agency_digit', e.target.value.replace(/\D/g, ''))}
-              placeholder="X"
-              maxLength={2}
-            />
+              placeholder="X" maxLength={2} />
           </div>
         </div>
 
-        {/* Conta corrente */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">Conta corrente <span className="text-red-500">*</span></Label>
-            <Input
-              value={form.bank_account}
+            <Input value={form.bank_account}
               onChange={e => set('bank_account', e.target.value.replace(/\D/g, ''))}
-              placeholder="000000"
-              maxLength={12}
-            />
+              placeholder="000000" maxLength={12} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Dígito <span className="text-red-500">*</span></Label>
-            <Input
-              value={form.bank_account_digit}
+            <Input value={form.bank_account_digit}
               onChange={e => set('bank_account_digit', e.target.value.replace(/[^0-9xX]/g, '').slice(0, 1))}
-              placeholder="0"
-              maxLength={1}
-            />
+              placeholder="0" maxLength={1} />
           </div>
         </div>
       </div>

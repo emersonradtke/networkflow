@@ -1,57 +1,70 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import BankDataSection from '@/components/BankDataSection';
 
 export default function BankData() {
-  const { associate: outletAssociate } = useOutletContext();
   const [associate, setAssociate] = useState(null);
-
-  // Sempre busca o associate fresco do banco ao montar ou quando outletAssociate muda
-  const loadAssociate = async (src) => {
-    if (!src) return;
-    try {
-      // Se tem id, busca direto pelo id para ter dados sempre atualizados
-      if (src.id) {
-        const fresh = await base44.entities.Associate.filter({ id: src.id });
-        if (fresh.length > 0) { setAssociate(fresh[0]); return; }
-        setAssociate(src);
-        return;
-      }
-      // DirectUser legado: buscar por CPF ou email
-      let found = [];
-      if (src.cpf) found = await base44.entities.Associate.filter({ cpf: src.cpf });
-      if (!found.length && src.email) found = await base44.entities.Associate.filter({ email: src.email });
-      if (found.length > 0) {
-        setAssociate(found[0]);
-      } else {
-        setAssociate(src);
-      }
-    } catch {
-      setAssociate(src);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadAssociate(outletAssociate);
-  }, [outletAssociate]);
+    loadAssociate();
+  }, []);
+
+  const loadAssociate = async () => {
+    setLoading(true);
+    try {
+      // DirectUser legado
+      const directUserData = sessionStorage.getItem('directUser');
+      if (directUserData) {
+        const directUser = JSON.parse(directUserData);
+        const src = directUser._associate;
+        if (src) {
+          let found = [];
+          if (src.id) found = await base44.entities.Associate.filter({ id: src.id });
+          if (!found.length && src.cpf) found = await base44.entities.Associate.filter({ cpf: src.cpf });
+          if (!found.length && src.email) found = await base44.entities.Associate.filter({ email: src.email });
+          if (found.length > 0) { setAssociate(found[0]); return; }
+          setAssociate(src);
+          return;
+        }
+      }
+
+      // Usuário Base44 nativo
+      const me = await base44.auth.me();
+      if (me) {
+        const found = await base44.entities.Associate.filter({ user_id: me.id });
+        if (found.length > 0) setAssociate(found[0]);
+      }
+    } catch (e) {
+      console.error('loadAssociate error', e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleUpdate = (savedData) => {
     if (!savedData) return;
-    // Atualiza o associate local com os dados salvos
     setAssociate(prev => ({ ...prev, ...savedData }));
-    // Atualiza o sessionStorage para DirectUser legado
-    const directUserData = sessionStorage.getItem('directUser');
-    if (directUserData) {
-      const directUser = JSON.parse(directUserData);
-      if (directUser._associate) {
-        directUser._associate = { ...directUser._associate, ...savedData };
-        sessionStorage.setItem('directUser', JSON.stringify(directUser));
+    // Atualiza sessionStorage para DirectUser legado
+    const raw = sessionStorage.getItem('directUser');
+    if (raw) {
+      const du = JSON.parse(raw);
+      if (du._associate) {
+        du._associate = { ...du._associate, ...savedData };
+        sessionStorage.setItem('directUser', JSON.stringify(du));
       }
     }
   };
 
-  if (!associate) return null;
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
+  if (!associate) return (
+    <div className="text-center py-20 text-muted-foreground">Cadastro não encontrado.</div>
+  );
 
   return (
     <div className="max-w-xl mx-auto">
