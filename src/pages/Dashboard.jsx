@@ -130,7 +130,7 @@ export default function Dashboard() {
 
           {/* Description */}
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Sua conta está <span className="text-primary font-semibold">pendente de ativação</span>. Realize o pagamento da adesão de <span className="font-bold text-foreground">R$ {networkConfig.adhesion_fee?.toFixed(2)}</span> para ter acesso completo à plataforma.
+            Sua conta está <span className="text-primary font-semibold">pendente de ativação</span>. Realize o pagamento da adesão de <span className="font-bold text-foreground">R$ {networkConfig.adhesion_price?.toFixed(2)}</span> para ter acesso completo à plataforma.
           </p>
 
           {/* Next Steps */}
@@ -159,7 +159,7 @@ export default function Dashboard() {
             style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
           >
             <CreditCard size={18} className="mr-2" />
-            Pagar Adesão — R$ {networkConfig.adhesion_fee?.toFixed(2)}
+            Pagar Adesão — R$ {networkConfig.adhesion_price?.toFixed(2)}
           </Button>
 
           {/* Alternative Link */}
