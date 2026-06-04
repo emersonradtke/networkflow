@@ -97,8 +97,8 @@ export default function Landing() {
     const d = v.replace(/\D/g, '').slice(0, 14);
     return d
       .replace(/(\d{2})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
   };
 
   const handleLoginClick = () => {
@@ -304,22 +304,23 @@ export default function Landing() {
                  />
                  <button
                    type="button"
+                   tabIndex={-1}
                    onClick={() => setShowPassword(!showPassword)}
                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                  >
                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                  </button>
-               </div>
-             </div>
+                 </div>
+                 </div>
 
-             <Button
-               type="submit"
-               disabled={loading}
-               className="w-full font-bold text-white text-base py-6 mt-2"
-               style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
-             >
-               {loading ? 'Entrando...' : <><LogIn size={18} className="mr-2" /> Entrar</>}
-             </Button>
+                 <Button
+                 type="submit"
+                 disabled={loading}
+                 className="w-full font-bold text-white text-base py-6 mt-2"
+                 style={{ background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+                 >
+                 {loading ? 'Entrando...' : <><LogIn size={18} className="mr-2" /> Entrar</>}
+                 </Button>
 
              <Button
                type="button"
@@ -508,19 +509,20 @@ export default function Landing() {
                       />
                       <button
                         type="button"
+                        tabIndex={-1}
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
                         {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
-                    </div>
-                  </div>
+                      </div>
+                      </div>
 
-                  <div>
-                    <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Confirmar Senha</Label>
-                    <div className="relative mt-1.5">
+                      <div>
+                      <Label className="text-sm font-semibold" style={{ color: '#1B2A5E' }}>Confirmar Senha</Label>
+                      <div className="relative mt-1.5">
                       <Input
-                        type={showPassword ? "text" : "password"}
+                        type={showNewPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -529,13 +531,14 @@ export default function Landing() {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
+                        tabIndex={-1}
+                        onClick={() => setShowNewPassword(!showNewPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
-                    </div>
-                  </div>
+                      </div>
+                      </div>
 
                   <Button
                     type="submit"
