@@ -43,14 +43,15 @@ export default function CepAddressInput({
     try {
       const response = await base44.functions.invoke('searchCepAddress', { cep });
       
-      if (response.data.success) {
-        setAddress(response.data.address);
-        setNeighborhood(response.data.neighborhood);
-        setCity(response.data.city);
-        setState(response.data.state);
+      if (response.data?.success && response.data?.data) {
+        const { street, neighborhood, city, state } = response.data.data;
+        setAddress(street || '');
+        setNeighborhood(neighborhood || '');
+        setCity(city || '');
+        setState(state || '');
         setAddressFound(true);
       } else {
-        toast({ title: 'CEP não encontrado', description: response.data.error, variant: 'destructive' });
+        toast({ title: 'CEP não encontrado', description: response.data?.error || 'CEP inválido', variant: 'destructive' });
         setAddressFound(false);
       }
     } catch (error) {
