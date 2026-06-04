@@ -4,8 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MapPin, CheckCircle2, Loader } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { MapPin, CheckCircle2 } from 'lucide-react';
 
 const EMPTY_ADDR = {
   shipping_street: '', shipping_number: '', shipping_complement: '',
@@ -15,36 +14,12 @@ const EMPTY_ADDR = {
   billing_neighborhood: '', billing_city: '', billing_state: '', billing_zip: '',
 };
 
-function AddressFields({ prefix, data, onChange, label, onSearchCep, loadingCep }) {
-  const handleCepChange = async (e) => {
-    const cep = e.target.value;
-    onChange(`${prefix}_zip`, cep);
-    
-    if (cep.replace(/\D/g, '').length === 8) {
-      await onSearchCep(prefix, cep);
-    }
-  };
-
+function AddressFields({ prefix, data, onChange, label }) {
   return (
     <div className="space-y-3">
       <p className="text-sm font-bold text-foreground flex items-center gap-2">
         <MapPin size={14} className="text-primary" /> {label}
       </p>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="relative">
-          <Label className="text-xs">CEP</Label>
-          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={handleCepChange} disabled={loadingCep} />
-          {loadingCep && <Loader size={14} className="absolute right-3 top-7 animate-spin text-primary" />}
-        </div>
-        <div>
-          <Label className="text-xs">Cidade</Label>
-          <Input className="mt-1" placeholder="São Paulo" value={data[`${prefix}_city`] || ''} onChange={e => onChange(`${prefix}_city`, e.target.value)} />
-        </div>
-        <div>
-          <Label className="text-xs">Estado (UF)</Label>
-          <Input className="mt-1" placeholder="SP" maxLength={2} value={data[`${prefix}_state`] || ''} onChange={e => onChange(`${prefix}_state`, e.target.value.toUpperCase())} />
-        </div>
-      </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="col-span-2">
           <Label className="text-xs">Rua / Logradouro</Label>
@@ -65,15 +40,27 @@ function AddressFields({ prefix, data, onChange, label, onSearchCep, loadingCep 
           <Input className="mt-1" placeholder="Centro" value={data[`${prefix}_neighborhood`] || ''} onChange={e => onChange(`${prefix}_neighborhood`, e.target.value)} />
         </div>
       </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <Label className="text-xs">CEP</Label>
+          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={e => onChange(`${prefix}_zip`, e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Cidade</Label>
+          <Input className="mt-1" placeholder="São Paulo" value={data[`${prefix}_city`] || ''} onChange={e => onChange(`${prefix}_city`, e.target.value)} />
+        </div>
+        <div>
+          <Label className="text-xs">Estado (UF)</Label>
+          <Input className="mt-1" placeholder="SP" maxLength={2} value={data[`${prefix}_state`] || ''} onChange={e => onChange(`${prefix}_state`, e.target.value.toUpperCase())} />
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function AddressModal({ associate, open, onClose, onSaved, forceOpen = false }) {
-  const { toast } = useToast();
   const [form, setForm] = useState(EMPTY_ADDR);
   const [saving, setSaving] = useState(false);
-  const [loadingCep, setLoadingCep] = useState(false);
 
   useEffect(() => {
     if (associate) {
@@ -98,32 +85,6 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
   }, [associate]);
 
   const setField = (key, value) => setForm(f => ({ ...f, [key]: value }));
-
-  const searchCep = async (prefix, cep) => {
-    const cleanCep = cep.replace(/\D/g, '');
-    if (cleanCep.length !== 8) return;
-
-    setLoadingCep(true);
-    try {
-      const result = await base44.functions.invoke('searchCepAddress', { cep: cleanCep });
-      if (result.data?.success && result.data?.data) {
-        const { street, neighborhood, city, state } = result.data.data;
-        const updates = {};
-        updates[`${prefix}_street`] = street || '';
-        updates[`${prefix}_neighborhood`] = neighborhood || '';
-        updates[`${prefix}_city`] = city || '';
-        updates[`${prefix}_state`] = state || '';
-        setForm(prev => ({ ...prev, ...updates }));
-        toast({ title: 'Endereço encontrado!', description: 'Dados preenchidos automaticamente.' });
-      } else {
-        toast({ title: 'CEP não encontrado', description: 'Verifique o CEP informado.', variant: 'destructive' });
-      }
-    } catch (err) {
-      toast({ title: 'Erro ao buscar CEP', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoadingCep(false);
-    }
-  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -159,7 +120,7 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-5">
-          <AddressFields prefix="shipping" data={form} onChange={setField} onSearchCep={searchCep} loadingCep={loadingCep} label="Endereço de Entrega" />
+          <AddressFields prefix="shipping" data={form} onChange={setField} label="Endereço de Entrega" />
 
           <div className="flex items-center gap-3 py-2">
             <input
@@ -175,7 +136,7 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
           </div>
 
           {!form.billing_same_as_shipping && (
-            <AddressFields prefix="billing" data={form} onChange={setField} onSearchCep={searchCep} loadingCep={loadingCep} label="Endereço de Faturamento" />
+            <AddressFields prefix="billing" data={form} onChange={setField} label="Endereço de Faturamento" />
           )}
 
           <Button type="submit" disabled={saving} className="w-full gold-gradient text-background font-bold gap-2">
