@@ -47,7 +47,14 @@ Deno.serve(async (req) => {
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error('Invalid JSON response:', text.slice(0, 200));
+      return Response.json({ error: 'Gateway de pagamento indisponível no momento' }, { status: 503 });
+    }
 
     if (!res.ok) {
       console.error('InfinitePay Error:', data);
