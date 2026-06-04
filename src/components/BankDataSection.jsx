@@ -112,19 +112,17 @@ export default function BankDataSection({ associate, onUpdate }) {
   const currentPixValue = form.pix_key_type && form.pix_key ? `${form.pix_key_type}:${form.pix_key}` : '';
 
   const handleSave = async () => {
+    if (!associate?.id) {
+      toast({ title: 'Erro', description: 'Cadastro não identificado. Saia e entre novamente.', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
-    const res = await base44.functions.invoke('saveBankData', {
-      associate_id: associate.id || null,
-      cpf: associate.cpf || null,
-      email: associate.email || null,
-      bankData: form,
-    });
-
-    if (res.data?.error) {
-      toast({ title: 'Erro ao salvar', description: res.data.error, variant: 'destructive' });
-    } else {
+    try {
+      await base44.entities.Associate.update(associate.id, form);
       toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
       onUpdate && onUpdate();
+    } catch (err) {
+      toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
     }
     setSaving(false);
   };
