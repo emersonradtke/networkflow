@@ -1,40 +1,25 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed }) {
-  const [status, setStatus] = useState('pending'); // pending | paid | error
-  const [popupRef, setPopupRef] = useState(null);
+  const [status, setStatus] = useState('loading'); // loading | ready | paid
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
   useEffect(() => {
     if (!cartId || !paymentUrl) return;
 
-    let unsubscribe = null;
-
-    // Abrir popup de pagamento ANTES de observar mudanças
-    const w = window.open(paymentUrl, 'InfinitePay', 'width=500,height=700');
-    setPopupRef(w);
-
-    // Observar mudanças nos pedidos do carrinho
-    unsubscribe = base44.entities.Order.subscribe((event) => {
-      // Aguardar o webhook atualizar qualquer pedido deste carrinho para 'paid'
+    // Observar mudanças nos pedidos do carrinho via real-time
+    const unsubscribe = base44.entities.Order.subscribe((event) => {
       if (event.data?.cart_id === cartId && event.data?.status === 'paid') {
         setStatus('paid');
-        // Fechar popup após confirmação
-        if (w && !w.closed) {
-          w.close();
-        }
-        // Executar callback imediatamente após confirmação
         setTimeout(() => {
           onPaymentConfirmed?.();
         }, 2000);
       }
     });
 
-    return () => {
-      if (unsubscribe) unsubscribe();
-      if (w && !w.closed) w.close();
-    };
+    return () => unsubscribe();
   }, [cartId, paymentUrl]);
 
   if (status === 'paid') {
@@ -52,20 +37,24 @@ export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed })
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 text-center">
-      <div className="w-16 h-16 rounded-full flex items-center justify-center animate-spin" style={{ background: 'linear-gradient(135deg,#1B2A5E,#3B9EE2)' }}>
-        <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center">
-          <Loader2 size={28} className="text-primary" />
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Loading overlay */}
+      {!iframeLoaded && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8">
+          <Loader2 size={36} className="animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando pagamento...</p>
         </div>
-      </div>
-      <div>
-        <h3 className="text-lg font-bold text-foreground">Processando Pagamento</h3>
-        <p className="text-sm text-muted-foreground mt-2">A janela de pagamento está aberta. Complete o pagamento para continuar aqui.</p>
-      </div>
-      <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 flex items-start gap-3">
-        <AlertCircle size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-blue-700">Se a janela foi bloqueada, verifique as configurações de popup do seu navegador.</p>
-      </div>
+      )}
+
+      {/* Iframe do checkout */}
+      <iframe
+        src={paymentUrl}
+        className={`flex-1 w-full border-0 ${iframeLoaded ? 'block' : 'hidden'}`}
+        style={{ minHeight: '520px' }}
+        onLoad={() => setIframeLoaded(true)}
+        title="Checkout InfinitePay"
+        allow="payment"
+      />
     </div>
   );
 }
