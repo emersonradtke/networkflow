@@ -18,16 +18,39 @@ export default function PaymentFrame({ paymentUrl, cartId, onPaymentConfirmed })
     // Abre automaticamente ao montar
     openPayment();
 
+    // Verificar por polling (a cada 3 segundos)
+    const pollInterval = setInterval(async () => {
+      try {
+        const orders = await base44.entities.Order.filter({ cart_id: cartId });
+        const allPaid = orders.length > 0 && orders.every(o => o.status === 'paid');
+        
+        if (allPaid) {
+          setStatus('paid');
+          clearInterval(pollInterval);
+          setTimeout(() => {
+            onPaymentConfirmed?.();
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar status do pedido:', err);
+      }
+    }, 3000);
+
+    // Também esperar pela subscription em tempo real
     const unsubscribe = base44.entities.Order.subscribe((event) => {
       if (event.data?.cart_id === cartId && event.data?.status === 'paid') {
         setStatus('paid');
+        clearInterval(pollInterval);
         setTimeout(() => {
           onPaymentConfirmed?.();
         }, 2000);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearInterval(pollInterval);
+      unsubscribe();
+    };
   }, [cartId, paymentUrl]);
 
   if (status === 'paid') {
