@@ -130,6 +130,26 @@ export default function Dashboard() {
         <p className="text-muted-foreground text-sm mt-1">Aqui está o resumo da sua rede e ganhos</p>
       </div>
 
+      {/* Adhesion Status */}
+      {!associate.adhesion_paid && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-200 bg-amber-50">
+          <Clock size={20} className="text-amber-600 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-amber-800">Adesão Pendente</p>
+            <p className="text-xs text-amber-700 mt-0.5">Complete o pagamento da adesão para acessar todos os recursos.</p>
+          </div>
+        </div>
+      )}
+      {associate.adhesion_paid && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-green-200 bg-green-50">
+          <CheckCircle size={20} className="text-green-600 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-green-800">Conta Ativa</p>
+            <p className="text-xs text-green-700 mt-0.5">Sua adesão foi confirmada! Você tem acesso a todos os recursos.</p>
+          </div>
+        </div>
+      )}
+
       {/* Notifications */}
       {notifications.length > 0 && (
         <div className="space-y-2">
