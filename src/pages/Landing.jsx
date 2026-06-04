@@ -44,19 +44,17 @@ export default function Landing() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const isAdhesionReturn = params.get('adhesion_paid') === 'true';
-    if (!isLoadingAuth && !isLoadingPublicSettings && isAuthenticated && !isAdhesionReturn) {
-      // Se autenticado, redireciona baseado no role
-      const directUserData = sessionStorage.getItem('directUser');
-      if (directUserData) {
-        const directUser = JSON.parse(directUserData);
-        if (directUser.role === 'admin') {
-          navigate('/admin', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+    // Redireciona apenas se autenticado via sistema customizado (directUser)
+    const directUserData = sessionStorage.getItem('directUser');
+    if (directUserData && !isAdhesionReturn) {
+      const directUser = JSON.parse(directUserData);
+      if (directUser.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
       }
     }
-  }, [isAuthenticated, isLoadingAuth, isLoadingPublicSettings, navigate]);
+  }, [navigate]);
 
   const loadWelcomeMessage = async () => {
     try {
