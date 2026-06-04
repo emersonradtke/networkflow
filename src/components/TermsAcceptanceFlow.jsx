@@ -132,7 +132,7 @@ function DocumentReader({ term, onAccept, onBack, accepting, isLast, error }) {
 }
 
 // Componente principal
-export default function TermsAcceptanceFlow({ pendingTerms, userId, onComplete }) {
+export default function TermsAcceptanceFlow({ pendingTerms, userId, userEmail, onComplete }) {
   const [view, setView] = useState('list'); // 'list' | 'document'
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [acceptedIds, setAcceptedIds] = useState(new Set());
@@ -155,7 +155,8 @@ export default function TermsAcceptanceFlow({ pendingTerms, userId, onComplete }
       await base44.functions.invoke('acceptTerms', {
         terms_id: term.id,
         terms_version: term.version || 1,
-        user_id: userId
+        user_id: userId,
+        user_email: userEmail || ''
       });
 
       const newAccepted = new Set(acceptedIds);

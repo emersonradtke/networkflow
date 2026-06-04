@@ -3,22 +3,20 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
 
     const body = await req.json();
-    const { terms_id, terms_version, user_id } = body;
+    const { terms_id, terms_version, user_id, user_email } = body;
 
     if (!terms_id || !terms_version) {
       return Response.json({ error: 'Missing terms_id or terms_version' }, { status: 400 });
     }
 
-    // Determinar user_id (usuário autenticado ou DirectUser)
-    const effectiveUserId = user?.id || user_id;
-    const effectiveEmail = user?.email || '';
-
-    if (!effectiveUserId) {
+    if (!user_id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const effectiveUserId = user_id;
+    const effectiveEmail = user_email || '';
 
     // Buscar dados do termo para snapshot
     const term = await base44.asServiceRole.entities.TermsOfService.filter({ id: terms_id });

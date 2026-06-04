@@ -54,6 +54,7 @@ export default function TermsCheckWrapper({ children }) {
         <TermsAcceptanceFlow
           pendingTerms={pendingTerms}
           userId={user.id}
+          userEmail={user.email || ''}
           onComplete={handleComplete}
         />
       )}
