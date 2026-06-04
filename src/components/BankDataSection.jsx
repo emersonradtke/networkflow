@@ -61,6 +61,7 @@ export default function BankDataSection({ associate, onUpdate }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [bankOpen, setBankOpen] = useState(false);
+  const [savedForm, setSavedForm] = useState(null);
   const [form, setForm] = useState({
     pix_key_type: '',
     pix_key: '',
@@ -75,7 +76,7 @@ export default function BankDataSection({ associate, onUpdate }) {
 
   useEffect(() => {
     if (associate) {
-      setForm({
+      const data = {
         pix_key_type: associate.pix_key_type || '',
         pix_key: associate.pix_key || '',
         bank_code: associate.bank_code || '',
@@ -85,7 +86,9 @@ export default function BankDataSection({ associate, onUpdate }) {
         bank_agency_digit: associate.bank_agency_digit || '',
         bank_account: associate.bank_account || '',
         bank_account_digit: associate.bank_account_digit || '',
-      });
+      };
+      setForm(data);
+      setSavedForm(data);
     }
   }, [associate]);
 
@@ -143,6 +146,7 @@ export default function BankDataSection({ associate, onUpdate }) {
         toast({ title: 'Erro ao salvar', description: result.error, variant: 'destructive' });
       } else {
         toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
+        setSavedForm({ ...form });
         onUpdate && onUpdate();
       }
     } catch (err) {
@@ -151,8 +155,9 @@ export default function BankDataSection({ associate, onUpdate }) {
     setSaving(false);
   };
 
-  const hasBankData = associate?.bank_code && associate?.bank_account;
-  const hasPixData = associate?.pix_key;
+  const displayed = savedForm || {};
+  const hasBankData = displayed.bank_code && displayed.bank_account;
+  const hasPixData = displayed.pix_key;
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -169,7 +174,7 @@ export default function BankDataSection({ associate, onUpdate }) {
               <CheckCircle size={16} className="text-green-600 shrink-0" />
               <div>
                 <p className="text-xs font-semibold text-green-800">PIX cadastrado</p>
-                <p className="text-xs text-green-600 truncate">{associate.pix_key}</p>
+                <p className="text-xs text-green-600 truncate">{displayed.pix_key}</p>
               </div>
             </div>
           )}
@@ -177,8 +182,8 @@ export default function BankDataSection({ associate, onUpdate }) {
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 flex-1">
               <Building2 size={16} className="text-blue-600 shrink-0" />
               <div>
-                <p className="text-xs font-semibold text-blue-800">{associate.bank_name}</p>
-                <p className="text-xs text-blue-600">Ag {associate.bank_agency} · Cc {associate.bank_account}-{associate.bank_account_digit}</p>
+                <p className="text-xs font-semibold text-blue-800">{displayed.bank_name}</p>
+                <p className="text-xs text-blue-600">Ag {displayed.bank_agency} · Cc {displayed.bank_account}-{displayed.bank_account_digit}</p>
               </div>
             </div>
           )}
