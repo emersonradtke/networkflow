@@ -131,17 +131,13 @@ export default function BankDataSection({ associate, onUpdate }) {
     }
     setSaving(true);
     try {
-      const resp = await fetch(`/functions/saveBankData`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          associate_id: associate.id || null,
-          cpf: associate.cpf || null,
-          email: associate.email || null,
-          bankData: form,
-        }),
+      const resp = await base44.functions.invoke('saveBankData', {
+        associate_id: associate.id || null,
+        cpf: associate.cpf || null,
+        email: associate.email || null,
+        bankData: form,
       });
-      const result = await resp.json();
+      const result = resp.data;
       if (result?.error) {
         toast({ title: 'Erro ao salvar', description: result.error, variant: 'destructive' });
       } else {
