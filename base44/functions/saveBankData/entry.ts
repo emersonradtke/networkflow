@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { associate_id, cpf, email, bankData } = body;
 
-    // Resolver o ID do associate
+    // Resolver o ID do associate usando service role (sem precisar de auth do usuário)
     let associateId = associate_id;
 
     if (!associateId) {
