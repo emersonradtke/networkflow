@@ -11,6 +11,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
   const [file, setFile] = useState(null);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [requestLoading, setRequestLoading] = useState(false);
+  const [hasCardLocal, setHasCardLocal] = useState(associate.has_boldlife_card);
 
   const minSpending = networkConfig?.card_min_spending || 500;
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -51,11 +52,30 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
         has_boldlife_card: true,
         card_activation_month: now.toISOString().slice(0, 7)
       });
+      setHasCardLocal(true);
       toast.success('Cartão registrado com sucesso!');
       onUpdate?.();
     } catch (err) {
       console.error('Error:', err);
       toast.error('Erro ao registrar cartão');
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const handleRemoveCard = async () => {
+    setRequestLoading(true);
+    try {
+      await base44.entities.Associate.update(associate.id, {
+        has_boldlife_card: false,
+        card_activation_month: null
+      });
+      setHasCardLocal(false);
+      toast.success('Cartão removido com sucesso!');
+      onUpdate?.();
+    } catch (err) {
+      console.error('Error:', err);
+      toast.error('Erro ao remover cartão');
     } finally {
       setRequestLoading(false);
     }
@@ -100,7 +120,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
     }
   };
 
-  if (!associate.has_boldlife_card) {
+  if (!hasCardLocal) {
     return (
       <div className="dark-card rounded-2xl p-5 border-l-4" style={{ borderLeftColor: '#3B9EE2' }}>
         <div className="flex items-start justify-between">
@@ -155,13 +175,23 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
               )}
             </div>
           </div>
-          <Button 
-            onClick={() => setShowModal(true)}
-            className="bg-primary hover:bg-primary/90 font-bold gap-2 shrink-0"
-          >
-            <Upload size={16} />
-            Enviar Comprovante
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button 
+              onClick={() => setShowModal(true)}
+              className="bg-primary hover:bg-primary/90 font-bold gap-2"
+            >
+              <Upload size={16} />
+              Enviar Comprovante
+            </Button>
+            <Button 
+              onClick={handleRemoveCard}
+              disabled={requestLoading}
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Remover
+            </Button>
+          </div>
         </div>
       </div>
 
