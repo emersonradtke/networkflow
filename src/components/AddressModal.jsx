@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, Loader } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const EMPTY_ADDR = {
   shipping_street: '', shipping_number: '', shipping_complement: '',
@@ -14,7 +15,16 @@ const EMPTY_ADDR = {
   billing_neighborhood: '', billing_city: '', billing_state: '', billing_zip: '',
 };
 
-function AddressFields({ prefix, data, onChange, label }) {
+function AddressFields({ prefix, data, onChange, label, onSearchCep, loadingCep }) {
+  const handleCepChange = async (e) => {
+    const cep = e.target.value;
+    onChange(`${prefix}_zip`, cep);
+    
+    if (cep.replace(/\D/g, '').length === 8) {
+      await onSearchCep(prefix, cep);
+    }
+  };
+
   return (
     <div className="space-y-3">
       <p className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -41,9 +51,10 @@ function AddressFields({ prefix, data, onChange, label }) {
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <div>
+        <div className="relative">
           <Label className="text-xs">CEP</Label>
-          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={e => onChange(`${prefix}_zip`, e.target.value)} />
+          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={handleCepChange} disabled={loadingCep} />
+          {loadingCep && <Loader size={14} className="absolute right-3 top-7 animate-spin text-primary" />}
         </div>
         <div>
           <Label className="text-xs">Cidade</Label>
@@ -59,8 +70,10 @@ function AddressFields({ prefix, data, onChange, label }) {
 }
 
 export default function AddressModal({ associate, open, onClose, onSaved, forceOpen = false }) {
+  const { toast } = useToast();
   const [form, setForm] = useState(EMPTY_ADDR);
   const [saving, setSaving] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
 
   useEffect(() => {
     if (associate) {
@@ -85,6 +98,30 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
   }, [associate]);
 
   const setField = (key, value) => setForm(f => ({ ...f, [key]: value }));
+
+  const searchCep = async (prefix, cep) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+
+    setLoadingCep(true);
+    try {
+      const result = await base44.functions.invoke('searchCepAddress', { cep: cleanCep });
+      if (result.data?.success && result.data?.data) {
+        const { street, neighborhood, city, state } = result.data.data;
+        setField(`${prefix}_street`, street || '');
+        setField(`${prefix}_neighborhood`, neighborhood || '');
+        setField(`${prefix}_city`, city || '');
+        setField(`${prefix}_state`, state || '');
+        toast({ title: 'Endereço encontrado!', description: 'Dados preenchidos automaticamente.' });
+      } else {
+        toast({ title: 'CEP não encontrado', description: 'Verifique o CEP informado.', variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Erro ao buscar CEP', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoadingCep(false);
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -120,7 +157,7 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-5">
-          <AddressFields prefix="shipping" data={form} onChange={setField} label="Endereço de Entrega" />
+          <AddressFields prefix="shipping" data={form} onChange={setField} onSearchCep={searchCep} loadingCep={loadingCep} label="Endereço de Entrega" />
 
           <div className="flex items-center gap-3 py-2">
             <input
@@ -136,7 +173,7 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
           </div>
 
           {!form.billing_same_as_shipping && (
-            <AddressFields prefix="billing" data={form} onChange={setField} label="Endereço de Faturamento" />
+            <AddressFields prefix="billing" data={form} onChange={setField} onSearchCep={searchCep} loadingCep={loadingCep} label="Endereço de Faturamento" />
           )}
 
           <Button type="submit" disabled={saving} className="w-full gold-gradient text-background font-bold gap-2">
