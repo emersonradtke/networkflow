@@ -24,41 +24,48 @@ export default function AdminDashboard() {
   useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
-    const [associates, allOrders, commissions, withdrawals, products, cardRequests] = await Promise.all([
-      base44.entities.Associate.list(),
-      base44.entities.Order.list(),
-      base44.entities.Commission.list(),
-      base44.entities.WithdrawalRequest.filter({ status: 'pending' }),
-      base44.entities.Product.filter({ is_active: true }),
-      base44.entities.CardRequest.filter({ status: 'pending' }),
-    ]);
+    try {
+      // Load essential data first
+      const [associates, allOrders] = await Promise.all([
+        base44.entities.Associate.list('-updated_date', 100),
+        base44.entities.Order.list('-created_date', 100),
+      ]);
 
-    const totalCommissions = commissions.reduce((s, c) => s + (c.commission_amount || 0), 0);
-    const cardCount = associates.filter(a => a.has_boldlife_card).length;
-    
-    // Agrupar pedidos por status
-    const grouped = {
-      pending: allOrders.filter(o => o.status === 'pending'),
-      paid: allOrders.filter(o => o.status === 'paid'),
-      cancelled: allOrders.filter(o => o.status === 'cancelled'),
-      refunded: allOrders.filter(o => o.status === 'refunded'),
-    };
+      // Load secondary data sequentially to avoid rate limit
+      const withdrawals = await base44.entities.WithdrawalRequest.filter({ status: 'pending' });
+      const commissions = await base44.entities.Commission.list('-created_date', 100);
+      const cardRequests = await base44.entities.CardRequest.filter({ status: 'pending' });
+      const products = await base44.entities.Product.filter({ is_active: true });
 
-    setStats({
-      total: associates.length,
-      active: associates.filter(a => a.status === 'active').length,
-      pending: associates.filter(a => a.status === 'pending').length,
-      orders: allOrders.length,
-      commissions: totalCommissions,
-      withdrawals: withdrawals.length,
-      cardCount: cardCount,
-      cardRequests: cardRequests.length,
-    });
-    setOrdersByStatus(grouped);
-    setAllCommissions(commissions);
-    setRecentActivity(allOrders.slice(0, 5));
-    setLowStockProducts(products.filter(p => p.type === 'direct_sale' && p.stock_min != null && p.stock != null && p.stock <= p.stock_min));
-    setLoading(false);
+      const totalCommissions = commissions.reduce((s, c) => s + (c.commission_amount || 0), 0);
+      const cardCount = associates.filter(a => a.has_boldlife_card).length;
+      
+      const grouped = {
+        pending: allOrders.filter(o => o.status === 'pending'),
+        paid: allOrders.filter(o => o.status === 'paid'),
+        cancelled: allOrders.filter(o => o.status === 'cancelled'),
+        refunded: allOrders.filter(o => o.status === 'refunded'),
+      };
+
+      setStats({
+        total: associates.length,
+        active: associates.filter(a => a.status === 'active').length,
+        pending: associates.filter(a => a.status === 'pending').length,
+        orders: allOrders.length,
+        commissions: totalCommissions,
+        withdrawals: withdrawals.length,
+        cardCount: cardCount,
+        cardRequests: cardRequests.length,
+      });
+      setOrdersByStatus(grouped);
+      setAllCommissions(commissions);
+      setRecentActivity(allOrders.slice(0, 5));
+      setLowStockProducts(products.filter(p => p.type === 'direct_sale' && p.stock_min != null && p.stock != null && p.stock <= p.stock_min));
+      setLoading(false);
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      setLoading(false);
+    }
   };
 
   return (
