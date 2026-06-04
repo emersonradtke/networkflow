@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard } from 'lucide-react';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard, AlertCircle } from 'lucide-react';
 const LOGO_URL = 'https://res.cloudinary.com/dm5qnmz7b/image/upload/v1721593625/boldlife/logo_v2.webp';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import MyOrders from '@/components/MyOrders';
 import PendingPlacements from '@/components/PendingPlacements';
 import AddressModal from '@/components/AddressModal';
 import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
-import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
+
 import BoldLifeCardSection from '@/components/BoldLifeCardSection';
 
 export default function Dashboard() {
@@ -21,11 +21,12 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [networkConfig, setNetworkConfig] = useState(null);
   const [freshStatus, setFreshStatus] = useState(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState(null);
 
   useEffect(() => {
     if (associate?.id) {
@@ -76,6 +77,27 @@ export default function Dashboard() {
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handlePayAdhesion = async () => {
+    if (!associate?.id) return;
+    setPayLoading(true);
+    setPayError(null);
+    try {
+      const res = await base44.functions.invoke('createAdhesionCheckout', {
+        associate_id: associate.id,
+        full_name: associate.full_name,
+        email: associate.email,
+        phone: associate.phone,
+      });
+      const url = res.data?.url;
+      if (url) window.location.href = url;
+      else setPayError('Erro ao gerar link de pagamento');
+    } catch (e) {
+      setPayError(e.response?.data?.error || 'Erro ao gerar link de pagamento');
+    } finally {
+      setPayLoading(false);
+    }
   };
 
   if (!associate) {
@@ -152,28 +174,29 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {payError && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200">
+              <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{payError}</p>
+            </div>
+          )}
+
           {/* Payment Button */}
           <Button 
-            onClick={() => setShowSubscriptionModal(true)}
+            onClick={handlePayAdhesion}
+            disabled={payLoading}
             className="w-full font-bold text-white text-base py-6"
-            style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
+            style={{ background: payLoading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
           >
             <CreditCard size={18} className="mr-2" />
-            Pagar Adesão — R$ {networkConfig.adhesion_price?.toFixed(2)}
+            {payLoading ? 'Gerando link...' : `Pagar Adesão — R$ ${networkConfig.adhesion_price?.toFixed(2)}`}
           </Button>
 
           {/* Alternative Link */}
           <Link to="/wallet" className="text-xs text-muted-foreground hover:text-primary transition-colors">
             Pagar depois → Ir para o Painel
           </Link>
-
-          <SubscriptionPaymentModal
-            isOpen={showSubscriptionModal}
-            onClose={() => setShowSubscriptionModal(false)}
-            associate={associate}
-            networkConfig={networkConfig}
-            onSuccess={loadData}
-          />
         </div>
       </div>
     );
