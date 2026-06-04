@@ -50,11 +50,20 @@ Deno.serve(async (req) => {
     const data = await res.json();
 
     if (!res.ok) {
-      return Response.json({ error: 'Erro ao criar link InfinitePay', details: data }, { status: res.status });
+      console.error('InfinitePay Error:', data);
+      return Response.json({ 
+        error: 'Erro ao criar link de pagamento. Tente novamente em instantes.',
+        details: data?.message || data?.error || 'Erro desconhecido'
+      }, { status: res.status });
+    }
+
+    if (!data.url) {
+      return Response.json({ error: 'Resposta inválida do gateway de pagamento' }, { status: 500 });
     }
 
     return Response.json({ url: data.url });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Checkout Error:', error);
+    return Response.json({ error: 'Erro ao processar pagamento. Verifique sua conexão e tente novamente.' }, { status: 500 });
   }
 });
