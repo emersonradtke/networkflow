@@ -16,6 +16,7 @@ import AuthMigrationTool from '@/components/admin/AuthMigrationTool';
 import MigrationRefactorPanel from '@/components/admin/MigrationRefactorPanel';
 import DeprecationPanel from '@/components/admin/DeprecationPanel';
 import ContinuousAuditPanel from '@/components/admin/ContinuousAuditPanel';
+import CleanupPanel from '@/components/admin/CleanupPanel';
 
 export default function AdminSettings() {
   const [config, setConfig] = useState(null);
@@ -72,7 +73,7 @@ export default function AdminSettings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-10 overflow-x-auto">
+        <TabsList className="grid w-full grid-cols-11 overflow-x-auto">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
@@ -83,6 +84,7 @@ export default function AdminSettings() {
           <TabsTrigger value="db-migration">BD Migração</TabsTrigger>
           <TabsTrigger value="deprecation">Depreciação</TabsTrigger>
           <TabsTrigger value="audit">Auditoria</TabsTrigger>
+          <TabsTrigger value="cleanup" className="text-red-600">Limpeza</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -254,6 +256,10 @@ export default function AdminSettings() {
 
         <TabsContent value="audit">
           <ContinuousAuditPanel />
+        </TabsContent>
+
+        <TabsContent value="cleanup">
+          <CleanupPanel />
         </TabsContent>
       </Tabs>
     </div>
