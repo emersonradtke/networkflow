@@ -84,7 +84,7 @@ export default function CepAddressInput({
               value={cep}
               onChange={handleCepChange}
               onBlur={handleCepBlur}
-              placeholder="00000000"
+              placeholder="12345678"
               maxLength={8}
               disabled={searching}
             />
@@ -99,6 +99,13 @@ export default function CepAddressInput({
         <p className="text-xs text-muted-foreground">Pressione Tab ou Enter para buscar</p>
       </div>
 
+      {addressFound && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+          <CheckCircle size={16} className="text-green-600 shrink-0" />
+          <p className="text-xs text-green-700 font-medium">Endereço preenchido automaticamente</p>
+        </div>
+      )}
+
       {/* Rua/Logradouro */}
       <div className="space-y-1.5">
         <Label className="text-xs">Rua/Logradouro <span className="text-red-500">*</span></Label>
@@ -109,7 +116,7 @@ export default function CepAddressInput({
             setAddressFound(false);
           }}
           placeholder="Rua exemplo"
-          disabled={!address && addressFound}
+          disabled={addressFound && address}
         />
       </div>
 
@@ -144,7 +151,7 @@ export default function CepAddressInput({
             setAddressFound(false);
           }}
           placeholder="Bairro"
-          disabled={!neighborhood && addressFound}
+          disabled={addressFound && neighborhood}
         />
       </div>
 
@@ -159,12 +166,12 @@ export default function CepAddressInput({
               setAddressFound(false);
             }}
             placeholder="São Paulo"
-            disabled={!city && addressFound}
+            disabled={addressFound && city}
           />
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Estado <span className="text-red-500">*</span></Label>
-          <Select value={state} onValueChange={setState}>
+          <Select value={state} onValueChange={setState} disabled={addressFound && state}>
             <SelectTrigger>
               <SelectValue placeholder="UF" />
             </SelectTrigger>
