@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard, AlertCircle } from 'lucide-react';
-const LOGO_URL = 'https://res.cloudinary.com/dm5qnmz7b/image/upload/v1721593625/boldlife/logo_v2.webp';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -11,7 +10,7 @@ import MyOrders from '@/components/MyOrders';
 import PendingPlacements from '@/components/PendingPlacements';
 import AddressModal from '@/components/AddressModal';
 import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
-
+import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
 import BoldLifeCardSection from '@/components/BoldLifeCardSection';
 
 export default function Dashboard() {
@@ -21,12 +20,11 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [networkConfig, setNetworkConfig] = useState(null);
   const [freshStatus, setFreshStatus] = useState(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
-  const [payLoading, setPayLoading] = useState(false);
-  const [payError, setPayError] = useState(null);
 
   useEffect(() => {
     if (associate?.id) {
@@ -79,27 +77,6 @@ export default function Dashboard() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handlePayAdhesion = async () => {
-    if (!associate?.id) return;
-    setPayLoading(true);
-    setPayError(null);
-    try {
-      const res = await base44.functions.invoke('createAdhesionCheckout', {
-        associate_id: associate.id,
-        full_name: associate.full_name,
-        email: associate.email,
-        phone: associate.phone,
-      });
-      const url = res.data?.url;
-      if (url) window.location.href = url;
-      else setPayError('Erro ao gerar link de pagamento');
-    } catch (e) {
-      setPayError(e.response?.data?.error || 'Erro ao gerar link de pagamento');
-    } finally {
-      setPayLoading(false);
-    }
-  };
-
   if (!associate) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -124,80 +101,21 @@ export default function Dashboard() {
     );
   }
 
-  if (effectiveStatus !== 'active') {
-    if (!networkConfig) {
-      return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Carregando dados...</p>
-          </div>
-        </div>
-      );
-    }
-
+  if (effectiveStatus === 'awaiting_placement') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-8 text-center space-y-6">
-          {/* Icon */}
-          <div className="w-24 h-24 mx-auto rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}>
-            <Clock size={48} className="text-white" />
-          </div>
-
-          {/* Logo */}
-          <img src={LOGO_URL} alt="Bold Life" className="h-8 w-auto object-contain mx-auto" />
-
-          {/* Title */}
-          <h1 className="text-2xl font-black text-foreground">Cadastro Realizado!</h1>
-
-          {/* Description */}
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Sua conta está <span className="text-primary font-semibold">pendente de ativação</span>. Realize o pagamento da adesão de <span className="font-bold text-foreground">R$ {networkConfig.adhesion_price?.toFixed(2)}</span> para ter acesso completo à plataforma.
-          </p>
-
-          {/* Next Steps */}
-          <div className="bg-blue-50 border-l-4 border-primary rounded-lg p-4 text-left space-y-3">
-            <p className="text-sm font-bold text-primary">Próximos passos:</p>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                <span>Realize o pagamento da taxa de adesão</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                <span>Aguarde a confirmação do pagamento</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                <span>Acesse a loja e comece a ganhar!</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {payError && (
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200">
-              <AlertCircle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{payError}</p>
-            </div>
-          )}
-
-          {/* Payment Button */}
-          <Button 
-            onClick={handlePayAdhesion}
-            disabled={payLoading}
-            className="w-full font-bold text-white text-base py-6"
-            style={{ background: payLoading ? '#94a3b8' : 'linear-gradient(135deg, #1B2A5E 0%, #3B9EE2 100%)' }}
-          >
-            <CreditCard size={18} className="mr-2" />
-            {payLoading ? 'Gerando link...' : `Pagar Adesão — R$ ${networkConfig.adhesion_price?.toFixed(2)}`}
-          </Button>
-
-          {/* Alternative Link */}
-          <Link to="/wallet" className="text-xs text-muted-foreground hover:text-primary transition-colors">
-            Pagar depois → Ir para o Painel
-          </Link>
+      <div className="max-w-lg mx-auto text-center py-16">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1B2A5E20,#3B9EE220)' }}>
+          <Users size={36} className="text-primary" />
         </div>
+        <h2 className="text-2xl font-black text-foreground mb-2">Aguardando Colocação</h2>
+        <p className="text-muted-foreground mb-6">
+          Seu patrocinador atingiu o limite de membros diretos. O administrador está buscando uma posição para você na rede. Você será notificado assim que confirmado.
+        </p>
+        {associate.sponsor_name && (
+          <div className="dark-card rounded-xl p-4 text-left">
+            <p className="text-sm text-muted-foreground">Indicado por: <span className="font-semibold text-primary">{associate.sponsor_name}</span></p>
+          </div>
+        )}
       </div>
     );
   }

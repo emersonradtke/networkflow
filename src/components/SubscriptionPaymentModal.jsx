@@ -6,10 +6,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { add } from 'date-fns';
 
-export default function SubscriptionPaymentModal({ isOpen, onClose, associate, onSuccess, networkConfig }) {
+export default function SubscriptionPaymentModal({ isOpen, onClose, associate, onSuccess }) {
   const [step, setStep] = useState('confirm'); // confirm, processing, success
   const [loading, setLoading] = useState(false);
-  const subscriptionPrice = networkConfig?.adhesion_price;
 
   const handlePayment = async () => {
     setLoading(true);
@@ -19,7 +18,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
       const response = await base44.functions.invoke('createInfinitePayCheckout', {
         associate_id: associate.id,
         type: 'subscription',
-        amount: subscriptionPrice
+        amount: 99.90 // valor da assinatura
       });
 
       if (response.data?.checkout_url) {
@@ -72,7 +71,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Valor da assinatura:</span>
-                      <span className="font-semibold">R$ {subscriptionPrice.toFixed(2)}</span>
+                      <span className="font-semibold">R$ 99,90</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Período:</span>
@@ -80,7 +79,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
                     </div>
                     <div className="border-t pt-2 mt-2 flex justify-between">
                       <span className="font-semibold">Total:</span>
-                      <span className="font-bold text-lg">R$ {subscriptionPrice.toFixed(2)}</span>
+                      <span className="font-bold text-lg">R$ 99,90</span>
                     </div>
                   </div>
                 </CardContent>
@@ -97,7 +96,7 @@ export default function SubscriptionPaymentModal({ isOpen, onClose, associate, o
                 <Button variant="outline" onClick={onClose} className="flex-1">
                   Cancelar
                 </Button>
-                <Button onClick={handlePayment} disabled={loading || !subscriptionPrice} className="flex-1 bg-primary">
+                <Button onClick={handlePayment} disabled={loading} className="flex-1 bg-primary">
                   {loading ? (
                     <>
                       <Loader2 size={16} className="mr-2 animate-spin" />

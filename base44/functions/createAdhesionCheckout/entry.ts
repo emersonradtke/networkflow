@@ -41,39 +41,20 @@ Deno.serve(async (req) => {
       };
     }
 
-    const res = await fetch('https://checkout.infinitepay.io/invoices/public/checkout/links', {
+    const res = await fetch('https://api.infinitepay.io/invoices/public/checkout/links', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('INFINITEPAY_API_KEY')}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      console.error('Invalid JSON response:', text.slice(0, 200));
-      return Response.json({ error: 'Gateway de pagamento indisponível no momento' }, { status: 503 });
-    }
+    const data = await res.json();
 
     if (!res.ok) {
-      console.error('InfinitePay Error:', data);
-      return Response.json({ 
-        error: 'Erro ao criar link de pagamento. Tente novamente em instantes.',
-        details: data?.message || data?.error || 'Erro desconhecido'
-      }, { status: res.status });
-    }
-
-    if (!data.url) {
-      return Response.json({ error: 'Resposta inválida do gateway de pagamento' }, { status: 500 });
+      return Response.json({ error: 'Erro ao criar link InfinitePay', details: data }, { status: res.status });
     }
 
     return Response.json({ url: data.url });
   } catch (error) {
-    console.error('Checkout Error:', error);
-    return Response.json({ error: 'Erro ao processar pagamento. Verifique sua conexão e tente novamente.' }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
