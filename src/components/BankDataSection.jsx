@@ -112,24 +112,15 @@ export default function BankDataSection({ associate, onUpdate }) {
   const currentPixValue = form.pix_key_type && form.pix_key ? `${form.pix_key_type}:${form.pix_key}` : '';
 
   const handleSave = async () => {
-    if (form.bank_code && !form.bank_agency) {
-      toast({ title: 'Dados bancários incompletos', description: 'Informe o número da agência.', variant: 'destructive' });
-      return;
-    }
-    if (form.bank_code && (!form.bank_account || !form.bank_account_digit)) {
-      toast({ title: 'Dados bancários incompletos', description: 'Informe a conta corrente e o dígito.', variant: 'destructive' });
-      return;
-    }
-    if (form.bank_code && !form.bank_account_type) {
-      toast({ title: 'Dados bancários incompletos', description: 'Selecione o tipo de conta.', variant: 'destructive' });
-      return;
-    }
-
     setSaving(true);
-    // Resolver o ID do associate se não vier direto
+    // Resolver o ID do associate se não vier direto (DirectUser legado)
     let associateId = associate.id;
-    if (!associateId && associate.cpf) {
-      const found = await base44.entities.Associate.filter({ cpf: associate.cpf });
+    if (!associateId) {
+      const cpf = associate.cpf;
+      const email = associate.email;
+      let found = [];
+      if (cpf) found = await base44.entities.Associate.filter({ cpf });
+      if (!found.length && email) found = await base44.entities.Associate.filter({ email });
       associateId = found[0]?.id;
     }
     if (!associateId) {
