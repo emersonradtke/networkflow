@@ -126,7 +126,19 @@ export default function BankDataSection({ associate, onUpdate }) {
     }
 
     setSaving(true);
-    await base44.entities.Associate.update(associate.id, form);
+    // Resolver o ID do associate se não vier direto
+    let associateId = associate.id;
+    if (!associateId && associate.cpf) {
+      const found = await base44.entities.Associate.filter({ cpf: associate.cpf });
+      associateId = found[0]?.id;
+    }
+    if (!associateId) {
+      toast({ title: 'Erro', description: 'Não foi possível identificar seu cadastro. Faça login novamente.', variant: 'destructive' });
+      setSaving(false);
+      return;
+    }
+
+    await base44.entities.Associate.update(associateId, form);
     toast({ title: 'Dados bancários salvos!', description: 'Suas informações foram atualizadas.' });
     onUpdate && onUpdate();
     setSaving(false);
