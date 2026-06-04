@@ -10,19 +10,14 @@ Deno.serve(async (req) => {
 
     const base44 = createClientFromRequest(req);
     
-    // Buscar usuário direto na base sem autenticação - busca por username
+    // Buscar todos os usuários e filtrar localmente
     let users = [];
     try {
-      users = await base44.asServiceRole.entities.DirectUser.filter({ username });
+      const allUsers = await base44.asServiceRole.entities.DirectUser.list();
+      users = allUsers.filter(u => u.username === username || u.cpf === username);
     } catch (e) {
-      console.error('Error filtering users by username:', e);
-      // Fallback: tenta buscar por CPF se username falhar
-      try {
-        users = await base44.asServiceRole.entities.DirectUser.filter({ cpf: username });
-      } catch (e2) {
-        console.error('Error filtering users by cpf:', e2);
-        return Response.json({ error: 'Erro ao validar usuário' }, { status: 500 });
-      }
+      console.error('Error fetching users:', e.message);
+      return Response.json({ error: 'Erro ao validar usuário' }, { status: 500 });
     }
     
     const user = users[0];
@@ -46,21 +41,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Usuário ou senha inválidos' }, { status: 401 });
     }
 
-    // Buscar o associate vinculado a este DirectUser (por user_id ou por CPF)
+    // Buscar o associate vinculado a este DirectUser
     let associate = null;
     try {
-      let associates = await base44.asServiceRole.entities.Associate.filter({ user_id: user.id });
-      if (associates.length === 0 && user.cpf) {
-        // Fallback: buscar por CPF caso user_id não esteja linkado
-        associates = await base44.asServiceRole.entities.Associate.filter({ cpf: user.cpf });
-      }
-      if (associates.length > 0) {
-        associate = associates[0];
-        // Se encontrou por CPF mas user_id não está linkado, linkar agora
-        if (!associate.user_id) {
-          await base44.asServiceRole.entities.Associate.update(associate.id, { user_id: user.id });
-          associate.user_id = user.id;
-        }
+      const allAssociates = await base44.asServiceRole.entities.Associate.list();
+      const byUserId = allAssociates.filter(a => a.user_id === user.id);
+      const byCpf = allAssociates.filter(a => a.cpf === user.cpf);
+      
+      associate = byUserId[0] || byCpf[0] || null;
+      
+      // Se encontrou por CPF mas user_id não está linkado, linkar agora
+      if (associate && !associate.user_id) {
+        await base44.asServiceRole.entities.Associate.update(associate.id, { user_id: user.id });
+        associate.user_id = user.id;
       }
     } catch (assocErr) {
       console.warn('Could not load associate:', assocErr.message);
