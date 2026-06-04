@@ -108,13 +108,12 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
       const result = await base44.functions.invoke('searchCepAddress', { cep: cleanCep });
       if (result.data?.success && result.data?.data) {
         const { street, neighborhood, city, state } = result.data.data;
-        setForm(prev => ({
-          ...prev,
-          [`${prefix}_street`]: street || '',
-          [`${prefix}_neighborhood`]: neighborhood || '',
-          [`${prefix}_city`]: city || '',
-          [`${prefix}_state`]: state || '',
-        }));
+        const updates = {};
+        updates[`${prefix}_street`] = street || '';
+        updates[`${prefix}_neighborhood`] = neighborhood || '';
+        updates[`${prefix}_city`] = city || '';
+        updates[`${prefix}_state`] = state || '';
+        setForm(prev => ({ ...prev, ...updates }));
         toast({ title: 'Endereço encontrado!', description: 'Dados preenchidos automaticamente.' });
       } else {
         toast({ title: 'CEP não encontrado', description: 'Verifique o CEP informado.', variant: 'destructive' });
