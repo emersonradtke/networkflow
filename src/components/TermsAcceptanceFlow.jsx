@@ -156,7 +156,9 @@ export default function TermsAcceptanceFlow({ pendingTerms, userId, userEmail, o
         terms_id: term.id,
         terms_version: term.version || 1,
         user_id: userId,
-        user_email: userEmail || ''
+        user_email: userEmail || '',
+        terms_title: term.title || '',
+        terms_category: term.category || ''
       });
 
       const newAccepted = new Set(acceptedIds);
