@@ -101,45 +101,6 @@ export default function Dashboard() {
     );
   }
 
-  if (effectiveStatus === 'pending') {
-    return (
-      <div className="max-w-lg mx-auto text-center py-16">
-        <div className="w-20 h-20 mx-auto mb-6 bg-secondary rounded-full flex items-center justify-center">
-          <Clock size={36} className="text-primary" />
-        </div>
-        <h2 className="text-2xl font-black text-foreground mb-2">Conta Pendente</h2>
-        <p className="text-muted-foreground mb-6">Sua adesão está aguardando confirmação de pagamento. Assim que confirmado, você terá acesso completo.</p>
-        <div className="dark-card rounded-xl p-5 text-left space-y-4">
-          <div>
-            <p className="text-sm font-bold text-primary mb-2">Taxa de Adesão</p>
-            <p className="text-sm text-muted-foreground">Valor necessário para ativar sua conta e acessar todos os benefícios da plataforma.</p>
-            <p className="text-lg font-bold text-foreground mt-3">R$ 99,90</p>
-          </div>
-          <Button 
-            onClick={() => setShowSubscriptionModal(true)} 
-            className="w-full bg-primary hover:bg-primary/90 font-bold"
-          >
-            <CreditCard size={18} className="mr-2" />
-            Pagar Assinatura
-          </Button>
-          <div className="border-t pt-4">
-            <p className="text-sm text-muted-foreground text-center">ou entre em contato com seu patrocinador</p>
-            {associate.sponsor_name && (
-              <p className="text-sm text-foreground mt-2">Patrocinador: <span className="font-semibold text-primary">{associate.sponsor_name}</span></p>
-            )}
-          </div>
-        </div>
-        
-        <SubscriptionPaymentModal
-          isOpen={showSubscriptionModal}
-          onClose={() => setShowSubscriptionModal(false)}
-          associate={associate}
-          onSuccess={loadData}
-        />
-      </div>
-    );
-  }
-
   if (effectiveStatus === 'awaiting_placement') {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
