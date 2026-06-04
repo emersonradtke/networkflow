@@ -23,6 +23,8 @@ export default function Dashboard() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [networkConfig, setNetworkConfig] = useState(null);
+  const [freshStatus, setFreshStatus] = useState(null);
+  const [checkingStatus, setCheckingStatus] = useState(false);
 
   useEffect(() => {
     if (associate?.id) {
@@ -34,6 +36,16 @@ export default function Dashboard() {
       loadConfig();
     }
   }, [associate]);
+
+  useEffect(() => {
+    if (associate?.id && associate.status === 'pending') {
+      setCheckingStatus(true);
+      base44.entities.Associate.filter({ id: associate.id }).then(res => {
+        if (res.length > 0) setFreshStatus(res[0].status);
+        setCheckingStatus(false);
+      }).catch(() => setCheckingStatus(false));
+    }
+  }, [associate?.id]);
 
   const loadData = async () => {
     try {
@@ -76,7 +88,20 @@ export default function Dashboard() {
     );
   }
 
-  if (associate.status === 'pending') {
+  const effectiveStatus = freshStatus || associate?.status;
+
+  if (checkingStatus) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Verificando status da conta...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (effectiveStatus === 'pending') {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
         <div className="w-20 h-20 mx-auto mb-6 bg-secondary rounded-full flex items-center justify-center">
@@ -115,7 +140,7 @@ export default function Dashboard() {
     );
   }
 
-  if (associate.status === 'awaiting_placement') {
+  if (effectiveStatus === 'awaiting_placement') {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
         <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#1B2A5E20,#3B9EE220)' }}>
