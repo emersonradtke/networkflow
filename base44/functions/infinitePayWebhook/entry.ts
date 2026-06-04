@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Webhook recebe POST da InfinitePay quando pagamento é aprovado
 // Payload: { invoice_slug, amount, paid_amount, capture_method, transaction_nsu, order_nsu, receipt_url, items }
