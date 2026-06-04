@@ -74,8 +74,11 @@ export default function BankDataSection({ associate, onUpdate }) {
     bank_account_digit: '',
   });
 
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
-    if (associate) {
+    // Só inicializa uma vez com os dados do associate
+    if (associate && !initialized) {
       const data = {
         pix_key_type: associate.pix_key_type || '',
         pix_key: associate.pix_key || '',
@@ -89,8 +92,9 @@ export default function BankDataSection({ associate, onUpdate }) {
       };
       setForm(data);
       setSavedForm(data);
+      setInitialized(true);
     }
-  }, [associate]);
+  }, [associate, initialized]);
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 
