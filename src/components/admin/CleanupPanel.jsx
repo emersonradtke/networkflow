@@ -122,21 +122,21 @@ export default function CleanupPanel() {
                 </span>
                 <input
                   type="text"
-                  placeholder="Digite 'DELETE_ALL_ASSOCIATES' para confirmar"
+                  placeholder="Digite 'boldlife@2024' para confirmar"
                   value={adminCode}
                   onChange={(e) => setAdminCode(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono"
                 />
               </label>
               <p className="text-xs text-muted-foreground">
-                Digite exatamente: <strong>DELETE_ALL_ASSOCIATES</strong>
+                Digite exatamente: <strong>boldlife@2024</strong>
               </p>
             </div>
           )}
 
           <Button
             onClick={handleCleanup}
-            disabled={loading || !confirmed || adminCode !== 'DELETE_ALL_ASSOCIATES'}
+            disabled={loading || !confirmed || adminCode !== 'boldlife@2024'}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold gap-2 py-6 text-base"
           >
             {loading ? (
