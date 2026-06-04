@@ -5,8 +5,9 @@ import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { LogIn, UserPlus, Sparkles, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Sparkles, AlertCircle, Eye, EyeOff, Clock, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
+import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/ece195d55_BOLDLIFE01-LOGO.png';
 const BRAIN_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/fa8c43cb9_BOLDLIFE-ICON1.png';
@@ -32,6 +33,8 @@ export default function Landing() {
   const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [welcomeMessage, setWelcomeMessage] = useState('Construa sua rede e ganhe comissões');
   const [adhesionPaid, setAdhesionPaid] = useState(false);
+  const [pendingAssociate, setPendingAssociate] = useState(null);
+  const [showPaymentScreen, setShowPaymentScreen] = useState(false);
 
   useEffect(() => {
     loadWelcomeMessage();
@@ -122,7 +125,12 @@ export default function Landing() {
       
       console.log('Login response:', response.data);
       
-      if (response.data?.success && response.data?.user) {
+      if (response.data?.requiresPayment) {
+        // Bloquear login - associado está com status pending
+        setPendingAssociate(response.data.associate);
+        setShowPaymentScreen(true);
+        setLoading(false);
+      } else if (response.data?.success && response.data?.user) {
         const userData = response.data.user;
         sessionStorage.setItem('directUser', JSON.stringify(userData));
         console.log('User saved, triggering auth check');
@@ -271,7 +279,63 @@ export default function Landing() {
             </p>
           </div>
 
-          {loginMode === 'regular' ? (
+          {showPaymentScreen && pendingAssociate ? (
+            <div className="space-y-4">
+              <div className="w-20 h-20 mx-auto mb-6 bg-secondary rounded-full flex items-center justify-center">
+                <Clock size={36} className="text-primary" />
+              </div>
+              <h2 className="text-2xl font-black text-foreground text-center mb-2">Conta Pendente</h2>
+              <p className="text-muted-foreground text-center mb-6">Sua adesão está aguardando confirmação de pagamento. Assim que confirmado, você terá acesso completo.</p>
+              <div className="dark-card rounded-xl p-5 text-left space-y-4">
+                <div>
+                  <p className="text-sm font-bold text-primary mb-2">Taxa de Adesão</p>
+                  <p className="text-sm text-muted-foreground">Valor necessário para ativar sua conta e acessar todos os benefícios da plataforma.</p>
+                  <p className="text-lg font-bold text-foreground mt-3">R$ 99,90</p>
+                </div>
+                <Button 
+                  onClick={() => {}} 
+                  className="w-full bg-primary hover:bg-primary/90 font-bold"
+                >
+                  <CreditCard size={18} className="mr-2" />
+                  Pagar Assinatura
+                </Button>
+                <div className="border-t pt-4">
+                  <p className="text-sm text-muted-foreground text-center">ou entre em contato com seu patrocinador</p>
+                  {pendingAssociate.sponsor_name && (
+                    <p className="text-sm text-foreground mt-2">Patrocinador: <span className="font-semibold text-primary">{pendingAssociate.sponsor_name}</span></p>
+                  )}
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowPaymentScreen(false);
+                  setLoginMode(null);
+                  setUsername('');
+                  setPassword('');
+                  setPendingAssociate(null);
+                }}
+                variant="ghost"
+                className="w-full text-slate-500"
+              >
+                Voltar
+              </Button>
+              <SubscriptionPaymentModal
+                isOpen={true}
+                onClose={() => {
+                  setShowPaymentScreen(false);
+                  setLoginMode(null);
+                  setPendingAssociate(null);
+                }}
+                associate={pendingAssociate}
+                onSuccess={() => {
+                  setShowPaymentScreen(false);
+                  setLoginMode(null);
+                  setPendingAssociate(null);
+                }}
+              />
+            </div>
+          ) : loginMode === 'regular' ? (
            <form onSubmit={handleLoginSubmit} className="space-y-4">
              {error && (
                <div className="rounded-lg p-4 flex items-start gap-3" style={{ background: '#FEE2E2', borderLeft: '3px solid #EF4444' }}>

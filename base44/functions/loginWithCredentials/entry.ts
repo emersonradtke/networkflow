@@ -66,6 +66,16 @@ Deno.serve(async (req) => {
       console.warn('Could not load associate:', assocErr.message);
     }
 
+    // Bloquear login se associate está pendente (aguardando pagamento de adesão)
+    if (associate && associate.status === 'pending') {
+      return Response.json({ 
+        success: false,
+        error: 'Sua adesão está aguardando confirmação de pagamento',
+        requiresPayment: true,
+        associate
+      }, { status: 401 });
+    }
+
     return Response.json({ 
       success: true,
       token: 'auth_token_validated',
