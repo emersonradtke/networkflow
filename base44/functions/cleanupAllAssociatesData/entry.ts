@@ -10,6 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const summary = {
+      users_deleted: 0,
       associates_deleted: 0,
       orders_deleted: 0,
       commissions_deleted: 0,
@@ -27,6 +28,7 @@ Deno.serve(async (req) => {
     // 1. Fetch all associates
     const associates = await base44.asServiceRole.entities.Associate.list();
     const associateIds = associates.map(a => a.id);
+    const userIds = associates.map(a => a.user_id).filter(uid => uid && uid.trim());
 
     // 2. Delete dependent entities (in order of dependencies)
     if (associateIds.length > 0) {
@@ -117,7 +119,22 @@ Deno.serve(async (req) => {
       }
       summary.pending_setups_deleted = relatedPendingSetups.length;
 
-      // 3. Finally, delete all Associates
+      // 3. Delete associated Users
+      if (userIds.length > 0) {
+        try {
+          const users = await base44.asServiceRole.entities.User.list();
+          const relatedUsers = users.filter(u => userIds.includes(u.id));
+          for (const user of relatedUsers) {
+            await base44.asServiceRole.entities.User.delete(user.id);
+          }
+          summary.users_deleted = relatedUsers.length;
+        } catch (e) {
+          // Se User não puder ser deletado, continuar com Associates
+          console.warn('Não foi possível deletar usuários:', e.message);
+        }
+      }
+
+      // 4. Finally, delete all Associates
       for (const associate of associates) {
         await base44.asServiceRole.entities.Associate.delete(associate.id);
       }

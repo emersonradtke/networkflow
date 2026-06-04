@@ -53,6 +53,10 @@ export default function CleanupPanel() {
           
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="p-3 bg-white rounded border border-green-200">
+              <p className="font-semibold text-green-700">Usuários</p>
+              <p className="text-2xl font-black text-green-900">{result.summary.users_deleted}</p>
+            </div>
+            <div className="p-3 bg-white rounded border border-green-200">
               <p className="font-semibold text-green-700">Associados</p>
               <p className="text-2xl font-black text-green-900">{result.summary.associates_deleted}</p>
             </div>
