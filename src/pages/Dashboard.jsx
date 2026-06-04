@@ -113,7 +113,7 @@ export default function Dashboard() {
           <div>
             <p className="text-sm font-bold text-primary mb-2">Taxa de Adesão</p>
             <p className="text-sm text-muted-foreground">Valor necessário para ativar sua conta e acessar todos os benefícios da plataforma.</p>
-            <p className="text-lg font-bold text-foreground mt-3">R$ 99,90</p>
+            <p className="text-lg font-bold text-foreground mt-3">R$ {(networkConfig?.adhesion_fee || 99.90).toFixed(2)}</p>
           </div>
           <Button 
             onClick={() => setShowSubscriptionModal(true)} 
@@ -134,6 +134,7 @@ export default function Dashboard() {
           isOpen={showSubscriptionModal}
           onClose={() => setShowSubscriptionModal(false)}
           associate={associate}
+          networkConfig={networkConfig}
           onSuccess={loadData}
         />
       </div>
