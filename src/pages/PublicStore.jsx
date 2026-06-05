@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PublicCartDrawer from '@/components/public/PublicCartDrawer';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/8b3076bd8_BOLDLIFE01-LOGO1.png';
+const LOGO_BLUE_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/e7a673183_BOLDLIFE04-LOGO.png';
 const ICON_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/79a92f0c7_BOLDLIFE-ICON1.png';
 
 export default function PublicStore() {
@@ -299,7 +300,7 @@ export default function PublicStore() {
         /* Hero padrão sem banner */
         <div className="bg-gradient-to-br from-[#1B2A5E] via-[#1e3a8a] to-[#3B9EE2] py-16 px-4">
           <div className="max-w-7xl mx-auto text-center">
-            <img src={LOGO_URL} alt="Bold Life" className="h-12 mx-auto mb-6 drop-shadow-xl object-contain brightness-0 invert" />
+            <img src={LOGO_BLUE_URL} alt="Bold Life" className="h-12 mx-auto mb-6 drop-shadow-xl object-contain" />
             <h1 className="text-3xl md:text-4xl font-black text-white mb-3">Ecossistema de Transformação</h1>
             <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">Produtos premium que transformam hábitos em resultados extraordinários.</p>
             <button onClick={scrollToProducts} className="bg-[#3B9EE2] hover:bg-[#2d8fd5] text-white font-bold px-8 py-3 rounded-xl transition shadow-lg">
@@ -408,7 +409,7 @@ export default function PublicStore() {
         <div className="mt-12 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1B2A5E] to-[#2563EB] p-8 md:p-12">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <img src={LOGO_URL} alt="Bold Life" className="h-9 mb-6 brightness-0 invert object-contain" />
+              <img src={LOGO_BLUE_URL} alt="Bold Life" className="h-9 mb-6 object-contain" />
               <h3 className="text-2xl md:text-3xl font-black text-white mb-4">
                 Não são suas condições, e sim suas <span className="text-[#3B9EE2]">decisões</span> que determinam o seu destino.
               </h3>
