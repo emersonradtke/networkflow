@@ -213,11 +213,11 @@ export default function PublicStore() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.5 }}
-              className="absolute inset-0 w-full h-full cursor-pointer"
+              className="absolute inset-0 w-full h-full cursor-pointer overflow-hidden"
               style={{
-                background: banners[bannerIndex]?.background_color
-                  ? banners[bannerIndex].background_color
-                  : 'linear-gradient(135deg, #1B2A5E 0%, #2563EB 50%, #3B9EE2 100%)',
+                background: banners[bannerIndex]?.image_url
+                  ? (banners[bannerIndex]?.background_color || '#1B2A5E')
+                  : (banners[bannerIndex]?.background_color || '#1B2A5E'),
               }}
               onClick={async () => {
                 const banner = banners[bannerIndex];
@@ -233,26 +233,48 @@ export default function PublicStore() {
                 if (banner.link) window.open(banner.link, '_blank');
               }}
             >
+              {/* Imagem de fundo cobrindo 100% sem opacidade */}
               {banners[bannerIndex]?.image_url && (
-                <img src={banners[bannerIndex].image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                <img
+                  src={banners[bannerIndex].image_url}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               )}
-              <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col md:flex-row items-center gap-6" style={{ paddingTop: 28, paddingBottom: 28 }}>
-                <div className="flex-1 text-center md:text-left">
-                  <span className="inline-block text-[#3B9EE2] text-xs font-bold tracking-widest uppercase mb-2">Oferta em destaque</span>
-                  <h1 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2">
-                    {banners[bannerIndex]?.title || 'Produtos Premium Bold Life'}
-                  </h1>
-                  {banners[bannerIndex]?.description && (
-                    <p className="text-blue-100 text-sm mb-4 max-w-lg">{banners[bannerIndex].description}</p>
-                  )}
-                </div>
-                {banners[bannerIndex]?.image_url && (
-                  <div className="hidden md:block w-64 xl:w-80">
-                    <img src={banners[bannerIndex].image_url} alt="" className="w-full object-contain rounded-2xl shadow-2xl" />
+
+              {/* Overlay com logomarca + texto */}
+              <div className="relative w-full h-full flex items-center px-6 md:px-12 gap-6">
+                {/* Logomarca do banner */}
+                {banners[bannerIndex]?.logo_url && (
+                  <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm rounded-2xl p-3">
+                    <img
+                      src={banners[bannerIndex].logo_url}
+                      alt="Logo"
+                      className="h-14 md:h-20 w-auto object-contain"
+                    />
+                  </div>
+                )}
+
+                {/* Título e descrição */}
+                {(banners[bannerIndex]?.title || banners[bannerIndex]?.description) && (
+                  <div className="flex-1">
+                    <h1
+                      className="text-xl md:text-3xl font-black leading-tight drop-shadow"
+                      style={{ color: banners[bannerIndex]?.text_color || '#FFFFFF' }}
+                    >
+                      {banners[bannerIndex].title}
+                    </h1>
+                    {banners[bannerIndex]?.description && (
+                      <p
+                        className="text-sm mt-1 max-w-lg drop-shadow"
+                        style={{ color: banners[bannerIndex]?.text_color || '#FFFFFF', opacity: 0.9 }}
+                      >
+                        {banners[bannerIndex].description}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
-
             </motion.div>
           </AnimatePresence>
           {/* Dots e setas ficam fora do motion para não piscar */}
