@@ -37,9 +37,10 @@ export default function AdminProducts() {
   const [replenishProduct, setReplenishProduct] = useState(null);
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [maxLevels, setMaxLevels] = useState(5);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { loadProducts(); loadSuppliers(); }, []);
+  useEffect(() => { loadProducts(); loadSuppliers(); loadNetworkConfig(); }, []);
 
   const loadProducts = async () => {
     const data = await base44.entities.Product.list('-created_date');
@@ -50,6 +51,11 @@ export default function AdminProducts() {
   const loadSuppliers = async () => {
     const data = await base44.entities.Supplier.filter({ is_active: true }, 'name');
     setSuppliers(data);
+  };
+
+  const loadNetworkConfig = async () => {
+    const config = await base44.entities.NetworkConfig.list();
+    if (config.length > 0) setMaxLevels(config[0].max_levels || 5);
   };
 
   const openCreate = () => { setForm({ ...emptyForm, code: generateCode() }); setEditId(null); setDialogOpen(true); };
@@ -79,7 +85,7 @@ export default function AdminProducts() {
 
   const getCommissionSum = () => {
     const operation = parseFloat(form.commission_operation || 0);
-    const associate = parseFloat(form.commission_associate || 0);
+    const associate = parseFloat(form.commission_associate || 0) * maxLevels;
     const organizer = parseFloat(form.commission_organizer || 0);
     return operation + associate + organizer;
   };
@@ -456,6 +462,8 @@ export default function AdminProducts() {
                </div>
                <div className="text-xs font-bold text-muted-foreground">
                  Total: {commissionSum.toFixed(1)}% de {commissionTotal.toFixed(1)}%
+                 <br />
+                 <span className="text-[10px] text-muted-foreground/70">Associado multiplicado por {maxLevels} níveis</span>
                </div>
                {isCommissionExceeded && (
                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
