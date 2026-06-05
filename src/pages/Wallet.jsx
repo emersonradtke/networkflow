@@ -45,7 +45,7 @@ export default function Wallet() {
   const handleWithdraw = async (e) => {
     e.preventDefault();
     const amount = parseFloat(withdrawForm.amount);
-    const minAmount = config?.withdrawal_min_amount || 50;
+    const minAmount = config?.withdrawal_min_amount ?? 0.01;
     if (amount < minAmount) return alert(`Valor mínimo de saque: R$ ${minAmount.toFixed(2)}`);
     if (amount > (associate?.wallet_balance || 0)) return alert('Saldo insuficiente.');
     setSubmitting(true);
@@ -83,7 +83,7 @@ export default function Wallet() {
 
       {/* Balance Card */}
       <div className="gold-gradient rounded-2xl p-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }} />
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }} />
         <p className="text-sm font-medium text-background/80 mb-1">Saldo Disponível</p>
         <p className="text-4xl font-black text-background">R$ {(associate?.wallet_balance || 0).toFixed(2)}</p>
         <div className="flex gap-4 mt-4 text-sm">
@@ -112,7 +112,7 @@ export default function Wallet() {
             </DialogHeader>
             <form onSubmit={handleWithdraw} className="space-y-4">
               <div>
-                <Label className="text-foreground">Valor (mín. R$ {config?.withdrawal_min_amount || 50})</Label>
+                <Label className="text-foreground">Valor (mín. R$ {(config?.withdrawal_min_amount ?? 0.01).toFixed(2)})</Label>
                 <Input className="mt-1.5 bg-secondary border-border text-foreground" type="number" step="0.01" placeholder="0.00" value={withdrawForm.amount} onChange={e => setWithdrawForm({...withdrawForm, amount: e.target.value})} required />
               </div>
               <div>

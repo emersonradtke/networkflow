@@ -45,7 +45,7 @@ export default function MyWithdrawals() {
   const handleWithdraw = async (e) => {
     e.preventDefault();
     const amount = parseFloat(form.amount);
-    const minAmount = config?.withdrawal_min_amount || 50;
+    const minAmount = config?.withdrawal_min_amount ?? 0.01;
     if (amount < minAmount) return alert(`Valor mínimo de saque: R$ ${minAmount.toFixed(2)}`);
     if (amount > (associate?.wallet_balance || 0)) return alert('Saldo insuficiente.');
     setSubmitting(true);
@@ -112,7 +112,7 @@ export default function MyWithdrawals() {
             </DialogHeader>
             <form onSubmit={handleWithdraw} className="space-y-4">
               <div>
-                <Label>Valor (mín. R$ {config?.withdrawal_min_amount || 50})</Label>
+                <Label>Valor (mín. R$ {(config?.withdrawal_min_amount ?? 0.01).toFixed(2)})</Label>
                 <Input className="mt-1.5" type="number" step="0.01" placeholder="0.00"
                   value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
               </div>
