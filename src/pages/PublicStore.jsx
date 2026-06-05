@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PublicCartDrawer from '@/components/public/PublicCartDrawer';
 
 const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/8b3076bd8_BOLDLIFE01-LOGO1.png';
-const LOGO_BLUE_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/e7a673183_BOLDLIFE04-LOGO.png';
+const LOGO_BLUE_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/d5642ac24_BOLDLIFE02-LOGO.png';
 const ICON_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/79a92f0c7_BOLDLIFE-ICON1.png';
 
 export default function PublicStore() {
