@@ -16,6 +16,8 @@ export default function ShippingStep({
   shippingMethods,
   selectedShipping,
   setSelectedShipping,
+  noShipping,
+  setNoShipping,
   shippingCost,
   total,
   canProceed,
@@ -35,8 +37,8 @@ export default function ShippingStep({
           ) : (
             <div className="space-y-2">
               <button
-                onClick={() => setSelectedShipping(null)}
-                className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${!selectedShipping ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
+                onClick={() => { setNoShipping(true); }}
+                className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${noShipping ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
               >
                 <span className="text-sm text-foreground">Sem frete (incluso)</span>
                 <span className="text-sm font-bold text-green-600">Grátis</span>
@@ -45,7 +47,7 @@ export default function ShippingStep({
                 <button
                   key={m.id}
                   onClick={() => setSelectedShipping(m)}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${selectedShipping?.id === m.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
+                  className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all ${!noShipping && selectedShipping?.id === m.id ? 'border-primary bg-primary/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300'}`}
                 >
                   <div>
                     <p className="text-sm font-semibold text-foreground">{m.name}</p>
@@ -155,7 +157,7 @@ export default function ShippingStep({
           className="w-full font-bold text-white gap-1"
           style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }}
           onClick={onContinue}
-          disabled={!selectedShipping}
+          disabled={!canProceed}
         >
           Continuar <ChevronRight size={14} />
         </Button>

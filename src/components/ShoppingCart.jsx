@@ -18,6 +18,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
   const [error, setError] = useState('');
   const [shippingMethods, setShippingMethods] = useState([]);
   const [selectedShipping, setSelectedShipping] = useState(null);
+  const [noShipping, setNoShipping] = useState(true); // "Sem frete" selecionado por padrão
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [localAssociate, setLocalAssociate] = useState(associate);
   const [pickupType, setPickupType] = useState(null);
@@ -316,11 +317,16 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
               nearestFranchiseId={nearestFranchiseId}
               shippingMethods={shippingMethods}
               selectedShipping={selectedShipping}
-              setSelectedShipping={setSelectedShipping}
+              setSelectedShipping={(m) => { setSelectedShipping(m); if (m) setNoShipping(false); else setNoShipping(true); }}
+              noShipping={noShipping}
+              setNoShipping={(v) => { setNoShipping(v); if (v) setSelectedShipping(null); }}
               shippingCost={shippingCost}
               total={total}
-              canProceed={selectedShipping !== null}
-              onContinue={() => setStep(selectedShipping?.requires_address === false ? 'confirm' : 'address')}
+              canProceed={noShipping || selectedShipping !== null}
+              onContinue={() => {
+                const nextStep = noShipping ? 'address' : (selectedShipping?.requires_address === false ? 'confirm' : 'address');
+                setStep(nextStep);
+              }}
             />
           )}
 
