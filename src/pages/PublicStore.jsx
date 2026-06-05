@@ -205,7 +205,7 @@ export default function PublicStore() {
 
       {/* ── HERO BANNER ── */}
       {banners.length > 0 ? (
-        <div className="relative overflow-hidden" style={{ minHeight: 200 }}>
+        <div className="relative overflow-hidden" style={{ height: 220 }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={bannerIndex}
@@ -213,12 +213,11 @@ export default function PublicStore() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.5 }}
-              className="relative w-full cursor-pointer"
+              className="absolute inset-0 w-full h-full cursor-pointer"
               style={{
                 background: banners[bannerIndex]?.background_color
-                  ? `linear-gradient(135deg, ${banners[bannerIndex].background_color}, #1B2A5E)`
+                  ? banners[bannerIndex].background_color
                   : 'linear-gradient(135deg, #1B2A5E 0%, #2563EB 50%, #3B9EE2 100%)',
-                minHeight: 200
               }}
               onClick={async () => {
                 const banner = banners[bannerIndex];
@@ -237,7 +236,7 @@ export default function PublicStore() {
               {banners[bannerIndex]?.image_url && (
                 <img src={banners[bannerIndex].image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
               )}
-              <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-12 flex flex-col md:flex-row items-center gap-6">
+              <div className="relative max-w-7xl mx-auto px-6 h-full flex flex-col md:flex-row items-center gap-6" style={{ paddingTop: 28, paddingBottom: 28 }}>
                 <div className="flex-1 text-center md:text-left">
                   <span className="inline-block text-[#3B9EE2] text-xs font-bold tracking-widest uppercase mb-2">Oferta em destaque</span>
                   <h1 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2">
@@ -253,30 +252,32 @@ export default function PublicStore() {
                   </div>
                 )}
               </div>
-              {banners.length > 1 && (
-                <>
-                  <button
-                    onClick={e => { e.stopPropagation(); setBannerIndex(i => (i - 1 + banners.length) % banners.length); }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
-                  >
-                    <ChevronLeft size={18} className="text-white" />
-                  </button>
-                  <button
-                    onClick={e => { e.stopPropagation(); setBannerIndex(i => (i + 1) % banners.length); }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
-                  >
-                    <ChevronRight size={18} className="text-white" />
-                  </button>
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                    {banners.map((_, idx) => (
-                      <button key={idx} onClick={e => { e.stopPropagation(); setBannerIndex(idx); }}
-                        className={`rounded-full transition-all ${idx === bannerIndex ? 'bg-white w-5 h-2' : 'bg-white/40 w-2 h-2'}`} />
-                    ))}
-                  </div>
-                </>
-              )}
+
             </motion.div>
           </AnimatePresence>
+          {/* Dots e setas ficam fora do motion para não piscar */}
+          {banners.length > 1 && (
+            <>
+              <button
+                onClick={e => { e.stopPropagation(); setBannerIndex(i => (i - 1 + banners.length) % banners.length); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition z-10"
+              >
+                <ChevronLeft size={18} className="text-white" />
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setBannerIndex(i => (i + 1) % banners.length); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition z-10"
+              >
+                <ChevronRight size={18} className="text-white" />
+              </button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                {banners.map((_, idx) => (
+                  <button key={idx} onClick={e => { e.stopPropagation(); setBannerIndex(idx); }}
+                    className={`rounded-full transition-all ${idx === bannerIndex ? 'bg-white w-5 h-2' : 'bg-white/40 w-2 h-2'}`} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       ) : (
         /* Hero padrão sem banner */
