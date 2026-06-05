@@ -299,7 +299,7 @@ export default function PublicStore() {
         /* Hero padrão sem banner */
         <div className="bg-gradient-to-br from-[#1B2A5E] via-[#1e3a8a] to-[#3B9EE2] py-16 px-4">
           <div className="max-w-7xl mx-auto text-center">
-            <img src={LOGO_URL} alt="Bold Life" className="h-12 mx-auto mb-6 drop-shadow-xl object-contain" />
+            <img src={LOGO_URL} alt="Bold Life" className="h-12 mx-auto mb-6 drop-shadow-xl object-contain brightness-0 invert" />
             <h1 className="text-3xl md:text-4xl font-black text-white mb-3">Ecossistema de Transformação</h1>
             <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">Produtos premium que transformam hábitos em resultados extraordinários.</p>
             <button onClick={scrollToProducts} className="bg-[#3B9EE2] hover:bg-[#2d8fd5] text-white font-bold px-8 py-3 rounded-xl transition shadow-lg">
