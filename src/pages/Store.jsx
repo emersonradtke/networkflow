@@ -101,7 +101,7 @@ export default function Store() {
     );
   }
 
-  const categories = ['all', ...new Set(products.filter(p => p.category).map(p => p.category))];
+  const categories = ['all', ...new Set(products.filter(p => p.category && (p.visibility === 'public' || p.visibility === 'associate_only')).map(p => p.category))];
 
   const filtered = products.filter(p => {
     const q = search.toLowerCase();
@@ -110,7 +110,8 @@ export default function Store() {
       p.category?.toLowerCase().includes(q) ||
       p.code?.toLowerCase().includes(q);
     const matchCat = category === 'all' || p.category === category;
-    return matchSearch && matchCat;
+    const visibilityMatch = p.visibility === 'public' || p.visibility === 'associate_only';
+    return matchSearch && matchCat && visibilityMatch;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -276,18 +277,22 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
     return (
       <div className="dark-card rounded-xl overflow-hidden flex flex-col hover:border-primary/30 transition-all duration-200 group">
         <div className="relative aspect-square bg-secondary overflow-hidden">
-          {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <ShoppingCart size={20} className="text-muted-foreground opacity-40" />
-            </div>
-          )}
-          <div className="absolute top-1 right-1">
-            <Badge className="bg-primary/90 text-primary-foreground text-xs px-1 py-0">
-              <Percent size={8} /> {product.commission_percent}%
-            </Badge>
-          </div>
+           {product.image_url ? (
+             <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+           ) : (
+             <div className="w-full h-full flex items-center justify-center">
+               <ShoppingCart size={20} className="text-muted-foreground opacity-40" />
+             </div>
+           )}
+           <div className="absolute top-1 right-1">
+             {product.on_special_offer ? (
+               <Badge className="bg-red-500/90 text-white text-xs px-1 py-0">⭐ Oferta</Badge>
+             ) : (
+               <Badge className="bg-primary/90 text-primary-foreground text-xs px-1 py-0">
+                 <Percent size={8} /> {product.commission_percent}%
+               </Badge>
+             )}
+           </div>
           {outOfStock && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="text-white text-xs font-bold bg-red-600 px-1.5 py-0.5 rounded-full">Sem Estoque</span>
@@ -329,9 +334,13 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
           </div>
         )}
         <div className="absolute top-2 right-2">
-          <Badge className="bg-primary/90 text-primary-foreground text-xs flex items-center gap-1">
-            <Percent size={10} /> {product.commission_percent}%
-          </Badge>
+          {product.on_special_offer ? (
+            <Badge className="bg-red-500/90 text-white text-xs flex items-center gap-1">⭐ Oferta</Badge>
+          ) : (
+            <Badge className="bg-primary/90 text-primary-foreground text-xs flex items-center gap-1">
+              <Percent size={10} /> {product.commission_percent}%
+            </Badge>
+          )}
         </div>
         {product.type === 'external_link' && (
           <div className="absolute top-2 left-2">

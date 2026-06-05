@@ -114,12 +114,13 @@ export default function PublicStore() {
   );
 
   const appName = config?.app_name || 'Bold Life';
-  const categories = ['all', ...new Set(products.filter(p => p.category).map(p => p.category))];
+  const categories = ['all', ...new Set(products.filter(p => p.category && p.visibility === 'public').map(p => p.category))];
   const filtered = products.filter(p => {
     const q = search.toLowerCase();
     const matchSearch = !q || p.name?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q) || p.code?.toLowerCase().includes(q);
     const matchCat = category === 'all' || p.category === category;
-    return matchSearch && matchCat;
+    const visibilityMatch = p.visibility === 'public' && p.is_active;
+    return matchSearch && matchCat && visibilityMatch;
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -527,7 +528,12 @@ function PublicProductCard({ product, onAddToCart, cart, consultant }) {
             <span className="bg-[#3B9EE2] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Externo</span>
           </div>
         )}
-        {product.commission_percent > 0 && (
+        {product.on_special_offer && (
+          <div className="absolute top-2 right-2">
+            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ Oferta</span>
+          </div>
+        )}
+        {product.commission_percent > 0 && !product.on_special_offer && (
           <div className="absolute top-2 right-2">
             <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{product.commission_percent}% off</span>
           </div>

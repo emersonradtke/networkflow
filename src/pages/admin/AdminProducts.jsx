@@ -16,6 +16,7 @@ const emptyForm = {
   price: '', commission_percent: '', image_url: '',
   type: 'direct_sale', external_url: '', category: '',
   is_active: true, stock: '', stock_min: '', stock_max: '',
+  visibility: 'public', on_special_offer: false,
 };
 
 const generateCode = () => {
@@ -53,16 +54,18 @@ export default function AdminProducts() {
 
   const openCreate = () => { setForm({ ...emptyForm, code: generateCode() }); setEditId(null); setDialogOpen(true); };
   const openEdit = (p) => {
-    setForm({
-      ...p,
-      price: p.price?.toString() ?? '',
-      commission_percent: p.commission_percent?.toString() ?? '',
-      stock: p.stock?.toString() ?? '',
-      stock_min: p.stock_min?.toString() ?? '',
-      stock_max: p.stock_max?.toString() ?? '',
-    });
-    setEditId(p.id);
-    setDialogOpen(true);
+   setForm({
+     ...p,
+     price: p.price?.toString() ?? '',
+     commission_percent: p.commission_percent?.toString() ?? '',
+     stock: p.stock?.toString() ?? '',
+     stock_min: p.stock_min?.toString() ?? '',
+     stock_max: p.stock_max?.toString() ?? '',
+     visibility: p.visibility || 'public',
+     on_special_offer: p.on_special_offer || false,
+   });
+   setEditId(p.id);
+   setDialogOpen(true);
   };
 
   const canActivate = (f) => {
@@ -268,6 +271,9 @@ export default function AdminProducts() {
                     <Badge className={p.type === 'external_link' ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 text-xs' : 'bg-green-500/20 text-green-600 border-green-500/30 text-xs'}>
                       {p.type === 'external_link' ? <><ExternalLink size={10} className="mr-1" />Externo</> : <><ShoppingBag size={10} className="mr-1" />Direto</>}
                     </Badge>
+                    {p.on_special_offer && (
+                      <Badge className="bg-red-500/20 text-red-600 border-red-500/30 text-xs">⭐ Oferta</Badge>
+                    )}
                     {p.type === 'direct_sale' && (
                       <Badge className={isLowStock ? 'bg-yellow-500/20 text-yellow-700 border-yellow-400/40 text-xs' : 'bg-secondary text-muted-foreground text-xs'}>
                         {isLowStock && <AlertTriangle size={10} className="mr-1" />}
@@ -422,6 +428,27 @@ export default function AdminProducts() {
                 </div>
               </div>
             )}
+
+            {/* Visibilidade + Oferta */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Visibilidade</Label>
+                <Select value={form.visibility} onValueChange={v => setForm({ ...form, visibility: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Loja Pública</SelectItem>
+                    <SelectItem value="associate_only">Apenas Associados</SelectItem>
+                    <SelectItem value="hidden">Oculto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <div className="flex items-center gap-2 w-full">
+                  <Switch checked={form.on_special_offer} onCheckedChange={v => setForm({ ...form, on_special_offer: v })} />
+                  <Label className="m-0">Oferta Especial</Label>
+                </div>
+              </div>
+            </div>
 
             {/* Aviso se não pode ativar */}
             {form.is_active && !canActivate(form) && (

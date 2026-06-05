@@ -63,6 +63,21 @@
       "type": "number",
       "default": 0,
       "description": "Quantidade m\u00e1xima em estoque"
+    },
+    "visibility": {
+      "type": "string",
+      "enum": [
+        "public",
+        "associate_only",
+        "hidden"
+      ],
+      "default": "public",
+      "description": "Controla onde o produto aparece (loja p\u00fablica, apenas associados, ou oculto)"
+    },
+    "on_special_offer": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indica se o produto est\u00e1 em oferta especial"
     }
   },
   "required": [
