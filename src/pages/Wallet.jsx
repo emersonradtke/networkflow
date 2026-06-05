@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, Clock, ArrowRightLeft } from 'lucide-react';
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, Clock, ArrowRightLeft, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import CommissionTransferModal from '@/components/CommissionTransferModal';
 
 export default function Wallet() {
@@ -53,7 +51,7 @@ export default function Wallet() {
       associate_id: associate.id,
       associate_name: associate.full_name,
       amount,
-      pix_key: withdrawForm.pix_key,
+      pix_key: associate.pix_key || withdrawForm.pix_key,
       bank_info: withdrawForm.bank_info,
       status: 'pending',
     });
@@ -61,6 +59,18 @@ export default function Wallet() {
     setWithdrawForm({ amount: '', pix_key: '', bank_info: '' });
     loadData();
     setSubmitting(false);
+  };
+
+  const hasBankData = !!(associate?.pix_key || associate?.bank_account);
+
+  const handleOpenWithdrawDialog = (open) => {
+    if (open && associate) {
+      const bankInfo = associate.bank_name
+        ? `${associate.bank_name} · Ag ${associate.bank_agency || '-'} · Cc ${associate.bank_account || '-'}${associate.bank_account_digit ? '-' + associate.bank_account_digit : ''}`
+        : (associate.bank_info || '');
+      setWithdrawForm({ amount: '', pix_key: associate.pix_key || '', bank_info: bankInfo });
+    }
+    setDialogOpen(open);
   };
 
   const statusBadge = (status) => {
@@ -97,45 +107,93 @@ export default function Wallet() {
           </div>
         </div>
         <div className="flex gap-2 mt-4 flex-wrap">
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
+          {/* Saque Dialog */}
+          <Dialog open={dialogOpen} onOpenChange={handleOpenWithdrawDialog}>
+            <DialogTrigger asChild>
+              <Button
+                disabled={associate?.status !== 'active' || (associate?.wallet_balance || 0) <= 0}
+                className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowUpCircle size={16} /> Solicitar Saque
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card border-border max-w-md">
+              <DialogHeader className="flex flex-row items-center justify-between">
+                <DialogTitle className="text-foreground font-black">Solicitar Saque</DialogTitle>
+                <DialogClose asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
+                    <X size={14} />
+                  </Button>
+                </DialogClose>
+              </DialogHeader>
+
+              {!hasBankData ? (
+                <div className="space-y-4 py-2">
+                  <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                    <AlertCircle size={18} className="text-yellow-600 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-yellow-800">Dados bancários não cadastrados</p>
+                      <p className="text-xs text-yellow-700 mt-1">Para solicitar um saque, você precisa cadastrar sua chave PIX ou dados bancários primeiro.</p>
+                    </div>
+                  </div>
+                  <Link to="/bank-data" onClick={() => setDialogOpen(false)}>
+                    <Button className="w-full gold-gradient text-background font-bold">Cadastrar Dados Bancários</Button>
+                  </Link>
+                  <DialogClose asChild>
+                    <Button variant="outline" className="w-full">Cancelar</Button>
+                  </DialogClose>
+                </div>
+              ) : (
+                <form onSubmit={handleWithdraw} className="space-y-4 py-2">
+                  <div className="p-3 bg-secondary rounded-xl space-y-1.5">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados para recebimento</p>
+                    {associate?.pix_key && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={13} className="text-green-500 shrink-0" />
+                        <p className="text-sm text-foreground">
+                          <span className="font-medium">PIX:</span> {associate.pix_key}
+                          {associate.pix_key_type && <span className="text-muted-foreground"> ({associate.pix_key_type.toUpperCase()})</span>}
+                        </p>
+                      </div>
+                    )}
+                    {associate?.bank_account && (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={13} className="text-green-500 shrink-0" />
+                        <p className="text-sm text-foreground">
+                          <span className="font-medium">{associate.bank_name || 'Banco'}:</span> Ag {associate.bank_agency || '-'} · Cc {associate.bank_account || '-'}{associate.bank_account_digit ? `-${associate.bank_account_digit}` : ''}
+                        </p>
+                      </div>
+                    )}
+                    <Link to="/bank-data" onClick={() => setDialogOpen(false)} className="text-xs text-accent underline block mt-1">
+                      Alterar dados bancários
+                    </Link>
+                  </div>
+
+                  <div>
+                    <Label className="text-foreground">Valor (mín. R$ {(config?.withdrawal_min_amount ?? 0.01).toFixed(2)})</Label>
+                    <Input className="mt-1.5 bg-secondary border-border text-foreground" type="number" step="0.01" placeholder="0.00" value={withdrawForm.amount} onChange={e => setWithdrawForm({...withdrawForm, amount: e.target.value})} required />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={submitting} className="flex-1 gold-gradient text-background font-bold">
+                      {submitting ? 'Enviando...' : 'Confirmar Saque'}
+                    </Button>
+                    <DialogClose asChild>
+                      <Button type="button" variant="outline" className="flex-1">Cancelar</Button>
+                    </DialogClose>
+                  </div>
+                </form>
+              )}
+            </DialogContent>
+          </Dialog>
+
           <Button
+            onClick={() => setShowTransferModal(true)}
             disabled={associate?.status !== 'active' || (associate?.wallet_balance || 0) <= 0}
             className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ArrowUpCircle size={16} /> Solicitar Saque
+            <ArrowRightLeft size={16} /> Transferir
           </Button>
-        </DialogTrigger>
-          <DialogContent className="bg-surface border-border">
-            <DialogHeader>
-              <DialogTitle className="text-foreground font-black">Solicitar Saque</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleWithdraw} className="space-y-4">
-              <div>
-                <Label className="text-foreground">Valor (mín. R$ {(config?.withdrawal_min_amount ?? 0.01).toFixed(2)})</Label>
-                <Input className="mt-1.5 bg-secondary border-border text-foreground" type="number" step="0.01" placeholder="0.00" value={withdrawForm.amount} onChange={e => setWithdrawForm({...withdrawForm, amount: e.target.value})} required />
-              </div>
-              <div>
-                <Label className="text-foreground">Chave Pix</Label>
-                <Input className="mt-1.5 bg-secondary border-border text-foreground" placeholder="CPF, e-mail, telefone ou chave aleatória" value={withdrawForm.pix_key} onChange={e => setWithdrawForm({...withdrawForm, pix_key: e.target.value})} />
-              </div>
-              <div>
-                <Label className="text-foreground">Dados Bancários (opcional)</Label>
-                <Input className="mt-1.5 bg-secondary border-border text-foreground" placeholder="Banco, agência, conta" value={withdrawForm.bank_info} onChange={e => setWithdrawForm({...withdrawForm, bank_info: e.target.value})} />
-              </div>
-              <Button type="submit" disabled={submitting} className="w-full gold-gradient text-background font-bold">
-                {submitting ? 'Enviando...' : 'Solicitar Saque'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-        <Button
-          onClick={() => setShowTransferModal(true)}
-          disabled={associate?.status !== 'active' || (associate?.wallet_balance || 0) <= 0}
-          className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ArrowRightLeft size={16} /> Transferir
-        </Button>
         </div>
       </div>
 
@@ -214,9 +272,11 @@ export default function Wallet() {
           </div>
         )}
       </div>
+
       {showTransferModal && (
         <CommissionTransferModal
           associate={associate}
+          minAmount={config?.withdrawal_min_amount ?? 1}
           onClose={() => setShowTransferModal(false)}
           onSubmitted={loadData}
         />

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRightLeft, Search, AlertTriangle, CheckCircle } from 'lucide-react';
 
-export default function CommissionTransferModal({ associate, onClose, onSubmitted }) {
+export default function CommissionTransferModal({ associate, onClose, onSubmitted, minAmount = 1 }) {
   const [step, setStep] = useState('select'); // 'select' | 'confirm' | 'done'
   const [networkMembers, setNetworkMembers] = useState([]);
   const [search, setSearch] = useState('');
@@ -46,7 +46,7 @@ export default function CommissionTransferModal({ associate, onClose, onSubmitte
     const val = parseFloat(amount);
     if (!val || val <= 0) { setError('Informe um valor válido.'); return; }
     if (val > (associate.wallet_balance || 0)) { setError('Saldo insuficiente para esta transferência.'); return; }
-    if (val < 1) { setError('Valor mínimo de transferência: R$ 1,00.'); return; }
+    if (val < minAmount) { setError(`Valor mínimo de transferência: R$ ${minAmount.toFixed(2)}.`); return; }
 
     setSubmitting(true);
     setError('');
@@ -146,12 +146,12 @@ export default function CommissionTransferModal({ associate, onClose, onSubmitte
             </div>
 
             <div>
-              <Label>Valor a Transferir (R$)</Label>
+              <Label>Valor a Transferir — mín. R$ {minAmount.toFixed(2)}</Label>
               <Input
                 className="mt-1.5"
                 type="number"
                 step="0.01"
-                min="1"
+                min={minAmount}
                 placeholder="0,00"
                 value={amount}
                 onChange={e => { setAmount(e.target.value); setError(''); }}
