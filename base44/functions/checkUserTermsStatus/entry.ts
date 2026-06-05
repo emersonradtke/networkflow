@@ -3,10 +3,21 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    // SECURITY: Verificar autenticação
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { user_id } = await req.json();
 
     if (!user_id) {
       return Response.json({ error: 'user_id is required' }, { status: 400 });
+    }
+
+    // SECURITY: Usuário só pode verificar seus próprios termos (admin pode verificar qualquer um)
+    if (user.role !== 'admin' && user.id !== user_id) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Buscar todos os documentos obrigatórios e ativos

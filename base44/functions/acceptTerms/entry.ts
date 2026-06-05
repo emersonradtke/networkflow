@@ -4,11 +4,22 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    // SECURITY: Verificar autenticação
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { terms_id, terms_version, user_id, user_email, terms_title, terms_category } = body;
 
     if (!terms_id || !terms_version || !user_id) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // SECURITY: Usuário só pode aceitar termos em seu próprio nome
+    if (user.role !== 'admin' && user.id !== user_id) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const ipAddress = req.headers.get('x-forwarded-for') ||

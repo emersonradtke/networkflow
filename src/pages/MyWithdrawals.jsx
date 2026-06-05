@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 
 const statusConfig = {
   pending:  { label: 'Pendente',  icon: Clock,        cls: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' },
@@ -53,8 +53,10 @@ export default function MyWithdrawals() {
       associate_id: associate.id,
       associate_name: associate.full_name,
       amount,
-      pix_key: form.pix_key,
-      bank_info: form.bank_info,
+      pix_key: associate.pix_key || form.pix_key,
+      bank_info: associate.bank_name
+        ? `${associate.bank_name} · Ag ${associate.bank_agency || '-'} · Cc ${associate.bank_account || '-'}`
+        : form.bank_info,
       status: 'pending',
     });
     setDialogOpen(false);
@@ -101,7 +103,14 @@ export default function MyWithdrawals() {
           <DialogTrigger asChild>
             <Button
               className="mt-4 bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2"
-              disabled={!associate?.wallet_balance || associate.wallet_balance <= 0}
+              disabled={associate?.status !== 'active' || !associate?.wallet_balance || associate.wallet_balance <= 0}
+              onClick={() => {
+                // Pré-preencher com dados bancários do associado
+                const bankInfo = associate?.bank_name
+                  ? `${associate.bank_name} · Ag ${associate.bank_agency || '-'} · Cc ${associate.bank_account || '-'}${associate.bank_account_digit ? '-' + associate.bank_account_digit : ''}`
+                  : (associate?.bank_info || '');
+                setForm({ amount: '', pix_key: associate?.pix_key || '', bank_info: bankInfo });
+              }}
             >
               <ArrowUpCircle size={16} /> Solicitar Saque
             </Button>
@@ -110,26 +119,41 @@ export default function MyWithdrawals() {
             <DialogHeader>
               <DialogTitle className="font-black">Solicitar Saque</DialogTitle>
             </DialogHeader>
+            {!(associate?.pix_key || associate?.bank_account) ? (
+              <div className="space-y-4 py-2">
+                <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                  <ArrowUpCircle size={18} className="text-yellow-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-yellow-800">Dados bancários não cadastrados</p>
+                    <p className="text-xs text-yellow-700 mt-1">Cadastre sua chave PIX ou dados bancários antes de solicitar um saque.</p>
+                  </div>
+                </div>
+                <a href="/bank-data" onClick={() => setDialogOpen(false)}>
+                  <Button className="w-full gold-gradient text-background font-bold">Cadastrar Dados Bancários</Button>
+                </a>
+              </div>
+            ) : (
             <form onSubmit={handleWithdraw} className="space-y-4">
+              <div className="p-3 bg-secondary rounded-xl space-y-1.5">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dados para recebimento</p>
+                {associate?.pix_key && (
+                  <p className="text-sm text-foreground"><span className="font-medium">PIX:</span> {associate.pix_key}</p>
+                )}
+                {associate?.bank_account && (
+                  <p className="text-sm text-foreground"><span className="font-medium">{associate.bank_name || 'Banco'}:</span> Ag {associate.bank_agency} · Cc {associate.bank_account}</p>
+                )}
+                <a href="/bank-data" onClick={() => setDialogOpen(false)} className="text-xs text-accent underline block mt-1">Alterar dados bancários</a>
+              </div>
               <div>
                 <Label>Valor (mín. R$ {(config?.withdrawal_min_amount ?? 0.01).toFixed(2)})</Label>
                 <Input className="mt-1.5" type="number" step="0.01" placeholder="0.00"
                   value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
               </div>
-              <div>
-                <Label>Chave Pix</Label>
-                <Input className="mt-1.5" placeholder="CPF, e-mail, telefone ou chave aleatória"
-                  value={form.pix_key} onChange={e => setForm({...form, pix_key: e.target.value})} />
-              </div>
-              <div>
-                <Label>Dados Bancários (opcional)</Label>
-                <Input className="mt-1.5" placeholder="Banco, agência, conta"
-                  value={form.bank_info} onChange={e => setForm({...form, bank_info: e.target.value})} />
-              </div>
               <Button type="submit" disabled={submitting} className="w-full gold-gradient text-background font-bold">
                 {submitting ? 'Enviando...' : 'Solicitar Saque'}
               </Button>
             </form>
+            )}
           </DialogContent>
         </Dialog>
       </div>

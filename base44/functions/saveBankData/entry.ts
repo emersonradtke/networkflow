@@ -3,10 +3,21 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    // SECURITY: Verificar autenticação obrigatória
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { associate_id, cpf, email, bankData } = body;
 
-    // Resolver o ID do associate usando service role (sem precisar de auth do usuário)
+    if (!bankData || typeof bankData !== 'object') {
+      return Response.json({ error: 'bankData é obrigatório' }, { status: 400 });
+    }
+
+    // Resolver o ID do associate
     let associateId = associate_id;
 
     if (!associateId) {
@@ -24,7 +35,23 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Associate não encontrado' }, { status: 404 });
     }
 
-    await base44.asServiceRole.entities.Associate.update(associateId, bankData);
+    // SECURITY: Se não for admin, garantir que o usuário só pode atualizar seus próprios dados
+    if (user.role !== 'admin') {
+      const owns = await base44.asServiceRole.entities.Associate.filter({ id: associateId, user_id: user.id });
+      // Fallback: buscar por email para usuários legados
+      if (owns.length === 0) {
+        const byEmail = await base44.asServiceRole.entities.Associate.filter({ id: associateId, email: user.email });
+        if (byEmail.length === 0) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      }
+    }
+
+    // Campos permitidos para atualização bancária (whitelist)
+    const allowedFields = ['pix_key', 'pix_key_type', 'bank_code', 'bank_name', 'bank_account_type', 'bank_agency', 'bank_agency_digit', 'bank_account', 'bank_account_digit', 'bank_info'];
+    const safeData = Object.fromEntries(Object.entries(bankData).filter(([k]) => allowedFields.includes(k)));
+
+    await base44.asServiceRole.entities.Associate.update(associateId, safeData);
 
     return Response.json({ success: true, associate_id: associateId });
   } catch (error) {
