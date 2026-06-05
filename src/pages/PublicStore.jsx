@@ -124,7 +124,7 @@ export default function PublicStore() {
     <div className="min-h-screen bg-slate-50 font-inter">
       {/* ── TOP BAR ── */}
       <div className="bg-[#1B2A5E] text-white text-xs py-2 px-4 text-center">
-        🚀 Você está na loja oficial do(a) consultor(a) <strong>{consultant?.full_name}</strong> — Bold Life
+        🚀 Você está na loja oficial da <strong>Bold Life</strong> — consultor(a) <strong>{consultant?.full_name}</strong>
       </div>
 
       {/* ── HEADER ── */}
