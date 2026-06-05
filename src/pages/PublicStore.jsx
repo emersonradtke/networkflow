@@ -132,7 +132,7 @@ export default function PublicStore() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <img src={LOGO_URL} alt="Bold Life" className="h-9 object-contain" />
+            <img src={LOGO_URL} alt="Bold Life" className="h-8 object-contain" />
           </div>
 
           {/* Search bar (desktop) */}
@@ -205,7 +205,7 @@ export default function PublicStore() {
 
       {/* ── HERO BANNER ── */}
       {banners.length > 0 ? (
-        <div className="relative overflow-hidden" style={{ minHeight: 300 }}>
+        <div className="relative overflow-hidden" style={{ minHeight: 200 }}>
           <AnimatePresence mode="wait">
             <motion.div
               key={bannerIndex}
@@ -218,7 +218,7 @@ export default function PublicStore() {
                 background: banners[bannerIndex]?.background_color
                   ? `linear-gradient(135deg, ${banners[bannerIndex].background_color}, #1B2A5E)`
                   : 'linear-gradient(135deg, #1B2A5E 0%, #2563EB 50%, #3B9EE2 100%)',
-                minHeight: 300
+                minHeight: 200
               }}
               onClick={async () => {
                 const banner = banners[bannerIndex];
@@ -237,28 +237,15 @@ export default function PublicStore() {
               {banners[bannerIndex]?.image_url && (
                 <img src={banners[bannerIndex].image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
               )}
-              <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-20 flex flex-col md:flex-row items-center gap-8">
+              <div className="relative max-w-7xl mx-auto px-6 py-10 md:py-12 flex flex-col md:flex-row items-center gap-6">
                 <div className="flex-1 text-center md:text-left">
-                  <span className="inline-block text-[#3B9EE2] text-xs font-bold tracking-widest uppercase mb-3">Oferta em destaque</span>
-                  <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3">
+                  <span className="inline-block text-[#3B9EE2] text-xs font-bold tracking-widest uppercase mb-2">Oferta em destaque</span>
+                  <h1 className="text-2xl md:text-3xl font-black text-white leading-tight mb-2">
                     {banners[bannerIndex]?.title || 'Produtos Premium Bold Life'}
                   </h1>
                   {banners[bannerIndex]?.description && (
-                    <p className="text-blue-100 text-base mb-6 max-w-lg">{banners[bannerIndex].description}</p>
+                    <p className="text-blue-100 text-sm mb-4 max-w-lg">{banners[bannerIndex].description}</p>
                   )}
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
-                    <button
-                      className="inline-flex items-center gap-2 bg-[#3B9EE2] hover:bg-[#2d8fd5] text-white font-bold px-6 py-3 rounded-xl transition-all shadow-lg"
-                      onClick={e => { e.stopPropagation(); scrollToProducts(); }}
-                    >
-                      Ver Produtos <ChevronDown size={16} />
-                    </button>
-                    {banners[bannerIndex]?.link && (
-                      <span className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl transition-all border border-white/20">
-                        <ExternalLink size={14} /> Ver Oferta
-                      </span>
-                    )}
-                  </div>
                 </div>
                 {banners[bannerIndex]?.image_url && (
                   <div className="hidden md:block w-64 xl:w-80">
@@ -295,7 +282,7 @@ export default function PublicStore() {
         /* Hero padrão sem banner */
         <div className="bg-gradient-to-br from-[#1B2A5E] via-[#1e3a8a] to-[#3B9EE2] py-16 px-4">
           <div className="max-w-7xl mx-auto text-center">
-            <img src={LOGO_URL} alt="Bold Life" className="h-14 mx-auto mb-6 drop-shadow-xl" />
+            <img src={LOGO_URL} alt="Bold Life" className="h-12 mx-auto mb-6 drop-shadow-xl object-contain" />
             <h1 className="text-3xl md:text-4xl font-black text-white mb-3">Ecossistema de Transformação</h1>
             <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">Produtos premium que transformam hábitos em resultados extraordinários.</p>
             <button onClick={scrollToProducts} className="bg-[#3B9EE2] hover:bg-[#2d8fd5] text-white font-bold px-8 py-3 rounded-xl transition shadow-lg">
@@ -404,7 +391,7 @@ export default function PublicStore() {
         <div className="mt-12 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1B2A5E] to-[#2563EB] p-8 md:p-12">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <img src={LOGO_URL} alt="Bold Life" className="h-10 mb-6 brightness-0 invert" />
+              <img src={LOGO_URL} alt="Bold Life" className="h-9 mb-6 brightness-0 invert object-contain" />
               <h3 className="text-2xl md:text-3xl font-black text-white mb-4">
                 Não são suas condições, e sim suas <span className="text-[#3B9EE2]">decisões</span> que determinam o seu destino.
               </h3>
@@ -444,7 +431,7 @@ export default function PublicStore() {
       <footer className="mt-12 bg-[#1B2A5E] text-white">
         <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <img src={LOGO_URL} alt="Bold Life" className="h-9 mb-4 brightness-0 invert" />
+            <img src={LOGO_URL} alt="Bold Life" className="h-8 mb-4 brightness-0 invert object-contain" />
             <p className="text-blue-200 text-sm leading-relaxed">
               Ecossistema de transformação que conecta consumo inteligente a resultados extraordinários.
             </p>
