@@ -23,20 +23,17 @@ export default function PendingPlacements({ associateId, onAccepted }) {
   };
 
   const dismissPlacementNotifications = async (req) => {
-    try {
-      const notifs = await base44.entities.Notification.filter({
-        associate_id: associateId,
-        is_read: false,
-      });
-      const toRead = notifs.filter(n =>
-        n.title?.includes('Colocação') && n.message?.includes(req.associate_name)
-      );
-      await Promise.all(toRead.map(n =>
-        base44.entities.Notification.update(n.id, { is_read: true })
-      ));
-    } catch (err) {
-      console.error('Erro ao limpar notificações:', err);
-    }
+    const notifs = await base44.entities.Notification.filter({
+      associate_id: associateId,
+      is_read: false,
+    });
+    // Marcar como lida qualquer notificação de colocação relacionada a este associado
+    const toRead = notifs.filter(n =>
+      n.title?.includes('Colocação') || n.message?.includes(req.associate_name)
+    );
+    await Promise.all(toRead.map(n =>
+      base44.entities.Notification.update(n.id, { is_read: true })
+    ));
   };
 
   const accept = async (req) => {
@@ -63,7 +60,11 @@ export default function PendingPlacements({ associateId, onAccepted }) {
 
   const reject = async (req) => {
     setProcessing(req.id);
-    await base44.entities.PlacementRequest.update(req.id, { status: 'rejected' });
+    // Rejeitar a solicitação e devolver status awaiting_placement para o admin realocar
+    await Promise.all([
+      base44.entities.PlacementRequest.update(req.id, { status: 'rejected' }),
+      base44.entities.Associate.update(req.associate_id, { status: 'awaiting_placement' }),
+    ]);
     await base44.entities.Notification.create({
       associate_id: req.associate_id,
       title: 'Solicitação Recusada',
