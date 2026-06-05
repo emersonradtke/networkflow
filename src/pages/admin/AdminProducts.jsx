@@ -77,8 +77,23 @@ export default function AdminProducts() {
     return true;
   };
 
+  const getCommissionSum = () => {
+    const operation = parseFloat(form.commission_operation || 0);
+    const associate = parseFloat(form.commission_associate || 0);
+    const organizer = parseFloat(form.commission_organizer || 0);
+    return operation + associate + organizer;
+  };
+
+  const commissionTotal = parseFloat(form.commission_percent || 0);
+  const commissionSum = getCommissionSum();
+  const isCommissionExceeded = commissionSum > commissionTotal;
+
   const save = async (e) => {
     e.preventDefault();
+    if (isCommissionExceeded) {
+      alert(`Soma das 3 comissões (${commissionSum.toFixed(1)}%) excede o total (${commissionTotal.toFixed(1)}%)`);
+      return;
+    }
     setSaving(true);
     const isDirect = form.type === 'direct_sale';
     const hasPrice = form.price && parseFloat(form.price) > 0;
@@ -420,25 +435,35 @@ export default function AdminProducts() {
             </div>
 
             {/* Comissões */}
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">Percentuais de Comissão (%)</Label>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">Operação</Label>
-                  <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_operation} onChange={e => setForm({ ...form, commission_operation: e.target.value })} placeholder="0" />
-                </div>
-                <div>
-                  <Label className="text-xs">Associado</Label>
-                  <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_associate} onChange={e => setForm({ ...form, commission_associate: e.target.value })} placeholder="0" />
-                </div>
-                <div>
-                  <Label className="text-xs">Idealizador</Label>
-                  <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_organizer} onChange={e => setForm({ ...form, commission_organizer: e.target.value })} placeholder="0" />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">Comissão anterior (legado)</p>
-              <Input className="text-sm" type="number" step="0.1" value={form.commission_percent} onChange={e => setForm({ ...form, commission_percent: e.target.value })} placeholder="0" />
-            </div>
+             <div className="space-y-2">
+               <Label className="text-sm font-bold">Comissão Total (%)</Label>
+               <Input className="text-sm font-bold" type="number" step="0.1" value={form.commission_percent} onChange={e => setForm({ ...form, commission_percent: e.target.value })} placeholder="0" required />
+
+               <Label className="text-sm font-bold mt-3">Distribuição das 3 Comissões (%)</Label>
+               <div className="grid grid-cols-3 gap-3">
+                 <div>
+                   <Label className="text-xs">Operação</Label>
+                   <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_operation} onChange={e => setForm({ ...form, commission_operation: e.target.value })} placeholder="0" />
+                 </div>
+                 <div>
+                   <Label className="text-xs">Associado</Label>
+                   <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_associate} onChange={e => setForm({ ...form, commission_associate: e.target.value })} placeholder="0" />
+                 </div>
+                 <div>
+                   <Label className="text-xs">Idealizador</Label>
+                   <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_organizer} onChange={e => setForm({ ...form, commission_organizer: e.target.value })} placeholder="0" />
+                 </div>
+               </div>
+               <div className="text-xs font-bold text-muted-foreground">
+                 Total: {commissionSum.toFixed(1)}% de {commissionTotal.toFixed(1)}%
+               </div>
+               {isCommissionExceeded && (
+                 <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                   <AlertTriangle size={14} />
+                   Soma exceede o total! Máximo de {commissionTotal.toFixed(1)}%
+                 </div>
+               )}
+             </div>
 
             {/* Estoque (apenas venda direta) */}
             {form.type === 'direct_sale' && (
