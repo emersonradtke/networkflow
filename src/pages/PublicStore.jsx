@@ -1,12 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ShoppingCart, ExternalLink, Percent, Search, Package, Hash, ChevronLeft, ChevronRight, Share2, User, CheckCircle2, X } from 'lucide-react';
+import {
+  ShoppingCart, ExternalLink, Search, Package, ChevronLeft, ChevronRight,
+  Share2, User, CheckCircle2, Star, Truck, ShieldCheck, CreditCard, Phone,
+  Instagram, MessageCircle, ChevronDown, Zap, Users, Award
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import PublicCartDrawer from '@/components/public/PublicCartDrawer';
+
+const LOGO_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/8b3076bd8_BOLDLIFE01-LOGO1.png';
+const ICON_URL = 'https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/79a92f0c7_BOLDLIFE-ICON1.png';
 
 export default function PublicStore() {
   const { invite_code } = useParams();
@@ -23,6 +30,8 @@ export default function PublicStore() {
   const [config, setConfig] = useState(null);
   const [copied, setCopied] = useState(false);
   const [bannerIndex, setBannerIndex] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const productsRef = useRef(null);
 
   useEffect(() => { loadData(); }, [invite_code]);
 
@@ -39,13 +48,7 @@ export default function PublicStore() {
       base44.entities.StoreBanner.filter({ is_active: true }, 'position', 10),
       base44.entities.NetworkConfig.list(),
     ]);
-
-    if (associates.length === 0) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
-
+    if (associates.length === 0) { setNotFound(true); setLoading(false); return; }
     setConsultant(associates[0]);
     setProducts(prods);
     setBanners(bannersData);
@@ -79,21 +82,26 @@ export default function PublicStore() {
     }
   };
 
+  const scrollToProducts = () => {
+    productsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="text-center">
-        <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground text-sm">Carregando loja...</p>
+        <img src={ICON_URL} alt="BoldLife" className="w-16 h-16 mx-auto mb-4 animate-pulse" />
+        <p className="text-slate-500 text-sm font-medium">Carregando loja...</p>
       </div>
     </div>
   );
 
   if (notFound) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <Package size={48} className="text-muted-foreground mx-auto mb-4 opacity-40" />
-        <h2 className="text-xl font-bold text-foreground mb-2">Consultor não encontrado</h2>
-        <p className="text-muted-foreground">O link que você acessou é inválido ou o consultor está inativo.</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="text-center px-6">
+        <img src={LOGO_URL} alt="BoldLife" className="h-10 mx-auto mb-8 opacity-60" />
+        <Package size={48} className="text-slate-300 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">Consultor não encontrado</h2>
+        <p className="text-slate-500">O link que você acessou é inválido ou o consultor está inativo.</p>
       </div>
     </div>
   );
@@ -113,30 +121,53 @@ export default function PublicStore() {
   const totalQty = cart.reduce((s, i) => s + i.qty, 0);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header do Consultor */}
-      <header className="sticky top-0 z-50 shadow-sm" style={{ background: 'linear-gradient(135deg,#1B2A5E,#243a7a)' }}>
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            {consultant?.profile_image ? (
-              <img src={consultant.profile_image} alt={consultant.full_name} className="w-10 h-10 rounded-full object-cover border-2 border-white/30 flex-shrink-0" />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                <User size={18} className="text-white" />
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="text-white/70 text-xs">Consultor(a)</p>
-              <p className="text-white font-bold text-sm leading-tight truncate">{consultant?.full_name}</p>
-            </div>
+    <div className="min-h-screen bg-slate-50 font-inter">
+      {/* ── TOP BAR ── */}
+      <div className="bg-[#1B2A5E] text-white text-xs py-2 px-4 text-center">
+        🚀 Você está na loja oficial do(a) consultor(a) <strong>{consultant?.full_name}</strong> — Bold Life
+      </div>
+
+      {/* ── HEADER ── */}
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          {/* Logo */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <img src={LOGO_URL} alt="Bold Life" className="h-9 object-contain" />
           </div>
 
+          {/* Search bar (desktop) */}
+          <div className="hidden md:flex flex-1 max-w-lg relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition"
+              placeholder="Buscar produtos, marcas, categorias..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
+
+          {/* Right actions */}
           <div className="flex items-center gap-2">
+            {/* Consultant badge */}
+            <div className="hidden sm:flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-1.5">
+              {consultant?.profile_image ? (
+                <img src={consultant.profile_image} alt="" className="w-7 h-7 rounded-full object-cover" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-[#1B2A5E] flex items-center justify-center">
+                  <User size={14} className="text-white" />
+                </div>
+              )}
+              <div className="leading-tight">
+                <p className="text-[10px] text-slate-500">Consultor(a)</p>
+                <p className="text-xs font-bold text-[#1B2A5E] max-w-[120px] truncate">{consultant?.full_name}</p>
+              </div>
+            </div>
+
             <button
               onClick={handleShare}
-              className="flex items-center gap-1.5 text-white/80 hover:text-white text-xs px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              className="flex items-center gap-1.5 text-slate-600 hover:text-[#1B2A5E] text-xs px-3 py-2 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all"
             >
-              {copied ? <CheckCircle2 size={14} /> : <Share2 size={14} />}
+              {copied ? <CheckCircle2 size={14} className="text-green-500" /> : <Share2 size={14} />}
               <span className="hidden sm:inline">{copied ? 'Copiado!' : 'Compartilhar'}</span>
             </button>
 
@@ -149,113 +180,310 @@ export default function PublicStore() {
             />
           </div>
         </div>
-      </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {/* Banners */}
-        {banners.length > 0 && (
-          <div
-            className="relative w-full rounded-xl overflow-hidden cursor-pointer"
-            style={{ backgroundColor: banners[bannerIndex]?.background_color || '#1B2A5E' }}
-            onClick={async () => {
-              const banner = banners[bannerIndex];
-              if (!banner) return;
-              // Registrar intenção de clique no banner
-              await base44.entities.ExternalLinkClick.create({
-                associate_id: consultant.id,
-                banner_id: banner.id,
-                banner_name: banner.title,
-                link_type: 'banner',
-                status: 'intent',
-                clicked_at: new Date().toISOString(),
-              });
-              if (banner.link) window.open(banner.link, '_blank');
-            }}
-          >
-            {banners[bannerIndex]?.image_url && (
-              <img src={banners[bannerIndex].image_url} alt={banners[bannerIndex].title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
-            )}
-            <div className="relative p-6 md:p-8">
-              <h2 className="text-xl md:text-2xl font-bold text-white">{banners[bannerIndex]?.title}</h2>
-              {banners[bannerIndex]?.description && (
-                <p className="text-sm text-white/80 mt-1">{banners[bannerIndex].description}</p>
-              )}
-              {banners[bannerIndex]?.link && (
-                <span className="inline-flex items-center gap-1 mt-3 text-xs text-white/70 bg-white/10 px-3 py-1 rounded-full">
-                  <ExternalLink size={11} /> Ver oferta
-                </span>
-              )}
-            </div>
-            {banners.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2" onClick={e => e.stopPropagation()}>
-                {banners.map((_, idx) => (
-                  <button key={idx} onClick={() => setBannerIndex(idx)} className={`w-2 h-2 rounded-full transition ${idx === bannerIndex ? 'bg-white' : 'bg-white/40'}`} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Busca */}
-        <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Buscar produtos..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
-        </div>
-
-        {/* Categorias */}
+        {/* Category nav */}
         {categories.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => { setCategory(cat); setPage(1); }}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${category === cat ? 'text-white' : 'bg-secondary text-muted-foreground hover:text-foreground'}`}
-                style={category === cat ? { background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' } : {}}
-              >
-                {cat === 'all' ? 'Todos' : cat}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Produtos */}
-        {filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <Package size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
-            <p className="text-muted-foreground">Nenhum produto encontrado.</p>
-          </div>
-        ) : (
-          <>
-            <div className="text-xs text-muted-foreground">
-              {filtered.length} produto{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {paginated.map((product, i) => (
-                <motion.div key={product.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}>
-                  <PublicProductCard product={product} onAddToCart={addToCart} cart={cart} consultant={consultant} />
-                </motion.div>
+          <div className="border-t border-slate-100 bg-white">
+            <div className="max-w-7xl mx-auto px-4 py-0 flex gap-0 overflow-x-auto scrollbar-none">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => { setCategory(cat); setPage(1); scrollToProducts(); }}
+                  className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
+                    category === cat
+                      ? 'border-[#3B9EE2] text-[#1B2A5E] font-bold'
+                      : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200'
+                  }`}
+                >
+                  {cat === 'all' ? 'Todos os Produtos' : cat}
+                </button>
               ))}
             </div>
-
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}>
-                  <ChevronLeft size={15} />
-                </Button>
-                <span className="text-sm text-muted-foreground">Página {safePage} de {totalPages}</span>
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}>
-                  <ChevronRight size={15} />
-                </Button>
-              </div>
-            )}
-          </>
+          </div>
         )}
+      </header>
 
-        {/* Rodapé */}
-        <div className="text-center py-6 border-t border-border">
-          <p className="text-xs text-muted-foreground">Powered by <span className="font-bold text-primary">{appName}</span></p>
+      {/* ── HERO BANNER ── */}
+      {banners.length > 0 ? (
+        <div className="relative overflow-hidden" style={{ minHeight: 300 }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={bannerIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6 }}
+              className="relative w-full cursor-pointer"
+              style={{
+                background: banners[bannerIndex]?.background_color
+                  ? `linear-gradient(135deg, ${banners[bannerIndex].background_color}, #1B2A5E)`
+                  : 'linear-gradient(135deg, #1B2A5E 0%, #2563EB 50%, #3B9EE2 100%)',
+                minHeight: 300
+              }}
+              onClick={async () => {
+                const banner = banners[bannerIndex];
+                if (!banner) return;
+                await base44.entities.ExternalLinkClick.create({
+                  associate_id: consultant.id,
+                  banner_id: banner.id,
+                  banner_name: banner.title,
+                  link_type: 'banner',
+                  status: 'intent',
+                  clicked_at: new Date().toISOString(),
+                });
+                if (banner.link) window.open(banner.link, '_blank');
+              }}
+            >
+              {banners[bannerIndex]?.image_url && (
+                <img src={banners[bannerIndex].image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+              )}
+              <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-20 flex flex-col md:flex-row items-center gap-8">
+                <div className="flex-1 text-center md:text-left">
+                  <span className="inline-block text-[#3B9EE2] text-xs font-bold tracking-widest uppercase mb-3">Oferta em destaque</span>
+                  <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3">
+                    {banners[bannerIndex]?.title || 'Produtos Premium Bold Life'}
+                  </h1>
+                  {banners[bannerIndex]?.description && (
+                    <p className="text-blue-100 text-base mb-6 max-w-lg">{banners[bannerIndex].description}</p>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                    <button
+                      className="inline-flex items-center gap-2 bg-[#3B9EE2] hover:bg-[#2d8fd5] text-white font-bold px-6 py-3 rounded-xl transition-all shadow-lg"
+                      onClick={e => { e.stopPropagation(); scrollToProducts(); }}
+                    >
+                      Ver Produtos <ChevronDown size={16} />
+                    </button>
+                    {banners[bannerIndex]?.link && (
+                      <span className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl transition-all border border-white/20">
+                        <ExternalLink size={14} /> Ver Oferta
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {banners[bannerIndex]?.image_url && (
+                  <div className="hidden md:block w-64 xl:w-80">
+                    <img src={banners[bannerIndex].image_url} alt="" className="w-full object-contain rounded-2xl shadow-2xl" />
+                  </div>
+                )}
+              </div>
+              {banners.length > 1 && (
+                <>
+                  <button
+                    onClick={e => { e.stopPropagation(); setBannerIndex(i => (i - 1 + banners.length) % banners.length); }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
+                  >
+                    <ChevronLeft size={18} className="text-white" />
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); setBannerIndex(i => (i + 1) % banners.length); }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"
+                  >
+                    <ChevronRight size={18} className="text-white" />
+                  </button>
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    {banners.map((_, idx) => (
+                      <button key={idx} onClick={e => { e.stopPropagation(); setBannerIndex(idx); }}
+                        className={`rounded-full transition-all ${idx === bannerIndex ? 'bg-white w-5 h-2' : 'bg-white/40 w-2 h-2'}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : (
+        /* Hero padrão sem banner */
+        <div className="bg-gradient-to-br from-[#1B2A5E] via-[#1e3a8a] to-[#3B9EE2] py-16 px-4">
+          <div className="max-w-7xl mx-auto text-center">
+            <img src={LOGO_URL} alt="Bold Life" className="h-14 mx-auto mb-6 drop-shadow-xl" />
+            <h1 className="text-3xl md:text-4xl font-black text-white mb-3">Ecossistema de Transformação</h1>
+            <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">Produtos premium que transformam hábitos em resultados extraordinários.</p>
+            <button onClick={scrollToProducts} className="bg-[#3B9EE2] hover:bg-[#2d8fd5] text-white font-bold px-8 py-3 rounded-xl transition shadow-lg">
+              Ver Produtos
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── BENEFITS BAR ── */}
+      <div className="bg-white border-b border-slate-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { icon: <Truck size={18} className="text-[#3B9EE2]" />, title: 'Entrega Rápida', sub: 'Em todo o Brasil' },
+            { icon: <ShieldCheck size={18} className="text-[#3B9EE2]" />, title: 'Compra Segura', sub: 'Dados protegidos' },
+            { icon: <CreditCard size={18} className="text-[#3B9EE2]" />, title: '10x sem juros', sub: 'Via PIX ou cartão' },
+            { icon: <Award size={18} className="text-[#3B9EE2]" />, title: 'Produtos Premium', sub: 'Qualidade garantida' },
+          ].map((b, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">{b.icon}</div>
+              <div>
+                <p className="text-xs font-bold text-slate-800">{b.title}</p>
+                <p className="text-xs text-slate-500">{b.sub}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* ── MOBILE SEARCH ── */}
+        <div className="md:hidden relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition"
+            placeholder="Buscar produtos..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+          />
+        </div>
+
+        {/* ── PRODUCTS SECTION ── */}
+        <div ref={productsRef}>
+          {/* Section header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-black text-[#1B2A5E]">
+                {category === 'all' ? 'Todos os Produtos' : category}
+              </h2>
+              <p className="text-sm text-slate-500">{filtered.length} produto{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}</p>
+            </div>
+            {search && (
+              <button onClick={() => { setSearch(''); setPage(1); }} className="text-xs text-slate-500 hover:text-slate-800 underline">
+                Limpar busca
+              </button>
+            )}
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
+              <Package size={48} className="text-slate-200 mx-auto mb-4" />
+              <p className="text-slate-500 font-medium">Nenhum produto encontrado</p>
+              <p className="text-slate-400 text-sm mt-1">Tente buscar por outro termo</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {paginated.map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(i * 0.03, 0.4) }}
+                  >
+                    <PublicProductCard product={product} onAddToCart={addToCart} cart={cart} consultant={consultant} />
+                  </motion.div>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 pt-8">
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="gap-1">
+                    <ChevronLeft size={15} /> Anterior
+                  </Button>
+                  <div className="flex gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const p = i + 1;
+                      return (
+                        <button key={p} onClick={() => setPage(p)}
+                          className={`w-8 h-8 rounded-lg text-sm font-medium transition ${p === safePage ? 'bg-[#1B2A5E] text-white' : 'bg-white text-slate-600 border border-slate-200 hover:border-blue-300'}`}>
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="gap-1">
+                    Próximo <ChevronRight size={15} />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── ABOUT SECTION ── */}
+        <div className="mt-12 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1B2A5E] to-[#2563EB] p-8 md:p-12">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <img src={LOGO_URL} alt="Bold Life" className="h-10 mb-6 brightness-0 invert" />
+              <h3 className="text-2xl md:text-3xl font-black text-white mb-4">
+                Não são suas condições, e sim suas <span className="text-[#3B9EE2]">decisões</span> que determinam o seu destino.
+              </h3>
+              <p className="text-blue-100 mb-6 leading-relaxed">
+                A Bold Life é um ecossistema de educação e consumo que transforma hábitos comuns em resultados extraordinários. Nascida no Vale do Aço, conecta você a +30 mil produtos e parcerias em todo o Brasil.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { icon: <Zap size={16} />, label: '+30 mil produtos' },
+                  { icon: <Users size={16} />, label: 'Rede 5 gerações' },
+                  { icon: <Star size={16} />, label: 'Qualidade premium' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+                    <span className="text-[#3B9EE2]">{item.icon}</span>
+                    <span className="text-white text-sm font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { n: '$200B', label: 'Mercado Global' },
+                { n: '5×5', label: 'Sistema de Rede' },
+                { n: '∞', label: 'Consumo Contínuo' },
+              ].map((s, i) => (
+                <div key={i} className="text-center bg-white/10 rounded-2xl p-4">
+                  <p className="text-2xl font-black text-white">{s.n}</p>
+                  <p className="text-blue-200 text-xs mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── FOOTER ── */}
+      <footer className="mt-12 bg-[#1B2A5E] text-white">
+        <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <img src={LOGO_URL} alt="Bold Life" className="h-9 mb-4 brightness-0 invert" />
+            <p className="text-blue-200 text-sm leading-relaxed">
+              Ecossistema de transformação que conecta consumo inteligente a resultados extraordinários.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-bold mb-4 text-sm tracking-wide uppercase">Seu Consultor(a)</h4>
+            <div className="flex items-center gap-3 mb-3">
+              {consultant?.profile_image ? (
+                <img src={consultant.profile_image} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-blue-400" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#3B9EE2] flex items-center justify-center">
+                  <User size={18} className="text-white" />
+                </div>
+              )}
+              <div>
+                <p className="font-bold">{consultant?.full_name}</p>
+                <p className="text-blue-300 text-xs">Consultor(a) Bold Life</p>
+              </div>
+            </div>
+            {consultant?.phone && (
+              <a href={`https://wa.me/${consultant.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white text-sm font-semibold px-4 py-2 rounded-xl transition mt-2">
+                <MessageCircle size={15} /> Falar no WhatsApp
+              </a>
+            )}
+          </div>
+          <div>
+            <h4 className="font-bold mb-4 text-sm tracking-wide uppercase">Segurança</h4>
+            <div className="space-y-2 text-sm text-blue-200">
+              <div className="flex items-center gap-2"><ShieldCheck size={14} className="text-[#3B9EE2]" /> Compra 100% segura</div>
+              <div className="flex items-center gap-2"><CreditCard size={14} className="text-[#3B9EE2]" /> Pagamento via InfinitePay</div>
+              <div className="flex items-center gap-2"><Truck size={14} className="text-[#3B9EE2]" /> Entrega em todo o Brasil</div>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-white/10 py-4 text-center text-xs text-blue-300">
+          © {new Date().getFullYear()} Bold Life · Todos os direitos reservados · Powered by <span className="text-white font-bold">Bold Life</span>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -265,7 +493,6 @@ function PublicProductCard({ product, onAddToCart, cart, consultant }) {
   const outOfStock = product.type === 'direct_sale' && (product.stock == null || product.stock <= 0);
 
   const handleExternalClick = async () => {
-    // Registrar intenção de compra para o associado indicante
     await base44.entities.ExternalLinkClick.create({
       associate_id: consultant.id,
       product_id: product.id,
@@ -278,46 +505,62 @@ function PublicProductCard({ product, onAddToCart, cart, consultant }) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border overflow-hidden flex flex-col hover:shadow-md transition-shadow group">
-      <div className="relative aspect-square bg-secondary overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group">
+      <div className="relative aspect-square bg-slate-50 overflow-hidden">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ShoppingCart size={28} className="text-muted-foreground opacity-40" />
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+            <img src={ICON_URL} alt="" className="w-10 h-10 opacity-20" />
           </div>
         )}
         {product.type === 'external_link' && (
           <div className="absolute top-2 left-2">
-            <Badge className="bg-blue-500/80 text-white text-xs">Externo</Badge>
+            <span className="bg-[#3B9EE2] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Externo</span>
+          </div>
+        )}
+        {product.commission_percent > 0 && (
+          <div className="absolute top-2 right-2">
+            <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{product.commission_percent}% off</span>
           </div>
         )}
         {outOfStock && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white text-xs font-bold bg-red-600 px-2 py-1 rounded-full">Sem Estoque</span>
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+            <span className="text-slate-700 text-xs font-bold bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">Sem Estoque</span>
           </div>
         )}
       </div>
+
       <div className="p-3 flex flex-col flex-1">
-        <h3 className="font-bold text-foreground text-sm leading-tight line-clamp-2">{product.name}</h3>
-        {product.brand && <p className="text-xs text-muted-foreground mt-0.5">{product.brand}</p>}
-        <div className="mt-auto pt-2">
-          <p className="text-lg font-black text-primary">R$ {product.price?.toFixed(2)}</p>
+        {product.brand && <p className="text-[10px] text-[#3B9EE2] font-bold uppercase tracking-wide mb-0.5">{product.brand}</p>}
+        <h3 className="font-bold text-slate-800 text-sm leading-tight line-clamp-2 flex-1">{product.name}</h3>
+
+        <div className="mt-2 pt-2 border-t border-slate-50">
+          <p className="text-lg font-black text-[#1B2A5E]">R$ {product.price?.toFixed(2)}</p>
+          <p className="text-[10px] text-slate-400 mb-2">ou 10x de R$ {(product.price / 10)?.toFixed(2)}</p>
+
           {product.type === 'external_link' ? (
-            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={handleExternalClick}>
-              <ExternalLink size={13} /> Ver Produto
-            </Button>
+            <button
+              onClick={handleExternalClick}
+              className="w-full flex items-center justify-center gap-1.5 bg-[#3B9EE2] hover:bg-[#2d8fd5] text-white text-xs font-bold py-2.5 rounded-xl transition-all"
+            >
+              <ExternalLink size={12} /> Ver Produto
+            </button>
           ) : (
-            <Button
-              size="sm"
-              className="w-full mt-2 font-bold gap-1.5"
-              style={cartItem ? { background: '#1B2A5E', color: '#fff' } : { background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)', color: '#fff' }}
-              onClick={() => onAddToCart(product)}
+            <button
+              className={`w-full flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition-all ${
+                cartItem
+                  ? 'bg-[#1B2A5E] text-white'
+                  : outOfStock
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : 'bg-[#1B2A5E] hover:bg-[#243a7a] text-white'
+              }`}
+              onClick={() => !outOfStock && onAddToCart(product)}
               disabled={outOfStock}
             >
-              <ShoppingCart size={13} />
-              {cartItem ? `No carrinho (${cartItem.qty})` : 'Adicionar'}
-            </Button>
+              <ShoppingCart size={12} />
+              {cartItem ? `No carrinho (${cartItem.qty})` : outOfStock ? 'Indisponível' : 'Adicionar'}
+            </button>
           )}
         </div>
       </div>
