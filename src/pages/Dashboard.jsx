@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard } from 'lucide-react';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -172,6 +172,33 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {/* Link da Loja Pública */}
+      {associate.invite_code && (
+        <div className="dark-card rounded-2xl p-5 border-l-4 border-cyan">
+          <div className="flex items-center gap-2 mb-3">
+            <ShoppingBag size={16} className="text-primary" />
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Sua Loja Pública</p>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">Compartilhe com clientes — eles compram e você ganha comissão!</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-secondary rounded-lg px-3 py-2.5 text-sm text-muted-foreground truncate border border-border">
+              {window.location.origin}/loja/{associate.invite_code}
+            </div>
+            <Button size="sm" className="font-bold gap-1.5 shrink-0" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)', color: '#fff' }}
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/loja/${associate.invite_code}`);
+              }}>
+              <Copy size={14} />
+              Copiar
+            </Button>
+          </div>
+          <a href={`/loja/${associate.invite_code}`} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline">
+            <ExternalLink size={11} /> Abrir minha loja
+          </a>
+        </div>
+      )}
 
       {/* Cartão BoldLife */}
       <BoldLifeCardSection 

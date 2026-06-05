@@ -57,6 +57,7 @@ import BankData from './pages/BankData';
 import ProfileData from './pages/ProfileData';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
+import PublicStore from './pages/PublicStore';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -86,6 +87,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfUse />} />
+      <Route path="/loja/:invite_code" element={<PublicStore />} />
       
       {/* Role-based redirect */}
       <Route path="/role-redirect" element={<RoleRedirect />} />
