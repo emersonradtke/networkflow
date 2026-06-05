@@ -37,7 +37,7 @@ export default function PublicStore() {
 
   useEffect(() => {
     if (banners.length <= 1) return;
-    const timer = setInterval(() => setBannerIndex(i => (i + 1) % banners.length), 5000);
+    const timer = setInterval(() => setBannerIndex(i => (i + 1) % banners.length), 20000);
     return () => clearInterval(timer);
   }, [banners]);
 
@@ -209,10 +209,10 @@ export default function PublicStore() {
           <AnimatePresence mode="wait">
             <motion.div
               key={bannerIndex}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.5 }}
               className="relative w-full cursor-pointer"
               style={{
                 background: banners[bannerIndex]?.background_color
