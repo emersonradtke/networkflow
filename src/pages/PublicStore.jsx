@@ -209,7 +209,7 @@ export default function PublicStore() {
       {/* ── HERO BANNER ── */}
       {banners.length > 0 ? (
         <div className="w-full mb-0">
-          <div className="relative overflow-hidden" style={{ height: 192 }}>
+          <div className="relative overflow-hidden" style={{ height: 320 }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={bannerIndex}
@@ -342,7 +342,7 @@ export default function PublicStore() {
         </div>
 
         {/* ── PRODUCTS SECTION ── */}
-        <div ref={productsRef} style={{ scrollMarginTop: '120px' }}>
+        <div ref={productsRef}>
           {/* Section header */}
           <div className="flex items-center justify-between mb-6">
             <div>
