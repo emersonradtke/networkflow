@@ -154,7 +154,24 @@ export default function PublicStore() {
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Banners */}
         {banners.length > 0 && (
-          <div className="relative w-full rounded-xl overflow-hidden cursor-pointer" style={{ backgroundColor: banners[bannerIndex]?.background_color || '#1B2A5E' }}>
+          <div
+            className="relative w-full rounded-xl overflow-hidden cursor-pointer"
+            style={{ backgroundColor: banners[bannerIndex]?.background_color || '#1B2A5E' }}
+            onClick={async () => {
+              const banner = banners[bannerIndex];
+              if (!banner) return;
+              // Registrar intenção de clique no banner
+              await base44.entities.ExternalLinkClick.create({
+                associate_id: consultant.id,
+                banner_id: banner.id,
+                banner_name: banner.title,
+                link_type: 'banner',
+                status: 'intent',
+                clicked_at: new Date().toISOString(),
+              });
+              if (banner.link) window.open(banner.link, '_blank');
+            }}
+          >
             {banners[bannerIndex]?.image_url && (
               <img src={banners[bannerIndex].image_url} alt={banners[bannerIndex].title} className="absolute inset-0 w-full h-full object-cover opacity-60" />
             )}
@@ -163,9 +180,14 @@ export default function PublicStore() {
               {banners[bannerIndex]?.description && (
                 <p className="text-sm text-white/80 mt-1">{banners[bannerIndex].description}</p>
               )}
+              {banners[bannerIndex]?.link && (
+                <span className="inline-flex items-center gap-1 mt-3 text-xs text-white/70 bg-white/10 px-3 py-1 rounded-full">
+                  <ExternalLink size={11} /> Ver oferta
+                </span>
+              )}
             </div>
             {banners.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2" onClick={e => e.stopPropagation()}>
                 {banners.map((_, idx) => (
                   <button key={idx} onClick={() => setBannerIndex(idx)} className={`w-2 h-2 rounded-full transition ${idx === bannerIndex ? 'bg-white' : 'bg-white/40'}`} />
                 ))}
@@ -210,7 +232,7 @@ export default function PublicStore() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {paginated.map((product, i) => (
                 <motion.div key={product.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}>
-                  <PublicProductCard product={product} onAddToCart={addToCart} cart={cart} />
+                  <PublicProductCard product={product} onAddToCart={addToCart} cart={cart} consultant={consultant} />
                 </motion.div>
               ))}
             </div>
@@ -238,9 +260,22 @@ export default function PublicStore() {
   );
 }
 
-function PublicProductCard({ product, onAddToCart, cart }) {
+function PublicProductCard({ product, onAddToCart, cart, consultant }) {
   const cartItem = cart.find(i => i.id === product.id);
   const outOfStock = product.type === 'direct_sale' && (product.stock == null || product.stock <= 0);
+
+  const handleExternalClick = async () => {
+    // Registrar intenção de compra para o associado indicante
+    await base44.entities.ExternalLinkClick.create({
+      associate_id: consultant.id,
+      product_id: product.id,
+      product_name: product.name,
+      link_type: 'product',
+      status: 'intent',
+      clicked_at: new Date().toISOString(),
+    });
+    if (product.external_url) window.open(product.external_url, '_blank');
+  };
 
   return (
     <div className="bg-white rounded-xl border border-border overflow-hidden flex flex-col hover:shadow-md transition-shadow group">
@@ -269,7 +304,7 @@ function PublicProductCard({ product, onAddToCart, cart }) {
         <div className="mt-auto pt-2">
           <p className="text-lg font-black text-primary">R$ {product.price?.toFixed(2)}</p>
           {product.type === 'external_link' ? (
-            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={() => window.open(product.external_url, '_blank')}>
+            <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={handleExternalClick}>
               <ExternalLink size={13} /> Ver Produto
             </Button>
           ) : (
