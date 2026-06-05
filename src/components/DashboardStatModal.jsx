@@ -251,20 +251,80 @@ function DiretosDetail({ associate }) {
 
 // ── Pontos ─────────────────────────────────────────────────────────────────────
 function PontosDetail({ associate }) {
+  const [orders, setOrders] = useState([]);
+  const [cardProofs, setCardProofs] = useState([]);
+  const [config, setConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      base44.entities.Order.filter({ associate_id: associate.id, status: 'paid' }, '-created_date', 50),
+      base44.entities.CardSpendingProof.filter({ associate_id: associate.id, status: 'approved' }, '-created_date', 50),
+      base44.entities.NetworkConfig.list(),
+    ]).then(([ord, proofs, cfg]) => {
+      setOrders(ord);
+      setCardProofs(proofs);
+      setConfig(cfg[0] || null);
+      setLoading(false);
+    });
+  }, [associate.id]);
+
+  const pontosPerReal = config?.pontos_por_real || 1;
+
+  // Build unified list of point sources
+  const sources = [
+    ...orders.map(o => ({
+      id: 'o-' + o.id,
+      date: o.created_date,
+      label: `Compra — ${o.product_name || 'Produto'}`,
+      sublabel: `Pedido #${o.order_number || o.id.slice(0,6)} · R$ ${(o.amount || 0).toFixed(2)}`,
+      pontos: Math.floor((o.amount || 0) * pontosPerReal),
+    })),
+    ...cardProofs.map(p => ({
+      id: 'cp-' + p.id,
+      date: p.created_date,
+      label: `Gasto no Cartão BoldLife`,
+      sublabel: `Ref. ${p.month} · R$ ${(p.spending_amount || 0).toFixed(2)}`,
+      pontos: Math.floor((p.spending_amount || 0) * pontosPerReal),
+    })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
     <div className="space-y-4">
-      <div className="bg-purple-50 rounded-2xl p-5 text-center">
-        <Gift size={32} className="text-purple-500 mx-auto mb-2" />
+      <div className="bg-purple-50 rounded-2xl p-4 text-center">
+        <Gift size={28} className="text-purple-500 mx-auto mb-1" />
         <p className="text-3xl font-black text-purple-700">{(associate.total_pontos || 0).toLocaleString('pt-BR')}</p>
         <p className="text-sm text-muted-foreground mt-1">Pontos acumulados</p>
-      </div>
-      <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm text-slate-600">
-        <p>• Pontos são ganhos a cada compra realizada na loja.</p>
-        <p>• Quanto mais pontos, maiores os benefícios na rede.</p>
-        {associate.has_boldlife_card && (
-          <p className="text-purple-700 font-semibold">• Você possui o Cartão BoldLife ativo! 🎉</p>
+        {config && (
+          <p className="text-xs text-purple-400 mt-1">{pontosPerReal} ponto{pontosPerReal !== 1 ? 's' : ''} a cada R$ 1,00 gasto</p>
         )}
       </div>
+
+      <Section title="Origem dos pontos">
+        {loading ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />)}
+          </div>
+        ) : sources.length === 0 ? (
+          <EmptyState text="Nenhum ponto registrado ainda. Realize compras na loja!" />
+        ) : (
+          <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+            {sources.map(s => (
+              <div key={s.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(168,85,247,0.1)' }}>
+                  <Gift size={14} className="text-purple-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{s.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{s.sublabel} · {formatDate(s.date)}</p>
+                </div>
+                <p className="text-sm font-black text-purple-600 shrink-0">+{s.pontos.toLocaleString('pt-BR')} pts</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
     </div>
   );
 }
