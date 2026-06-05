@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, XCircle, Eye, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { CheckCircle2, XCircle, Eye, Trash2, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function ExternalLinksManager() {
@@ -12,6 +13,7 @@ export default function ExternalLinksManager() {
   const [filter, setFilter] = useState('submitted');
   const [selectedClick, setSelectedClick] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     loadClicks();
@@ -60,8 +62,23 @@ export default function ExternalLinksManager() {
     rejected: { label: 'Rejeitada', color: 'bg-red-100 text-red-800' }
   };
 
+  const filtered = clicks.filter(c =>
+    !search || (c.associate_name || '').toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
+      {/* Busca por associado */}
+      <div className="relative max-w-sm">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          className="pl-9"
+          placeholder="Buscar por associado..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       <div className="flex gap-2 overflow-x-auto pb-2">
         {['submitted', 'approved', 'rejected', 'intent', 'all'].map((status) => (
           <Button
@@ -77,11 +94,11 @@ export default function ExternalLinksManager() {
 
       {loading ? (
         <div className="text-center py-8">Carregando...</div>
-      ) : clicks.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">Nenhum registro</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">Nenhum registro encontrado</div>
       ) : (
         <div className="space-y-3">
-          {clicks.map((click) => (
+          {filtered.map((click) => (
             <div key={click.id} className="p-4 rounded-lg border border-border bg-card hover:border-primary/40 transition-colors">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
