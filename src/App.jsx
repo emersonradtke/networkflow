@@ -13,9 +13,9 @@ const RequireAuth = ({ children, requiredRole = null }) => {
   if (isLoadingAuth || isLoadingPublicSettings) return null;
   if (!isAuthenticated) return <Navigate to="/" replace state={{ from: location }} />;
   
-  // Verificar role se requerido
+  // Verificar role se requerido — redireciona para dashboard do usuário
   if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   
   return children;
@@ -105,19 +105,19 @@ const AuthenticatedApp = () => {
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/checkout" element={<Checkout />} />
 
-        {/* Admin */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/associates" element={<AdminAssociates />} />
-        <Route path="/admin/products" element={<AdminProducts />} />
-        <Route path="/admin/orders" element={<AdminOrders />} />
-        <Route path="/admin/withdrawals" element={<AdminWithdrawals />} />
-        <Route path="/admin/network" element={<AdminNetwork />} />
-        <Route path="/admin/suppliers" element={<AdminSuppliers />} />
-        <Route path="/admin/shipping" element={<AdminShipping />} />
-        <Route path="/admin/external-links" element={<AdminExternalLinks />} />
-        <Route path="/admin/settings" element={<AdminSettings />} />
-        <Route path="/admin/support-tickets" element={<AdminSupportTickets />} />
-        <Route path="/admin/restricted-users" element={<AdminRestrictedUsers />} />
+        {/* Admin — protegido por role */}
+        <Route path="/admin" element={<RequireAuth requiredRole="admin"><AdminDashboard /></RequireAuth>} />
+        <Route path="/admin/associates" element={<RequireAuth requiredRole="admin"><AdminAssociates /></RequireAuth>} />
+        <Route path="/admin/products" element={<RequireAuth requiredRole="admin"><AdminProducts /></RequireAuth>} />
+        <Route path="/admin/orders" element={<RequireAuth requiredRole="admin"><AdminOrders /></RequireAuth>} />
+        <Route path="/admin/withdrawals" element={<RequireAuth requiredRole="admin"><AdminWithdrawals /></RequireAuth>} />
+        <Route path="/admin/network" element={<RequireAuth requiredRole="admin"><AdminNetwork /></RequireAuth>} />
+        <Route path="/admin/suppliers" element={<RequireAuth requiredRole="admin"><AdminSuppliers /></RequireAuth>} />
+        <Route path="/admin/shipping" element={<RequireAuth requiredRole="admin"><AdminShipping /></RequireAuth>} />
+        <Route path="/admin/external-links" element={<RequireAuth requiredRole="admin"><AdminExternalLinks /></RequireAuth>} />
+        <Route path="/admin/settings" element={<RequireAuth requiredRole="admin"><AdminSettings /></RequireAuth>} />
+        <Route path="/admin/support-tickets" element={<RequireAuth requiredRole="admin"><AdminSupportTickets /></RequireAuth>} />
+        <Route path="/admin/restricted-users" element={<RequireAuth requiredRole="admin"><AdminRestrictedUsers /></RequireAuth>} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />
