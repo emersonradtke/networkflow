@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Users, ShoppingBag, Wallet, TrendingUp, UserCheck, Clock, AlertCircle, AlertTriangle, PackagePlus, CheckCircle, XCircle, Package, CreditCard } from 'lucide-react';
 import StatCard from '@/components/StatCard';
@@ -152,7 +153,7 @@ export default function AdminDashboard() {
           <AlertCircle size={18} className="text-yellow-400 shrink-0" />
           <p className="text-sm text-foreground">
             <span className="font-bold text-yellow-400">{stats.pending} associados</span> aguardando ativação.{' '}
-            <a href="/admin/associates" className="text-primary hover:underline">Ver agora →</a>
+            <Link to="/admin/associates" className="text-primary hover:underline">Ver agora →</Link>
           </p>
         </div>
       )}
@@ -167,9 +168,9 @@ export default function AdminDashboard() {
               <h3 className="font-bold text-foreground text-sm">Estoque Abaixo do Mínimo</h3>
               <p className="text-xs text-muted-foreground">{lowStockProducts.length} produto(s) precisam de reposição</p>
             </div>
-            <a href="/admin/products" className="ml-auto text-xs text-primary hover:underline flex items-center gap-1">
+            <Link to="/admin/products" className="ml-auto text-xs text-primary hover:underline flex items-center gap-1">
               <PackagePlus size={13} /> Gerenciar
-            </a>
+            </Link>
           </div>
           <div className="space-y-2">
             {lowStockProducts.map(p => (
