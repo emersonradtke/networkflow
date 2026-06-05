@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import StatCard from '@/components/StatCard';
+import DashboardStatModal from '@/components/DashboardStatModal';
 import MyOrders from '@/components/MyOrders';
 import PendingPlacements from '@/components/PendingPlacements';
 import AddressModal from '@/components/AddressModal';
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [networkConfig, setNetworkConfig] = useState(null);
   const [freshStatus, setFreshStatus] = useState(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
+  const [statModal, setStatModal] = useState(null); // 'saldo' | 'totalGanho' | 'diretos' | 'pontos'
 
   useEffect(() => {
     if (associate?.id) {
@@ -224,11 +226,25 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Saldo" value={`R$ ${(associate.wallet_balance || 0).toFixed(2)}`} icon={Wallet} color="gold" />
-        <StatCard title="Total Ganho" value={`R$ ${(associate.total_earned || 0).toFixed(2)}`} icon={TrendingUp} color="green" />
-        <StatCard title="Diretos" value={networkCount} icon={Users} color="blue" />
-        <StatCard title="Pontos" value={`${(associate.total_pontos || 0).toLocaleString('pt-BR')}`} icon={Gift} color="purple" />
+        <div className="cursor-pointer" onClick={() => setStatModal('saldo')}>
+          <StatCard title="Saldo" value={`R$ ${(associate.wallet_balance || 0).toFixed(2)}`} icon={Wallet} color="gold" />
+        </div>
+        <div className="cursor-pointer" onClick={() => setStatModal('totalGanho')}>
+          <StatCard title="Total Ganho" value={`R$ ${(associate.total_earned || 0).toFixed(2)}`} icon={TrendingUp} color="green" />
+        </div>
+        <div className="cursor-pointer" onClick={() => setStatModal('diretos')}>
+          <StatCard title="Diretos" value={networkCount} icon={Users} color="blue" />
+        </div>
+        <div className="cursor-pointer" onClick={() => setStatModal('pontos')}>
+          <StatCard title="Pontos" value={`${(associate.total_pontos || 0).toLocaleString('pt-BR')}`} icon={Gift} color="purple" />
+        </div>
       </div>
+
+      <DashboardStatModal
+        type={statModal}
+        associate={associate}
+        onClose={() => setStatModal(null)}
+      />
 
       {/* Recent Commissions */}
       <div className="dark-card rounded-2xl p-5">
