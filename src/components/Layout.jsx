@@ -30,15 +30,15 @@ export default function Layout() {
       if (directUser._associate) {
         try {
           // Validar que o associate ainda existe
-          const associates = await base44.entities.Associate.filter({ id: directUser._associate.id });
-          if (associates.length > 0) {
-            setAssociate(associates[0]);
+          const associates = await base44.asServiceRole.entities.Associate.filter({ user_id: directUser._associate.user_id || directUser.id });
+          const found = associates.length > 0 ? associates : (directUser._associate.cpf ? await base44.asServiceRole.entities.Associate.filter({ cpf: directUser._associate.cpf }) : []);
+          if (found.length > 0) {
+            setAssociate(found[0]);
             const notifs = await base44.entities.Notification.filter({ associate_id: directUser._associate.id, is_read: false });
             setUnreadCount(notifs.length);
           } else {
-            // Associate foi deletado, limpar dados
-            setAssociate(null);
-            sessionStorage.removeItem('directUser');
+            // Fallback: usar o _associate do sessionStorage diretamente
+            setAssociate(directUser._associate);
           }
         } catch {}
       }
