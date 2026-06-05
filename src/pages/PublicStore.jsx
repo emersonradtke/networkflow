@@ -449,7 +449,7 @@ export default function PublicStore() {
       <footer className="mt-12 bg-[#1B2A5E] text-white">
         <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <img src={LOGO_URL} alt="Bold Life" className="h-7 mb-3 object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
+            <img src="https://media.base44.com/images/public/6a0cfdbc574effcdedd29da9/faf4c533b_BOLDLIFE02-LOGO.png" alt="Bold Life" className="h-7 mb-3 object-contain" />
             <p className="text-blue-200 text-sm leading-relaxed">
               Ecossistema de transformação que conecta consumo inteligente a resultados extraordinários.
             </p>
