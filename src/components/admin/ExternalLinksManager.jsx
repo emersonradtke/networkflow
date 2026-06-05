@@ -114,7 +114,8 @@ export default function ExternalLinksManager() {
                           day: '2-digit',
                           month: '2-digit',
                           hour: '2-digit',
-                          minute: '2-digit'
+                          minute: '2-digit',
+                          timeZone: 'America/Sao_Paulo'
                         })}
                       </p>
                     </div>
@@ -196,7 +197,8 @@ export default function ExternalLinksManager() {
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit',
-                    second: '2-digit'
+                    second: '2-digit',
+                    timeZone: 'America/Sao_Paulo'
                   })}
                 </p>
               </div>
