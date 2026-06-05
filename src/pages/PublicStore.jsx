@@ -557,9 +557,9 @@ function PublicProductCard({ product, onAddToCart, cart, consultant }) {
             <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ Oferta</span>
           </div>
         )}
-        {product.commission_percent > 0 && !product.on_special_offer && (
+        {product.commission_associate > 0 && !product.on_special_offer && (
           <div className="absolute top-2 right-2">
-            <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{product.commission_percent}% off</span>
+            <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{product.commission_associate}%</span>
           </div>
         )}
         {outOfStock && (

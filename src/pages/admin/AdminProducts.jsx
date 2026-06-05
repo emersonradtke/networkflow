@@ -13,7 +13,7 @@ import StockReplenishModal from '@/components/StockReplenishModal';
 
 const emptyForm = {
   code: '', name: '', description: '', brand: '', supplier: '',
-  price: '', commission_percent: '', image_url: '',
+  price: '', commission_percent: '', commission_operation: '', commission_associate: '', commission_organizer: '', image_url: '',
   type: 'direct_sale', external_url: '', category: '',
   is_active: true, stock: '', stock_min: '', stock_max: '',
   visibility: 'public', on_special_offer: false,
@@ -58,6 +58,9 @@ export default function AdminProducts() {
      ...p,
      price: p.price?.toString() ?? '',
      commission_percent: p.commission_percent?.toString() ?? '',
+     commission_operation: p.commission_operation?.toString() ?? '',
+     commission_associate: p.commission_associate?.toString() ?? '',
+     commission_organizer: p.commission_organizer?.toString() ?? '',
      stock: p.stock?.toString() ?? '',
      stock_min: p.stock_min?.toString() ?? '',
      stock_max: p.stock_max?.toString() ?? '',
@@ -86,6 +89,9 @@ export default function AdminProducts() {
       ...form,
       price: parseFloat(form.price),
       commission_percent: parseFloat(form.commission_percent),
+      commission_operation: parseFloat(form.commission_operation || 0),
+      commission_associate: parseFloat(form.commission_associate || 0),
+      commission_organizer: parseFloat(form.commission_organizer || 0),
       stock: isDirect ? parseInt(form.stock || 0) : null,
       stock_min: isDirect ? parseInt(form.stock_min || 0) : null,
       stock_max: isDirect ? parseInt(form.stock_max || 0) : null,
@@ -267,7 +273,15 @@ export default function AdminProducts() {
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <span className="text-base font-black text-primary">R$ {p.price?.toFixed(2)}</span>
-                    <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">{p.commission_percent}% comissão</Badge>
+                    {p.commission_associate && (
+                      <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">{p.commission_associate}% assoc.</Badge>
+                    )}
+                    {p.commission_operation && (
+                      <Badge className="bg-blue-500/20 text-blue-600 border-blue-500/30 text-xs">{p.commission_operation}% oper.</Badge>
+                    )}
+                    {p.commission_organizer && (
+                      <Badge className="bg-purple-500/20 text-purple-600 border-purple-500/30 text-xs">{p.commission_organizer}% org.</Badge>
+                    )}
                     <Badge className={p.type === 'external_link' ? 'bg-blue-500/20 text-blue-600 border-blue-500/30 text-xs' : 'bg-green-500/20 text-green-600 border-green-500/30 text-xs'}>
                       {p.type === 'external_link' ? <><ExternalLink size={10} className="mr-1" />Externo</> : <><ShoppingBag size={10} className="mr-1" />Direto</>}
                     </Badge>
@@ -399,16 +413,31 @@ export default function AdminProducts() {
               <Textarea className="mt-1.5 resize-none" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             </div>
 
-            {/* Preço + Comissão */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Preço (R$)</Label>
-                <Input className="mt-1.5" type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
+            {/* Preço */}
+            <div>
+              <Label>Preço (R$)</Label>
+              <Input className="mt-1.5" type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
+            </div>
+
+            {/* Comissões */}
+            <div className="space-y-2">
+              <Label className="text-sm font-bold">Percentuais de Comissão (%)</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">Operação</Label>
+                  <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_operation} onChange={e => setForm({ ...form, commission_operation: e.target.value })} placeholder="0" />
+                </div>
+                <div>
+                  <Label className="text-xs">Associado</Label>
+                  <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_associate} onChange={e => setForm({ ...form, commission_associate: e.target.value })} placeholder="0" />
+                </div>
+                <div>
+                  <Label className="text-xs">Idealizador</Label>
+                  <Input className="mt-1.5 text-sm" type="number" step="0.1" value={form.commission_organizer} onChange={e => setForm({ ...form, commission_organizer: e.target.value })} placeholder="0" />
+                </div>
               </div>
-              <div>
-                <Label>Comissão (%)</Label>
-                <Input className="mt-1.5" type="number" step="0.1" value={form.commission_percent} onChange={e => setForm({ ...form, commission_percent: e.target.value })} required />
-              </div>
+              <p className="text-xs text-muted-foreground">Comissão anterior (legado)</p>
+              <Input className="text-sm" type="number" step="0.1" value={form.commission_percent} onChange={e => setForm({ ...form, commission_percent: e.target.value })} placeholder="0" />
             </div>
 
             {/* Estoque (apenas venda direta) */}

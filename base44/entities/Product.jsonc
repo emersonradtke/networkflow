@@ -40,7 +40,22 @@
     },
     "commission_percent": {
       "type": "number",
-      "description": "Percentual de comiss\u00e3o (%) igual para todos os n\u00edveis"
+      "description": "Percentual de comiss\u00e3o (legado - usar os novos campos)"
+    },
+    "commission_operation": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de comiss\u00e3o para opera\u00e7\u00e3o"
+    },
+    "commission_associate": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de comiss\u00e3o para associado"
+    },
+    "commission_organizer": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentual de comiss\u00e3o para idealizador"
     },
     "is_active": {
       "type": "boolean",
@@ -82,7 +97,6 @@
   },
   "required": [
     "name",
-    "price",
-    "commission_percent"
+    "price"
   ]
 }
