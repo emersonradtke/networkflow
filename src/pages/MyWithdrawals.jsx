@@ -80,7 +80,7 @@ export default function MyWithdrawals() {
 
       {/* Card de saldo */}
       <div className="gold-gradient rounded-2xl p-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }} />
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }} />
         <p className="text-sm font-medium text-background/80 mb-1">Saldo Disponível para Saque</p>
         <p className="text-4xl font-black text-background">R$ {(associate?.wallet_balance || 0).toFixed(2)}</p>
         <div className="flex gap-6 mt-4 text-sm">
