@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ArrowRightLeft, CheckCircle, XCircle, Clock, Monitor, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatDateTime } from '@/lib/date-utils';
 
 export default function CommissionTransferManager() {
   const [transfers, setTransfers] = useState([]);
@@ -125,10 +124,7 @@ export default function CommissionTransferManager() {
     return <Badge className={s.cls}>{s.label}</Badge>;
   };
 
-  const formatDate = (d) => {
-    if (!d) return '-';
-    try { return format(new Date(d), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }); } catch { return d; }
-  };
+  const formatDate = (d) => formatDateTime(d);
 
   return (
     <div className="space-y-4">

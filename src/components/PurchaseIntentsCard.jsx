@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ExternalLink, Zap, Trash2 } from 'lucide-react';
+import { formatDateTime } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import PurchaseProofModal from './PurchaseProofModal';
@@ -129,13 +130,7 @@ export default function PurchaseIntentsCard({ associateId }) {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {new Date(intent.created_date).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                  {formatDateTime(intent.created_date)}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -205,14 +200,7 @@ export default function PurchaseIntentsCard({ associateId }) {
              <div>
                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Data e Hora</p>
                <p className="text-sm text-foreground mt-1">
-                 {new Date(detailsModal.created_date).toLocaleDateString('pt-BR', {
-                   day: '2-digit',
-                   month: '2-digit',
-                   year: 'numeric',
-                   hour: '2-digit',
-                   minute: '2-digit',
-                   second: '2-digit'
-                 })}
+                 {formatDateTime(detailsModal.created_date)}
                </p>
              </div>
               <Button

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ShoppingBag, Package, ExternalLink, Truck, Clock, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { formatDate } from '@/lib/date-utils';
 import { Badge } from '@/components/ui/badge';
 
 const statusConfig = {
@@ -33,7 +34,7 @@ function OrderCard({ order }) {
             <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
           </div>
           <p className="text-xs text-slate-500">
-            {new Date(order.created_date).toLocaleDateString('pt-BR')} · R$ {order.amount?.toFixed(2)}
+            {formatDate(order.created_date)} · R$ {order.amount?.toFixed(2)}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">

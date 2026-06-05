@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { ShoppingBag, CheckCircle, XCircle, Search, Eye, Truck, Hash } from 'lucide-react';
+import { formatDate } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -215,7 +216,7 @@ export default function AdminOrders() {
                         ) : (
                           <span className="text-xs text-muted-foreground italic">Sem número</span>
                         )}
-                        <span className="text-xs text-muted-foreground">{new Date(group.created_date).toLocaleDateString('pt-BR')}</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(group.created_date)}</span>
                       </div>
                       <p className="text-sm font-semibold text-foreground truncate">{displayProducts}</p>
                       <p className="text-xs text-muted-foreground">{group.associate_name} · {group.items.length} item{group.items.length !== 1 ? 's' : ''}</p>

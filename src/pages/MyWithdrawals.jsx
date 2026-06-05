@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { ArrowUpCircle, ArrowDownCircle, Wallet, Clock, CheckCircle, XCircle, DollarSign, TrendingUp } from 'lucide-react';
+import { formatDate } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -174,7 +175,7 @@ export default function MyWithdrawals() {
                     <div>
                       <p className="text-sm font-bold text-foreground">R$ {w.amount?.toFixed(2)}</p>
                       <p className="text-xs text-muted-foreground">
-                        {w.pix_key || 'Pix'} · {new Date(w.created_date).toLocaleDateString('pt-BR')}
+                        {w.pix_key || 'Pix'} · {formatDate(w.created_date)}
                       </p>
                     </div>
                   </div>
@@ -207,7 +208,7 @@ export default function MyWithdrawals() {
                 <div>
                   <p className="text-sm font-medium text-foreground">{c.product_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Nível {c.network_level} · via {c.originator_name} · {new Date(c.created_date).toLocaleDateString('pt-BR')}
+                    Nível {c.network_level} · via {c.originator_name} · {formatDate(c.created_date)}
                   </p>
                 </div>
                 <div className="text-right">

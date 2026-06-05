@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard, ExternalLink } from 'lucide-react';
+import { formatDate } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -216,7 +217,7 @@ export default function Dashboard() {
           <CheckCircle size={20} className="text-green-600 shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-green-800">Assinatura Ativa</p>
-            <p className="text-xs text-green-600">Renovação em: {new Date(subscription.renewal_date).toLocaleDateString('pt-BR')}</p>
+            <p className="text-xs text-green-600">Renovação em: {formatDate(subscription.renewal_date)}</p>
           </div>
         </div>
       )}
