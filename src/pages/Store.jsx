@@ -310,7 +310,7 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
                <Badge className="bg-red-500/90 text-white text-xs px-1 py-0">⭐ Oferta</Badge>
              ) : product.commission_associate ? (
                <Badge className="bg-primary/90 text-primary-foreground text-xs px-1 py-0">
-                 <Percent size={8} /> {product.commission_associate}%
+                 <Percent size={8} /> {product.commission_associate}
                </Badge>
              ) : null}
            </div>
@@ -359,7 +359,7 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
             <Badge className="bg-red-500/90 text-white text-xs flex items-center gap-1">⭐ Oferta</Badge>
           ) : product.commission_associate ? (
             <Badge className="bg-primary/90 text-primary-foreground text-xs flex items-center gap-1">
-              <Percent size={10} /> {product.commission_associate}%
+              <Percent size={10} /> {product.commission_associate}
             </Badge>
           ) : null}
         </div>
