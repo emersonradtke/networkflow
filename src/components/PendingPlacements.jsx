@@ -20,6 +20,7 @@ export default function PendingPlacements({ associateId, onAccepted }) {
     }, '-created_date');
     setRequests(data);
     setLoading(false);
+    return data;
   };
 
   const dismissPlacementNotifications = async (req) => {
@@ -29,7 +30,8 @@ export default function PendingPlacements({ associateId, onAccepted }) {
     });
     // Marcar como lida qualquer notificação de colocação relacionada a este associado
     const toRead = notifs.filter(n =>
-      n.title?.includes('Colocação') || n.message?.includes(req.associate_name)
+      n.title?.toLowerCase().includes('colocação') ||
+      (n.message && req.associate_name && n.message.includes(req.associate_name))
     );
     await Promise.all(toRead.map(n =>
       base44.entities.Notification.update(n.id, { is_read: true })
@@ -54,7 +56,7 @@ export default function PendingPlacements({ associateId, onAccepted }) {
     });
     await dismissPlacementNotifications(req);
     setProcessing(null);
-    loadRequests();
+    await loadRequests();
     if (onAccepted) onAccepted();
   };
 
@@ -74,7 +76,7 @@ export default function PendingPlacements({ associateId, onAccepted }) {
     });
     await dismissPlacementNotifications(req);
     setProcessing(null);
-    loadRequests();
+    await loadRequests();
   };
 
   if (loading || requests.length === 0) return null;
