@@ -310,7 +310,7 @@ export default function PublicStore() {
       )}
 
       {/* ── BENEFITS BAR ── */}
-      <div className="bg-white border-b border-slate-100 shadow-sm">
+      <div className="mt-6 bg-white border-b border-slate-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { icon: <Truck size={18} className="text-[#3B9EE2]" />, title: 'Entrega Rápida', sub: 'Em todo o Brasil' },
