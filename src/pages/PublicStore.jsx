@@ -114,6 +114,7 @@ export default function PublicStore() {
   );
 
   const appName = config?.app_name || 'Bold Life';
+  const specialOffers = products.filter(p => p.on_special_offer && p.visibility === 'public' && p.is_active);
   const categories = ['all', ...new Set(products.filter(p => p.category && p.visibility === 'public').map(p => p.category))];
   const filtered = products.filter(p => {
     const q = search.toLowerCase();
@@ -335,6 +336,29 @@ export default function PublicStore() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        {/* ── SPECIAL OFFERS SECTION ── */}
+        {specialOffers.length > 0 && (
+          <div className="space-y-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border border-red-100">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">⭐</span>
+              <h2 className="text-xl font-black text-red-600">Ofertas Especiais</h2>
+            </div>
+            <p className="text-sm text-slate-600">Produtos em promoção imperdível</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {specialOffers.slice(0, 10).map((product, i) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(i * 0.04, 0.25) }}
+                >
+                  <PublicProductCard product={product} onAddToCart={addToCart} cart={cart} consultant={consultant} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── MOBILE SEARCH ── */}
         <div className="md:hidden relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />

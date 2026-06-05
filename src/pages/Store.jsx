@@ -101,6 +101,7 @@ export default function Store() {
     );
   }
 
+  const specialOffers = products.filter(p => p.on_special_offer && (p.visibility === 'public' || p.visibility === 'associate_only'));
   const categories = ['all', ...new Set(products.filter(p => p.category && (p.visibility === 'public' || p.visibility === 'associate_only')).map(p => p.category))];
 
   const filtered = products.filter(p => {
@@ -154,6 +155,26 @@ export default function Store() {
       <div className="flex justify-start">
         <StoreBannerCarousel associate={currentAssociate} />
       </div>
+
+      {/* Ofertas Especiais */}
+      {specialOffers.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-5 border border-red-100">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">⭐</span>
+            <div>
+              <h2 className="font-bold text-red-600 text-lg">Ofertas Especiais</h2>
+              <p className="text-xs text-slate-600">Produtos em promoção imperdível</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {specialOffers.slice(0, 8).map((product, i) => (
+              <motion.div key={product.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.05, 0.2) }}>
+                <ProductCard product={product} onAddToCart={addToCart} cart={cart} compact={false} onExternalLinkClick={handleExternalLinkClick} />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Busca */}
       <div className="relative">
