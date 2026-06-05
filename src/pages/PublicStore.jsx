@@ -429,9 +429,9 @@ export default function PublicStore() {
 
       {/* ── FOOTER ── */}
       <footer className="mt-12 bg-[#1B2A5E] text-white">
-        <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <img src={LOGO_URL} alt="Bold Life" className="h-8 mb-4 brightness-0 invert object-contain" />
+            <img src={LOGO_URL} alt="Bold Life" className="h-7 mb-3 object-contain" style={{ filter: 'brightness(0) invert(1)' }} />
             <p className="text-blue-200 text-sm leading-relaxed">
               Ecossistema de transformação que conecta consumo inteligente a resultados extraordinários.
             </p>
@@ -467,7 +467,7 @@ export default function PublicStore() {
             </div>
           </div>
         </div>
-        <div className="border-t border-white/10 py-4 text-center text-xs text-blue-300">
+        <div className="border-t border-white/10 py-3 text-center text-xs text-blue-300">
           © {new Date().getFullYear()} Bold Life · Todos os direitos reservados · Powered by <span className="text-white font-bold">Bold Life</span>
         </div>
       </footer>
