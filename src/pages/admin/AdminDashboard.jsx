@@ -7,6 +7,7 @@ import OrderStatusModal from '@/components/OrderStatusModal';
 import CommissionsModal from '@/components/CommissionsModal';
 import TopProductsWidget from '@/components/admin/TopProductsWidget';
 import CommissionManager from '@/components/admin/CommissionManager';
+import CommissionTransferManager from '@/components/admin/CommissionTransferManager';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -77,10 +78,11 @@ export default function AdminDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="products">Produtos Top</TabsTrigger>
-          <TabsTrigger value="commissions">Gerenciar Comissões</TabsTrigger>
+          <TabsTrigger value="commissions">Comissões</TabsTrigger>
+          <TabsTrigger value="transfers">Transferências</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -240,6 +242,16 @@ export default function AdminDashboard() {
 
         <TabsContent value="commissions">
           <CommissionManager />
+        </TabsContent>
+
+        <TabsContent value="transfers">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-black text-foreground">Transferências de Comissão</h2>
+              <p className="text-muted-foreground text-sm">Aprove ou recuse solicitações de transferência entre associados</p>
+            </div>
+            <CommissionTransferManager />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

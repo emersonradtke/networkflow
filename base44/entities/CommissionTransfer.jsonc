@@ -1,0 +1,87 @@
+{
+  "name": "CommissionTransfer",
+  "type": "object",
+  "properties": {
+    "from_associate_id": {
+      "type": "string",
+      "description": "FK \u2192 Associate (origem da transfer\u00eancia)"
+    },
+    "from_associate_name": {
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
+    },
+    "to_associate_id": {
+      "type": "string",
+      "description": "FK \u2192 Associate (destino da transfer\u00eancia)"
+    },
+    "to_associate_name": {
+      "type": "string",
+      "description": "Snapshot do nome para auditoria"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Valor transferido"
+    },
+    "from_balance_before": {
+      "type": "number",
+      "description": "Saldo da origem antes da transfer\u00eancia"
+    },
+    "from_balance_after": {
+      "type": "number",
+      "description": "Saldo da origem ap\u00f3s a transfer\u00eancia"
+    },
+    "to_balance_before": {
+      "type": "number",
+      "description": "Saldo do destino antes da transfer\u00eancia"
+    },
+    "to_balance_after": {
+      "type": "number",
+      "description": "Saldo do destino ap\u00f3s a transfer\u00eancia"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status da transfer\u00eancia (pendente de aceite admin)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00e3o/motivo da transfer\u00eancia"
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do admin ao aprovar/rejeitar"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP do solicitante no momento da requisi\u00e7\u00e3o"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "User agent do navegador"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da solicita\u00e7\u00e3o"
+    },
+    "processed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora do processamento pelo admin"
+    },
+    "processed_by": {
+      "type": "string",
+      "description": "ID do admin que processou"
+    }
+  },
+  "required": [
+    "from_associate_id",
+    "to_associate_id",
+    "amount"
+  ]
+}

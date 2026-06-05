@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, Clock } from 'lucide-react';
+import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle, Clock, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import CommissionTransferModal from '@/components/CommissionTransferModal';
 
 export default function Wallet() {
   const { associate } = useOutletContext();
@@ -20,20 +21,24 @@ export default function Wallet() {
   const [withdrawForm, setWithdrawForm] = useState({ amount: '', pix_key: '', bank_info: '' });
   const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [myTransfers, setMyTransfers] = useState([]);
 
   useEffect(() => {
     if (associate?.id) loadData();
   }, [associate]);
 
   const loadData = async () => {
-    const [comms, withds, configs] = await Promise.all([
+    const [comms, withds, configs, transfers] = await Promise.all([
       base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 20),
       base44.entities.WithdrawalRequest.filter({ associate_id: associate.id }, '-created_date', 10),
       base44.entities.NetworkConfig.list(),
+      base44.entities.CommissionTransfer.filter({ from_associate_id: associate.id }, '-created_date', 10),
     ]);
     setCommissions(comms);
     setWithdrawals(withds);
     if (configs.length > 0) setConfig(configs[0]);
+    setMyTransfers(transfers);
     setLoading(false);
   };
 
@@ -91,12 +96,13 @@ export default function Wallet() {
             <p className="font-bold text-background">R$ {(associate?.total_withdrawn || 0).toFixed(2)}</p>
           </div>
         </div>
+        <div className="flex gap-2 mt-4 flex-wrap">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="mt-4 bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2">
-              <ArrowUpCircle size={16} /> Solicitar Saque
-            </Button>
-          </DialogTrigger>
+        <DialogTrigger asChild>
+          <Button className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2">
+            <ArrowUpCircle size={16} /> Solicitar Saque
+          </Button>
+        </DialogTrigger>
           <DialogContent className="bg-surface border-border">
             <DialogHeader>
               <DialogTitle className="text-foreground font-black">Solicitar Saque</DialogTitle>
@@ -120,6 +126,13 @@ export default function Wallet() {
             </form>
           </DialogContent>
         </Dialog>
+        <Button
+          onClick={() => setShowTransferModal(true)}
+          className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2"
+        >
+          <ArrowRightLeft size={16} /> Transferir
+        </Button>
+        </div>
       </div>
 
       {/* Withdrawal History */}
@@ -138,6 +151,30 @@ export default function Wallet() {
                 <div className="text-right">
                   {statusBadge(w.status)}
                   {w.admin_notes && <p className="text-xs text-muted-foreground mt-1">{w.admin_notes}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Transfer History */}
+      {myTransfers.length > 0 && (
+        <div className="dark-card rounded-2xl p-5">
+          <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+            <ArrowRightLeft size={16} className="text-primary" /> Transferências Enviadas
+          </h3>
+          <div className="space-y-3">
+            {myTransfers.map(t => (
+              <div key={t.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Para: {t.to_associate_name}</p>
+                  <p className="text-xs text-muted-foreground">{t.requested_at ? new Date(t.requested_at).toLocaleDateString('pt-BR') : ''}</p>
+                  {t.notes && <p className="text-xs text-muted-foreground italic">"{t.notes}"</p>}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-red-500">-R$ {t.amount?.toFixed(2)}</p>
+                  {statusBadge(t.status)}
                 </div>
               </div>
             ))}
@@ -173,6 +210,13 @@ export default function Wallet() {
           </div>
         )}
       </div>
+      {showTransferModal && (
+        <CommissionTransferModal
+          associate={associate}
+          onClose={() => setShowTransferModal(false)}
+          onSubmitted={loadData}
+        />
+      )}
     </div>
   );
 }
