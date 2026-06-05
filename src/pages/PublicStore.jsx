@@ -87,7 +87,10 @@ export default function PublicStore() {
   };
 
   const scrollToProducts = () => {
-    productsRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!productsRef.current) return;
+    const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+    const top = productsRef.current.getBoundingClientRect().top + window.scrollY - headerHeight - 16;
+    window.scrollTo({ top, behavior: 'smooth' });
   };
 
   if (loading) return (
