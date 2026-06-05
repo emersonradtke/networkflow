@@ -32,8 +32,7 @@
         "direct_sale",
         "external_link"
       ],
-      "default": "direct_sale",
-      "description": "Tipo de venda"
+      "default": "direct_sale"
     },
     "external_url": {
       "type": "string",
@@ -73,41 +72,12 @@
         "hidden"
       ],
       "default": "public",
-      "description": "Controla onde o produto aparece"
+      "description": "Controla onde o produto aparece (loja p\u00fablica, apenas associados, ou oculto)"
     },
     "on_special_offer": {
       "type": "boolean",
       "default": false,
       "description": "Indica se o produto est\u00e1 em oferta especial"
-    },
-    "payment_methods": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "pix",
-          "credit_card",
-          "debit_card",
-          "bank_transfer",
-          "installments"
-        ]
-      },
-      "description": "Formas de pagamento dispon\u00edveis para o produto"
-    },
-    "condition": {
-      "type": "string",
-      "enum": [
-        "new",
-        "refurbished",
-        "used"
-      ],
-      "default": "new",
-      "description": "Condi\u00e7\u00e3o do produto"
-    },
-    "current_discount": {
-      "type": "number",
-      "default": 0,
-      "description": "Percentual de desconto atual (0-100)"
     }
   },
   "required": [

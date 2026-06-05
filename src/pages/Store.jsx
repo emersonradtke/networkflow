@@ -305,12 +305,9 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
                <ShoppingCart size={20} className="text-muted-foreground opacity-40" />
              </div>
            )}
-           <div className="absolute top-1 right-1 flex flex-col gap-0.5">
-             {product.current_discount > 0 && (
-               <Badge className="bg-red-500/90 text-white text-xs px-1 py-0 font-bold">-{product.current_discount}%</Badge>
-             )}
+           <div className="absolute top-1 right-1">
              {product.on_special_offer ? (
-               <Badge className="bg-orange-500/90 text-white text-xs px-1 py-0">⭐ Oferta</Badge>
+               <Badge className="bg-red-500/90 text-white text-xs px-1 py-0">⭐ Oferta</Badge>
              ) : (
                <Badge className="bg-primary/90 text-primary-foreground text-xs px-1 py-0">
                  <Percent size={8} /> {product.commission_percent}%
@@ -357,12 +354,9 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
             <ShoppingCart size={32} className="text-muted-foreground" />
           </div>
         )}
-        <div className="absolute top-2 right-2 flex flex-col gap-1">
-          {product.current_discount > 0 && (
-            <Badge className="bg-red-500/90 text-white text-xs font-bold">-{product.current_discount}%</Badge>
-          )}
+        <div className="absolute top-2 right-2">
           {product.on_special_offer ? (
-            <Badge className="bg-orange-500/90 text-white text-xs flex items-center gap-1">⭐ Oferta</Badge>
+            <Badge className="bg-red-500/90 text-white text-xs flex items-center gap-1">⭐ Oferta</Badge>
           ) : (
             <Badge className="bg-primary/90 text-primary-foreground text-xs flex items-center gap-1">
               <Percent size={10} /> {product.commission_percent}%
