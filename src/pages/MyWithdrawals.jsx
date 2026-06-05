@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { ArrowUpCircle, ArrowDownCircle, Wallet, Clock, CheckCircle, XCircle, DollarSign, TrendingUp } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Wallet, Clock, CheckCircle, XCircle, DollarSign, TrendingUp, ArrowLeftRight } from 'lucide-react';
 import { formatDate } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import CommissionTransferModal from '@/components/CommissionTransferModal';
 
 const statusConfig = {
   pending:  { label: 'Pendente',  icon: Clock,        cls: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' },
@@ -25,6 +26,7 @@ export default function MyWithdrawals() {
   const [form, setForm] = useState({ amount: '', pix_key: '', bank_info: '' });
   const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
 
   useEffect(() => {
     if (associate?.id) loadData();
@@ -99,22 +101,29 @@ export default function MyWithdrawals() {
             <p className="font-bold text-background">R$ {monthlyTotal.toFixed(2)}</p>
           </div>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
+        <div className="flex gap-2 mt-4 flex-wrap">
             <Button
-              className="mt-4 bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2"
+              className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2"
               disabled={associate?.status !== 'active' || !associate?.wallet_balance || associate.wallet_balance <= 0}
               onClick={() => {
-                // Pré-preencher com dados bancários do associado
                 const bankInfo = associate?.bank_name
                   ? `${associate.bank_name} · Ag ${associate.bank_agency || '-'} · Cc ${associate.bank_account || '-'}${associate.bank_account_digit ? '-' + associate.bank_account_digit : ''}`
                   : (associate?.bank_info || '');
                 setForm({ amount: '', pix_key: associate?.pix_key || '', bank_info: bankInfo });
+                setDialogOpen(true);
               }}
             >
               <ArrowUpCircle size={16} /> Solicitar Saque
             </Button>
-          </DialogTrigger>
+            <Button
+              className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2"
+              disabled={associate?.status !== 'active' || !associate?.wallet_balance || associate.wallet_balance <= 0}
+              onClick={() => setTransferOpen(true)}
+            >
+              <ArrowLeftRight size={16} /> Transferir Comissão
+            </Button>
+          </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="font-black">Solicitar Saque</DialogTitle>
@@ -244,6 +253,14 @@ export default function MyWithdrawals() {
           </div>
         )}
       </div>
+
+      {/* Modal de Transferência de Comissão */}
+      {transferOpen && (
+        <CommissionTransferModal
+          associate={associate}
+          onClose={() => { setTransferOpen(false); loadData(); }}
+        />
+      )}
     </div>
   );
 }
