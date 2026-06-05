@@ -37,9 +37,12 @@ export default function PublicStore() {
 
   useEffect(() => {
     if (banners.length <= 1) return;
-    const timer = setInterval(() => setBannerIndex(i => (i + 1) % banners.length), 20000);
+    const currentBanner = banners[bannerIndex];
+    const rotateSeconds = currentBanner?.auto_rotate_seconds || 5;
+    if (rotateSeconds <= 0) return;
+    const timer = setInterval(() => setBannerIndex(i => (i + 1) % banners.length), rotateSeconds * 1000);
     return () => clearInterval(timer);
-  }, [banners]);
+  }, [banners, bannerIndex]);
 
   const loadData = async () => {
     const [associates, prods, bannersData, configs] = await Promise.all([
@@ -205,101 +208,92 @@ export default function PublicStore() {
 
       {/* ── HERO BANNER ── */}
       {banners.length > 0 ? (
-        <div className="relative overflow-hidden" style={{ height: 220 }}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={bannerIndex}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 w-full h-full cursor-pointer overflow-hidden"
-              style={{
-                background: banners[bannerIndex]?.image_url
-                  ? (banners[bannerIndex]?.background_color || '#1B2A5E')
-                  : (banners[bannerIndex]?.background_color || '#1B2A5E'),
-              }}
-              onClick={async () => {
-                const banner = banners[bannerIndex];
-                if (!banner) return;
-                await base44.entities.ExternalLinkClick.create({
-                  associate_id: consultant.id,
-                  banner_id: banner.id,
-                  banner_name: banner.title,
-                  link_type: 'banner',
-                  status: 'intent',
-                  clicked_at: new Date().toISOString(),
-                });
-                if (banner.link) window.open(banner.link, '_blank');
-              }}
-            >
-              {/* Imagem de fundo cobrindo 100% sem opacidade */}
-              {banners[bannerIndex]?.image_url && (
-                <img
-                  src={banners[bannerIndex].image_url}
-                  alt=""
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              )}
-
-              {/* Overlay com logomarca + texto */}
-              <div className="relative w-full h-full flex items-center px-6 md:px-12 gap-6">
-                {/* Logomarca do banner */}
-                {banners[bannerIndex]?.logo_url && (
-                  <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm rounded-2xl p-3">
-                    <img
-                      src={banners[bannerIndex].logo_url}
-                      alt="Logo"
-                      className="h-14 md:h-20 w-auto object-contain"
-                    />
-                  </div>
+        <div className="w-full mb-0">
+          <div className="relative overflow-hidden" style={{ height: 320 }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={bannerIndex}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0 w-full h-full cursor-pointer"
+                style={{
+                  backgroundColor: banners[bannerIndex]?.background_color || '#1B2A5E',
+                  color: banners[bannerIndex]?.text_color || '#FFFFFF',
+                }}
+                onClick={async () => {
+                  const banner = banners[bannerIndex];
+                  if (!banner) return;
+                  window.open(banner.link, '_blank');
+                  try {
+                    const res = await base44.functions.invoke('trackExternalLinkClick', {
+                      associate_id: consultant.id,
+                      banner_id: banner.id,
+                      banner_name: banner.title,
+                      link_type: 'banner',
+                    });
+                  } catch (e) {}
+                }}
+              >
+                {banners[bannerIndex]?.image_url && (
+                  <img
+                    src={banners[bannerIndex].image_url}
+                    alt={banners[bannerIndex].title}
+                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                  />
                 )}
 
-                {/* Título e descrição */}
-                {(banners[bannerIndex]?.title || banners[bannerIndex]?.description) && (
-                  <div className="flex-1">
-                    <h1
-                      className="text-xl md:text-3xl font-black leading-tight drop-shadow"
-                      style={{ color: banners[bannerIndex]?.text_color || '#FFFFFF' }}
-                    >
+                <div className="relative flex items-center gap-6 p-8 md:p-12 h-full">
+                  {banners[bannerIndex]?.logo_url && (
+                    <div className="w-28 h-28 md:w-36 md:h-36 rounded-xl overflow-hidden bg-white flex-shrink-0 shadow-xl">
+                      <img src={banners[bannerIndex].logo_url} alt="Logo" className="w-full h-full object-contain p-3" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-2xl md:text-4xl font-bold leading-tight">
                       {banners[bannerIndex].title}
-                    </h1>
+                    </h2>
                     {banners[bannerIndex]?.description && (
-                      <p
-                        className="text-sm mt-1 max-w-lg drop-shadow"
-                        style={{ color: banners[bannerIndex]?.text_color || '#FFFFFF', opacity: 0.9 }}
-                      >
+                      <p className="text-base md:text-lg opacity-90 mt-3 max-w-2xl">
                         {banners[bannerIndex].description}
                       </p>
                     )}
                   </div>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-          {/* Dots e setas ficam fora do motion para não piscar */}
-          {banners.length > 1 && (
-            <>
-              <button
-                onClick={e => { e.stopPropagation(); setBannerIndex(i => (i - 1 + banners.length) % banners.length); }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition z-10"
-              >
-                <ChevronLeft size={18} className="text-white" />
-              </button>
-              <button
-                onClick={e => { e.stopPropagation(); setBannerIndex(i => (i + 1) % banners.length); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition z-10"
-              >
-                <ChevronRight size={18} className="text-white" />
-              </button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                {banners.map((_, idx) => (
-                  <button key={idx} onClick={e => { e.stopPropagation(); setBannerIndex(idx); }}
-                    className={`rounded-full transition-all ${idx === bannerIndex ? 'bg-white w-5 h-2' : 'bg-white/40 w-2 h-2'}`} />
-                ))}
-              </div>
-            </>
-          )}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {banners.length > 1 && (
+              <>
+                <button
+                  onClick={e => { e.stopPropagation(); setBannerIndex(i => (i - 1 + banners.length) % banners.length); }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition z-10"
+                >
+                  <ChevronLeft size={20} className="text-white" />
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); setBannerIndex(i => (i + 1) % banners.length); }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center transition z-10"
+                >
+                  <ChevronRight size={20} className="text-white" />
+                </button>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                  {banners.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={e => { e.stopPropagation(); setBannerIndex(idx); }}
+                      className="w-2 h-2 rounded-full transition"
+                      style={{
+                        backgroundColor: banners[bannerIndex]?.text_color || '#FFFFFF',
+                        opacity: idx === bannerIndex ? 1 : 0.5,
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       ) : (
         /* Hero padrão sem banner */
