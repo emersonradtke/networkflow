@@ -22,18 +22,32 @@ export default function PendingPlacements({ associateId, onAccepted }) {
     setLoading(false);
   };
 
+  const dismissPlacementNotifications = async (req) => {
+    try {
+      const notifs = await base44.entities.Notification.filter({
+        associate_id: associateId,
+        is_read: false,
+      });
+      const toRead = notifs.filter(n =>
+        n.title?.includes('Colocação') && n.message?.includes(req.associate_name)
+      );
+      await Promise.all(toRead.map(n =>
+        base44.entities.Notification.update(n.id, { is_read: true })
+      ));
+    } catch (err) {
+      console.error('Erro ao limpar notificações:', err);
+    }
+  };
+
   const accept = async (req) => {
     setProcessing(req.id);
-    // Atualizar o associado: definir novo patrocinador e ativar
     await base44.entities.Associate.update(req.associate_id, {
       sponsor_id: associateId,
       sponsor_name: req.target_sponsor_name,
       status: 'active',
       adhesion_paid: true,
     });
-    // Marcar solicitação como aceita
     await base44.entities.PlacementRequest.update(req.id, { status: 'accepted' });
-    // Notificar o associado alocado
     await base44.entities.Notification.create({
       associate_id: req.associate_id,
       title: 'Colocação Aceita! 🎉',
@@ -41,6 +55,7 @@ export default function PendingPlacements({ associateId, onAccepted }) {
       type: 'activation',
       is_read: false,
     });
+    await dismissPlacementNotifications(req);
     setProcessing(null);
     loadRequests();
     if (onAccepted) onAccepted();
@@ -49,7 +64,6 @@ export default function PendingPlacements({ associateId, onAccepted }) {
   const reject = async (req) => {
     setProcessing(req.id);
     await base44.entities.PlacementRequest.update(req.id, { status: 'rejected' });
-    // Notificar o associado
     await base44.entities.Notification.create({
       associate_id: req.associate_id,
       title: 'Solicitação Recusada',
@@ -57,6 +71,7 @@ export default function PendingPlacements({ associateId, onAccepted }) {
       type: 'system',
       is_read: false,
     });
+    await dismissPlacementNotifications(req);
     setProcessing(null);
     loadRequests();
   };
