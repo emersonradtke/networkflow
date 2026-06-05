@@ -88,6 +88,7 @@ const AuthenticatedApp = () => {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfUse />} />
       <Route path="/loja/:invite_code" element={<PublicStore />} />
+      <Route path="/PublicStore" element={<Navigate to="/" replace />} />
       
       {/* Role-based redirect */}
       <Route path="/role-redirect" element={<RoleRedirect />} />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { ShoppingCart, ExternalLink, Percent, Search, Package, Hash, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -84,9 +85,11 @@ export default function Store() {
     }
   };
 
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const currentAssociate = localAssociate || associate;
 
-  if (currentAssociate?.status !== 'active') {
+  if (!isAdmin && currentAssociate?.status !== 'active') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mb-4">
