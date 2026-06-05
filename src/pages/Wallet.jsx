@@ -99,7 +99,10 @@ export default function Wallet() {
         <div className="flex gap-2 mt-4 flex-wrap">
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2">
+          <Button
+            disabled={associate?.status !== 'active' || (associate?.wallet_balance || 0) <= 0}
+            className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <ArrowUpCircle size={16} /> Solicitar Saque
           </Button>
         </DialogTrigger>
@@ -128,7 +131,8 @@ export default function Wallet() {
         </Dialog>
         <Button
           onClick={() => setShowTransferModal(true)}
-          className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2"
+          disabled={associate?.status !== 'active' || (associate?.wallet_balance || 0) <= 0}
+          className="bg-background/20 hover:bg-background/30 text-background border border-background/30 font-bold gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ArrowRightLeft size={16} /> Transferir
         </Button>
