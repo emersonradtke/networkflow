@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, Network, Gift } from 'lucide-react';
+import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, Network, Gift, CreditCard, Loader2 } from 'lucide-react';
 import PlacementModal from '@/components/PlacementModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,7 @@ export default function AdminAssociates() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [placingAssociate, setPlacingAssociate] = useState(null);
+  const [checkingPayment, setCheckingPayment] = useState(null);
 
   useEffect(() => { loadAssociates(); }, []);
 
@@ -96,6 +97,33 @@ export default function AdminAssociates() {
       is_read: false,
     });
     loadAssociates();
+  };
+
+  const checkPaymentAndActivate = async (assoc) => {
+    setCheckingPayment(assoc.id);
+    try {
+      const res = await base44.functions.invoke('activateAssociateByPayment', { associate_id: assoc.id });
+      if (res.data?.success) {
+        alert(`✅ ${res.data.message}`);
+        loadAssociates();
+      } else {
+        // Pagamento não confirmado — perguntar se quer forçar ativação manual
+        const forceIt = confirm(
+          `❌ Pagamento não confirmado pela InfinitePay.\n\nDeseja ativar o associado manualmente mesmo assim?`
+        );
+        if (forceIt) {
+          const res2 = await base44.functions.invoke('activateAssociateByPayment', { associate_id: assoc.id, force: true });
+          if (res2.data?.success) {
+            alert('✅ Associado ativado manualmente.');
+            loadAssociates();
+          }
+        }
+      }
+    } catch (err) {
+      alert('Erro ao verificar pagamento: ' + err.message);
+    } finally {
+      setCheckingPayment(null);
+    }
   };
 
   const block = async (id) => {
@@ -241,9 +269,15 @@ export default function AdminAssociates() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       {a.status === 'pending' && (
-                        <DropdownMenuItem onClick={() => activate(a)} className="text-green-600 gap-2">
-                          <CheckCircle size={14} /> Ativar
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem onClick={() => checkPaymentAndActivate(a)} className="text-blue-600 gap-2" disabled={checkingPayment === a.id}>
+                            {checkingPayment === a.id ? <Loader2 size={14} className="animate-spin" /> : <CreditCard size={14} />}
+                            Verificar Pagamento
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => activate(a)} className="text-green-600 gap-2">
+                            <CheckCircle size={14} /> Ativar Manualmente
+                          </DropdownMenuItem>
+                        </>
                       )}
                       {a.status === 'awaiting_placement' && !pendingPlacementIds.has(a.id) && (
                         <DropdownMenuItem onClick={() => setPlacingAssociate(a)} className="text-blue-600 gap-2">

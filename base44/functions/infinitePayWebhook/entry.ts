@@ -10,7 +10,10 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { order_nsu, transaction_nsu, invoice_slug, receipt_url, capture_method, paid_amount, amount } = body;
 
+    console.log('Webhook recebido:', JSON.stringify(body));
+
     if (!order_nsu) {
+      console.log('Webhook sem order_nsu, ignorando');
       return new Response('OK', { status: 200 });
     }
 
@@ -27,10 +30,11 @@ Deno.serve(async (req) => {
     });
 
     const checkData = await checkRes.json();
+    console.log(`payment_check para order_nsu=${order_nsu}:`, JSON.stringify(checkData));
 
     // Só prosseguir se paid === true e dados conferem
     if (!checkData.paid) {
-      console.log(`payment_check: pagamento NÃO confirmado para order_nsu=${order_nsu}`, checkData);
+      console.log(`payment_check: pagamento NÃO confirmado para order_nsu=${order_nsu}`);
       return new Response('OK', { status: 200 });
     }
 
