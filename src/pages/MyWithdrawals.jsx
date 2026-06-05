@@ -258,6 +258,7 @@ export default function MyWithdrawals() {
       {transferOpen && (
         <CommissionTransferModal
           associate={associate}
+          minAmount={config?.withdrawal_min_amount ?? 0.01}
           onClose={() => { setTransferOpen(false); loadData(); }}
         />
       )}
