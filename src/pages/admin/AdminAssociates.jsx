@@ -43,6 +43,7 @@ const validatePhone = (phone) => phone.replace(/\D/g, '').length >= 10;
 
 export default function AdminAssociates() {
   const [associates, setAssociates] = useState([]);
+  const [pendingPlacementIds, setPendingPlacementIds] = useState(new Set());
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -55,8 +56,12 @@ export default function AdminAssociates() {
   useEffect(() => { loadAssociates(); }, []);
 
   const loadAssociates = async () => {
-    const data = await base44.entities.Associate.list('-created_date');
+    const [data, placements] = await Promise.all([
+      base44.entities.Associate.list('-created_date'),
+      base44.entities.PlacementRequest.filter({ status: 'pending' }),
+    ]);
     setAssociates(data);
+    setPendingPlacementIds(new Set(placements.map(p => p.associate_id)));
     setLoading(false);
   };
 
@@ -240,9 +245,14 @@ export default function AdminAssociates() {
                           <CheckCircle size={14} /> Ativar
                         </DropdownMenuItem>
                       )}
-                      {a.status === 'awaiting_placement' && (
+                      {a.status === 'awaiting_placement' && !pendingPlacementIds.has(a.id) && (
                         <DropdownMenuItem onClick={() => setPlacingAssociate(a)} className="text-blue-600 gap-2">
                           <Network size={14} /> Alocar na Rede
+                        </DropdownMenuItem>
+                      )}
+                      {a.status === 'awaiting_placement' && pendingPlacementIds.has(a.id) && (
+                        <DropdownMenuItem disabled className="text-muted-foreground gap-2 opacity-50 cursor-not-allowed">
+                          <Network size={14} /> Ag. Aceite Patrocinador
                         </DropdownMenuItem>
                       )}
                       {a.status === 'active' && (

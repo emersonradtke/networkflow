@@ -26,7 +26,16 @@ export default function PlacementModal({ associate, onClose, onPlaced }) {
 
   const sendRequest = async (targetSponsor) => {
     setSending(targetSponsor.id);
-    // Criar solicitação de alocação
+    // Verificar se já existe solicitação pendente para este associado
+    const existing = await base44.entities.PlacementRequest.filter({
+      associate_id: associate.id,
+      status: 'pending',
+    });
+    if (existing.length > 0) {
+      setSending(null);
+      setDone(targetSponsor.id);
+      return;
+    }
     await base44.entities.PlacementRequest.create({
       associate_id: associate.id,
       associate_name: associate.full_name,
@@ -44,6 +53,8 @@ export default function PlacementModal({ associate, onClose, onPlaced }) {
       type: 'system',
       is_read: false,
     });
+    // Mudar status do associado para aguardando aceite
+    await base44.entities.Associate.update(associate.id, { status: 'awaiting_placement' });
     setDone(targetSponsor.id);
     setSending(null);
     if (onPlaced) onPlaced();
