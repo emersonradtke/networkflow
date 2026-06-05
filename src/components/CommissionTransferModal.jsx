@@ -156,7 +156,10 @@ export default function CommissionTransferModal({ associate, onClose, onSubmitte
                 value={amount}
                 onChange={e => { setAmount(e.target.value); setError(''); }}
               />
-              {amount && parseFloat(amount) > 0 && (
+              {amount && parseFloat(amount) > 0 && parseFloat(amount) < minAmount && (
+                <p className="mt-1.5 text-xs text-red-600 font-medium">Valor mínimo de transferência: R$ {minAmount.toFixed(2)}</p>
+              )}
+              {amount && parseFloat(amount) >= minAmount && (
                 <div className="mt-2 text-xs text-muted-foreground space-y-0.5">
                   <p>Seu saldo após: <span className="font-semibold text-foreground">R$ {((associate.wallet_balance || 0) - parseFloat(amount || 0)).toFixed(2)}</span></p>
                   <p>Saldo destino após: <span className="font-semibold text-foreground">R$ {((selectedMember.wallet_balance || 0) + parseFloat(amount || 0)).toFixed(2)}</span></p>
@@ -191,7 +194,7 @@ export default function CommissionTransferModal({ associate, onClose, onSubmitte
                 className="flex-1 text-white font-bold"
                 style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }}
                 onClick={handleSubmit}
-                disabled={submitting || !amount}
+                disabled={submitting || !amount || parseFloat(amount) < minAmount || parseFloat(amount) > (associate.wallet_balance || 0)}
               >
                 {submitting ? 'Enviando...' : 'Solicitar Transferência'}
               </Button>
