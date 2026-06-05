@@ -17,6 +17,7 @@ const emptyForm = {
   type: 'direct_sale', external_url: '', category: '',
   is_active: true, stock: '', stock_min: '', stock_max: '',
   visibility: 'public', on_special_offer: false,
+  payment_methods: [], condition: 'new', current_discount: '',
 };
 
 const generateCode = () => {
@@ -63,6 +64,9 @@ export default function AdminProducts() {
      stock_max: p.stock_max?.toString() ?? '',
      visibility: p.visibility || 'public',
      on_special_offer: p.on_special_offer || false,
+     payment_methods: p.payment_methods || [],
+     condition: p.condition || 'new',
+     current_discount: p.current_discount?.toString() ?? '',
    });
    setEditId(p.id);
    setDialogOpen(true);
@@ -90,6 +94,7 @@ export default function AdminProducts() {
       stock_min: isDirect ? parseInt(form.stock_min || 0) : null,
       stock_max: isDirect ? parseInt(form.stock_max || 0) : null,
       is_active: isActive,
+      current_discount: parseFloat(form.current_discount || 0),
     };
     if (editId) await base44.entities.Product.update(editId, data);
     else await base44.entities.Product.create(data);
@@ -447,6 +452,55 @@ export default function AdminProducts() {
                   <Switch checked={form.on_special_offer} onCheckedChange={v => setForm({ ...form, on_special_offer: v })} />
                   <Label className="m-0">Oferta Especial</Label>
                 </div>
+              </div>
+            </div>
+
+            {/* Condição + Desconto */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Condição do Produto</Label>
+                <Select value={form.condition} onValueChange={v => setForm({ ...form, condition: v })}>
+                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Novo</SelectItem>
+                    <SelectItem value="refurbished">Recondicionado</SelectItem>
+                    <SelectItem value="used">Usado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Desconto Atual (%)</Label>
+                <Input className="mt-1.5" type="number" min="0" max="100" step="0.1" value={form.current_discount} onChange={e => setForm({ ...form, current_discount: e.target.value })} />
+              </div>
+            </div>
+
+            {/* Formas de Pagamento */}
+            <div>
+              <Label className="mb-2 block">Formas de Pagamento Aceitas</Label>
+              <div className="space-y-2">
+                {[
+                  { id: 'pix', label: 'PIX' },
+                  { id: 'credit_card', label: 'Cartão de Crédito' },
+                  { id: 'debit_card', label: 'Cartão de Débito' },
+                  { id: 'bank_transfer', label: 'Transferência Bancária' },
+                  { id: 'installments', label: 'Parcelado' },
+                ].map(method => (
+                  <div key={method.id} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`payment-${method.id}`}
+                      checked={form.payment_methods?.includes(method.id) || false}
+                      onChange={e => {
+                        const updated = e.target.checked
+                          ? [...(form.payment_methods || []), method.id]
+                          : (form.payment_methods || []).filter(m => m !== method.id);
+                        setForm({ ...form, payment_methods: updated });
+                      }}
+                      className="w-4 h-4 rounded border-input cursor-pointer"
+                    />
+                    <Label htmlFor={`payment-${method.id}`} className="m-0 cursor-pointer">{method.label}</Label>
+                  </div>
+                ))}
               </div>
             </div>
 

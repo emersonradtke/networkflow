@@ -552,16 +552,17 @@ function PublicProductCard({ product, onAddToCart, cart, consultant }) {
             <span className="bg-[#3B9EE2] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Externo</span>
           </div>
         )}
-        {product.on_special_offer && (
-          <div className="absolute top-2 right-2">
-            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ Oferta</span>
-          </div>
-        )}
-        {product.commission_percent > 0 && !product.on_special_offer && (
-          <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
+          {product.current_discount > 0 && (
+            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{product.current_discount}%</span>
+          )}
+          {product.on_special_offer && (
+            <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ Oferta</span>
+          )}
+          {product.commission_percent > 0 && !product.on_special_offer && (
             <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{product.commission_percent}% off</span>
-          </div>
-        )}
+          )}
+        </div>
         {outOfStock && (
           <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center">
             <span className="text-slate-700 text-xs font-bold bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">Sem Estoque</span>
