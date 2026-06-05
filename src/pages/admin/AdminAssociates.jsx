@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, Network, Gift, CreditCard, Loader2 } from 'lucide-react';
+import { Search, UserCheck, UserX, CheckCircle, XCircle, ChevronDown, Pencil, Trash2, Network, Gift, CreditCard, Loader2, UserPlus } from 'lucide-react';
 import PlacementModal from '@/components/PlacementModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,10 @@ export default function AdminAssociates() {
   const [errors, setErrors] = useState({});
   const [placingAssociate, setPlacingAssociate] = useState(null);
   const [checkingPayment, setCheckingPayment] = useState(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState('');
 
   useEffect(() => { loadAssociates(); }, []);
 
@@ -177,6 +181,23 @@ export default function AdminAssociates() {
     setSaving(false);
   };
 
+  const sendInvite = async (e) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    setInviteError('');
+    try {
+      await base44.users.inviteUser(inviteEmail.trim(), 'user');
+      setShowInviteModal(false);
+      setInviteEmail('');
+      alert(`✅ Convite enviado para ${inviteEmail.trim()}`);
+    } catch (err) {
+      setInviteError(err.message || 'Erro ao enviar convite.');
+    } finally {
+      setInviting(false);
+    }
+  };
+
   const statusBadge = (status) => {
     const map = {
       pending: { label: 'Pendente', cls: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' },
@@ -199,9 +220,14 @@ export default function AdminAssociates() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black text-foreground">Associados</h1>
-        <p className="text-muted-foreground text-sm mt-1">Gerencie todos os membros da rede</p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black text-foreground">Associados</h1>
+          <p className="text-muted-foreground text-sm mt-1">Gerencie todos os membros da rede</p>
+        </div>
+        <Button onClick={() => { setInviteEmail(''); setInviteError(''); setShowInviteModal(true); }} className="gap-2 font-bold text-white shrink-0" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }}>
+          <UserPlus size={16} /> Convidar Associado
+        </Button>
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -319,6 +345,33 @@ export default function AdminAssociates() {
           onPlaced={loadAssociates}
         />
       )}
+
+      {/* Modal Convidar */}
+      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+        <DialogContent className="max-w-sm bg-white">
+          <DialogHeader>
+            <DialogTitle className="font-black">Convidar Associado</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={sendInvite} className="space-y-4">
+            <div>
+              <Label>Email do convidado</Label>
+              <Input
+                className="mt-1.5"
+                type="email"
+                placeholder="email@exemplo.com"
+                value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)}
+                required
+              />
+            </div>
+            {inviteError && <p className="text-sm text-red-500">{inviteError}</p>}
+            <Button type="submit" disabled={inviting} className="w-full font-bold text-white" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }}>
+              {inviting ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+              {inviting ? 'Enviando...' : 'Enviar Convite'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Edição */}
       <Dialog open={!!editAssociate} onOpenChange={() => setEditAssociate(null)}>
