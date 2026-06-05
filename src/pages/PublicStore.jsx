@@ -342,7 +342,7 @@ export default function PublicStore() {
         </div>
 
         {/* ── PRODUCTS SECTION ── */}
-        <div ref={productsRef}>
+        <div ref={productsRef} style={{ scrollMarginTop: '120px' }}>
           {/* Section header */}
           <div className="flex items-center justify-between mb-6">
             <div>
