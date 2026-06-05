@@ -208,7 +208,7 @@ export default function PublicStore() {
 
       {/* ── HERO BANNER ── */}
       {banners.length > 0 ? (
-        <div className="w-full mb-0">
+        <div className="w-full mb-0 mt-6">
           <div className="relative overflow-hidden" style={{ height: 320 }}>
             <AnimatePresence mode="wait">
               <motion.div
