@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/date-utils';
-import { Wallet, TrendingUp, Users, Gift, ArrowUpCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Wallet, TrendingUp, Users, Gift, ArrowDownCircle, ArrowUpCircle, ArrowLeftRight } from 'lucide-react';
 
 const statusConfig = {
   pending:  { label: 'Pendente',  cls: 'bg-yellow-100 text-yellow-700' },
@@ -32,45 +32,112 @@ function EmptyState({ text }) {
 
 // ── Saldo ──────────────────────────────────────────────────────────────────────
 function SaldoDetail({ associate }) {
-  const [withdrawals, setWithdrawals] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.WithdrawalRequest.filter({ associate_id: associate.id }, '-created_date', 10)
-      .then(r => { setWithdrawals(r); setLoading(false); });
+    const load = async () => {
+      const [commissions, withdrawals, transfersIn, transfersOut] = await Promise.all([
+        base44.entities.Commission.filter({ beneficiary_id: associate.id, status: 'credited' }, '-created_date', 50),
+        base44.entities.WithdrawalRequest.filter({ associate_id: associate.id }, '-created_date', 50),
+        base44.entities.CommissionTransfer.filter({ to_associate_id: associate.id, status: 'approved' }, '-created_date', 50),
+        base44.entities.CommissionTransfer.filter({ from_associate_id: associate.id, status: 'approved' }, '-created_date', 50),
+      ]);
+
+      const all = [
+        ...commissions.map(c => ({
+          id: 'c-' + c.id,
+          date: c.created_date,
+          type: 'entrada',
+          label: `Comissão — ${c.product_name || 'Produto'}`,
+          sublabel: `Nível ${c.network_level ?? '-'} · ${c.originator_name || ''}`,
+          amount: c.commission_amount || 0,
+        })),
+        ...withdrawals.map(w => ({
+          id: 'w-' + w.id,
+          date: w.created_date,
+          type: w.status === 'rejected' ? 'cancelado' : 'saida',
+          label: 'Saque solicitado',
+          sublabel: w.status === 'rejected' ? 'Rejeitado' : w.status === 'approved' ? 'Aprovado' : 'Pendente',
+          amount: w.amount || 0,
+          status: w.status,
+        })),
+        ...transfersIn.map(t => ({
+          id: 'ti-' + t.id,
+          date: t.created_date,
+          type: 'entrada',
+          label: `Transferência recebida`,
+          sublabel: `De: ${t.from_associate_name || ''}`,
+          amount: t.amount || 0,
+        })),
+        ...transfersOut.map(t => ({
+          id: 'to-' + t.id,
+          date: t.created_date,
+          type: 'saida',
+          label: `Transferência enviada`,
+          sublabel: `Para: ${t.to_associate_name || ''}`,
+          amount: t.amount || 0,
+        })),
+      ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      setEntries(all);
+      setLoading(false);
+    };
+    load();
   }, [associate.id]);
+
+  const totalEntradas = entries.filter(e => e.type === 'entrada').reduce((s, e) => s + e.amount, 0);
+  const totalSaidas   = entries.filter(e => e.type === 'saida').reduce((s, e) => s + e.amount, 0);
+
+  const iconMap = {
+    entrada:   <ArrowDownCircle size={16} className="text-green-500 shrink-0" />,
+    saida:     <ArrowUpCircle size={16} className="text-red-400 shrink-0" />,
+    cancelado: <ArrowUpCircle size={16} className="text-slate-300 shrink-0" />,
+  };
 
   return (
     <div className="space-y-4">
+      {/* Resumo */}
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Saldo Disponível', value: `R$ ${(associate.wallet_balance || 0).toFixed(2)}`, color: 'text-primary' },
-          { label: 'Total Ganho',      value: `R$ ${(associate.total_earned || 0).toFixed(2)}`,   color: 'text-green-600' },
-          { label: 'Total Sacado',     value: `R$ ${(associate.total_withdrawn || 0).toFixed(2)}`, color: 'text-slate-700' },
-        ].map(i => (
-          <div key={i.label} className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">{i.label}</p>
-            <p className={`text-base font-black ${i.color}`}>{i.value}</p>
-          </div>
-        ))}
+        <div className="bg-slate-50 rounded-xl p-3 text-center">
+          <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
+          <p className="text-base font-black text-primary">R$ {(associate.wallet_balance || 0).toFixed(2)}</p>
+        </div>
+        <div className="bg-green-50 rounded-xl p-3 text-center">
+          <p className="text-xs text-muted-foreground mb-1">Entradas</p>
+          <p className="text-base font-black text-green-600">R$ {totalEntradas.toFixed(2)}</p>
+        </div>
+        <div className="bg-red-50 rounded-xl p-3 text-center">
+          <p className="text-xs text-muted-foreground mb-1">Saídas</p>
+          <p className="text-base font-black text-red-500">R$ {totalSaidas.toFixed(2)}</p>
+        </div>
       </div>
 
-      <Section title="Últimos Saques">
-        {loading ? <div className="h-10 bg-slate-100 rounded animate-pulse" /> :
-         withdrawals.length === 0 ? <EmptyState text="Nenhum saque solicitado ainda." /> : (
-          <div className="space-y-2 max-h-56 overflow-y-auto">
-            {withdrawals.map(w => {
-              const s = statusConfig[w.status] || statusConfig.pending;
-              return (
-                <div key={w.id} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl">
-                  <div>
-                    <p className="text-sm font-bold text-foreground">R$ {w.amount?.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(w.created_date)}</p>
-                  </div>
-                  <Badge className={s.cls}>{s.label}</Badge>
+      {/* Extrato */}
+      <Section title="Extrato de movimentações">
+        {loading ? (
+          <div className="space-y-2">
+            {[1,2,3].map(i => <div key={i} className="h-14 bg-slate-100 rounded-xl animate-pulse" />)}
+          </div>
+        ) : entries.length === 0 ? (
+          <EmptyState text="Nenhuma movimentação encontrada." />
+        ) : (
+          <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
+            {entries.map(e => (
+              <div key={e.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: e.type === 'entrada' ? 'rgba(34,197,94,0.1)' : e.type === 'cancelado' ? 'rgba(100,116,139,0.08)' : 'rgba(239,68,68,0.08)' }}>
+                  {iconMap[e.type]}
                 </div>
-              );
-            })}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{e.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{e.sublabel} · {formatDate(e.date)}</p>
+                </div>
+                <p className={`text-sm font-black shrink-0 ${e.type === 'entrada' ? 'text-green-600' : e.type === 'cancelado' ? 'text-slate-400 line-through' : 'text-red-500'}`}>
+                  {e.type === 'entrada' ? '+' : '-'}R$ {e.amount.toFixed(2)}
+                </p>
+              </div>
+            ))}
           </div>
         )}
       </Section>
