@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
     }
 
     // Verificar se pertence ao usuário
-    const associate = await base44.entities.Associate.filter({ user_id: user.id }, '', 1);
-    if (!associate || associate[0].id !== click.associate_id) {
+    const associates = await base44.entities.Associate.filter({ user_id: user.id });
+    if (!associates || associates.length === 0 || associates[0].id !== click.associate_id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     });
 
     // Criar notificação para admin revisar
-    const admins = await base44.entities.Associate.filter({ status: 'active' }, '', 100);
+    const admins = await base44.entities.Associate.filter({ status: 'active' });
     for (const admin of admins) {
       if (admin.role === 'admin') {
         await base44.entities.Notification.create({
