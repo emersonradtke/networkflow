@@ -31,21 +31,21 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
       const orderNumber = res.data?.next_number || 1;
 
       for (const item of cart) {
-        await base44.entities.Order.create({
-          order_number: orderNumber,
-          cart_id: cartId,
-          associate_id: consultant.id,
-          associate_name: consultant.full_name,
-          product_id: item.id,
-          product_name: item.name,
-          product_type: item.type || 'direct_sale',
-          quantity: item.qty,
-          unit_price: item.price,
-          amount: item.price * item.qty,
-          commission_percent: item.commission_percent,
-          status: 'pending',
-          notes: `Venda pública via link do consultor. Cliente: ${customerInfo.name} (${customerInfo.email})${customerInfo.phone ? `, Tel: ${customerInfo.phone}` : ''}`,
-        });
+         await base44.entities.Order.create({
+           order_number: orderNumber,
+           cart_id: cartId,
+           associate_id: consultant.id,
+           associate_name: consultant.full_name,
+           product_id: item.id,
+           product_name: item.name,
+           product_type: item.type || 'direct_sale',
+           quantity: item.qty,
+           unit_price: item.price,
+           amount: item.price * item.qty,
+           commission_percent: item.commission_associate || 0,
+           status: 'pending',
+           notes: `Venda pública via link do consultor. Cliente: ${customerInfo.name} (${customerInfo.email})${customerInfo.phone ? `, Tel: ${customerInfo.phone}` : ''}`,
+         });
         if (item.type === 'direct_sale') {
           await base44.entities.Product.update(item.id, { stock: Math.max(0, (item.stock || 0) - item.qty) });
         }
