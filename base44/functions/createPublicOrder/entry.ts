@@ -4,7 +4,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { cart, consultant_id, consultant_name, customer_info } = await req.json();
+    const { cart, consultant_id, consultant_name, customer_info, shipping_data, shipping_cost } = await req.json();
 
     if (!cart || cart.length === 0 || !consultant_id || !customer_info?.name) {
       return Response.json({ error: 'Dados obrigatórios ausentes' }, { status: 400 });
@@ -16,6 +16,7 @@ Deno.serve(async (req) => {
     const cartId = `pub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     for (const item of cart) {
+      const itemShipping = (shipping_cost || 0) / cart.length;
       await base44.asServiceRole.entities.Order.create({
         order_number: orderNumber,
         cart_id: cartId,
@@ -26,10 +27,11 @@ Deno.serve(async (req) => {
         product_type: item.type || 'direct_sale',
         quantity: item.qty,
         unit_price: item.price,
-        amount: item.price * item.qty,
+        amount: item.price * item.qty + itemShipping,
         commission_percent: item.commission_associate || 0,
         status: 'pending',
         notes: `Venda pública. Cliente: ${customer_info.name} (${customer_info.email || ''})${customer_info.phone ? `, Tel: ${customer_info.phone}` : ''}`,
+        ...(shipping_data || {}),
       });
 
       if (item.type !== 'external_link') {
