@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,8 +74,12 @@ export default function BankDataSection({ associate, onUpdate }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [bankOpen, setBankOpen] = useState(false);
-  // Form é inicializado uma única vez com os dados do associate
   const [form, setForm] = useState(() => buildForm(associate));
+
+  // Re-sincroniza o form quando o associate é recarregado do banco
+  useEffect(() => {
+    setForm(buildForm(associate));
+  }, [associate?.id]);
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
 

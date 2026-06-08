@@ -4,7 +4,6 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // SECURITY: Verificar autenticação obrigatória
     const user = await base44.auth.me();
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,39 +16,57 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'bankData é obrigatório' }, { status: 400 });
     }
 
+    // Campos permitidos para atualização bancária (whitelist)
+    const allowedFields = ['pix_key', 'pix_key_type', 'bank_code', 'bank_name', 'bank_account_type', 'bank_agency', 'bank_agency_digit', 'bank_account', 'bank_account_digit', 'bank_info'];
+    const safeData = Object.fromEntries(Object.entries(bankData).filter(([k]) => allowedFields.includes(k)));
+
     // Resolver o ID do associate
     let associateId = associate_id;
+    let associateRecord = null;
 
-    if (!associateId) {
-      let found = [];
-      if (cpf) {
-        found = await base44.asServiceRole.entities.Associate.filter({ cpf });
-      }
-      if (!found.length && email) {
-        found = await base44.asServiceRole.entities.Associate.filter({ email });
-      }
-      associateId = found[0]?.id;
+    if (associateId) {
+      const found = await base44.asServiceRole.entities.Associate.filter({ id: associateId });
+      associateRecord = found[0] || null;
     }
 
-    if (!associateId) {
+    if (!associateRecord) {
+      // Tentar pelo user_id do usuário logado
+      const byUser = await base44.asServiceRole.entities.Associate.filter({ user_id: user.id });
+      if (byUser.length > 0) {
+        associateRecord = byUser[0];
+        associateId = byUser[0].id;
+      }
+    }
+
+    if (!associateRecord && cpf) {
+      const byCpf = await base44.asServiceRole.entities.Associate.filter({ cpf });
+      if (byCpf.length > 0) {
+        associateRecord = byCpf[0];
+        associateId = byCpf[0].id;
+      }
+    }
+
+    if (!associateRecord && email) {
+      const byEmail = await base44.asServiceRole.entities.Associate.filter({ email });
+      if (byEmail.length > 0) {
+        associateRecord = byEmail[0];
+        associateId = byEmail[0].id;
+      }
+    }
+
+    if (!associateRecord || !associateId) {
       return Response.json({ error: 'Associate não encontrado' }, { status: 404 });
     }
 
     // SECURITY: Se não for admin, garantir que o usuário só pode atualizar seus próprios dados
     if (user.role !== 'admin') {
-      const owns = await base44.asServiceRole.entities.Associate.filter({ id: associateId, user_id: user.id });
-      // Fallback: buscar por email para usuários legados
-      if (owns.length === 0) {
-        const byEmail = await base44.asServiceRole.entities.Associate.filter({ id: associateId, email: user.email });
-        if (byEmail.length === 0) {
-          return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
+      const ownerUserId = associateRecord.user_id;
+      const ownerEmail = associateRecord.email;
+      const isOwner = (ownerUserId && ownerUserId === user.id) || (ownerEmail && ownerEmail === user.email);
+      if (!isOwner) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
-
-    // Campos permitidos para atualização bancária (whitelist)
-    const allowedFields = ['pix_key', 'pix_key_type', 'bank_code', 'bank_name', 'bank_account_type', 'bank_agency', 'bank_agency_digit', 'bank_account', 'bank_account_digit', 'bank_info'];
-    const safeData = Object.fromEntries(Object.entries(bankData).filter(([k]) => allowedFields.includes(k)));
 
     await base44.asServiceRole.entities.Associate.update(associateId, safeData);
 

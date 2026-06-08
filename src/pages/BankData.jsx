@@ -44,6 +44,7 @@ export default function BankData() {
 
   const handleUpdate = (savedData) => {
     if (!savedData) return;
+    // Atualiza estado local imediatamente para feedback visual
     setAssociate(prev => ({ ...prev, ...savedData }));
     // Atualiza sessionStorage para DirectUser legado
     const raw = sessionStorage.getItem('directUser');
@@ -54,6 +55,8 @@ export default function BankData() {
         sessionStorage.setItem('directUser', JSON.stringify(du));
       }
     }
+    // Recarrega do banco para garantir persistência real
+    loadAssociate();
   };
 
   if (loading) return (
