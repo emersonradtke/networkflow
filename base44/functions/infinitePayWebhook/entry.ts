@@ -80,9 +80,9 @@ Deno.serve(async (req) => {
         });
       }
 
-    } else if (order_nsu.startsWith('CART-')) {
-      const cartId = order_nsu.replace('CART-', '');
-      const orders = await base44.asServiceRole.entities.Order.filter({ cart_id: cartId });
+    } else if (order_nsu.startsWith('CART-') || order_nsu.startsWith('PUB-')) {
+       const cartId = order_nsu.startsWith('CART-') ? order_nsu.replace('CART-', '') : order_nsu.replace('PUB-', '');
+       const orders = await base44.asServiceRole.entities.Order.filter({ cart_id: cartId });
       for (const order of orders) {
         await base44.asServiceRole.entities.Order.update(order.id, {
           status: 'paid',
