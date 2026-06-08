@@ -96,8 +96,15 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const resetForm = () => {
+    files.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
+    setFiles([]);
+    setSpending('');
+    setMonth(new Date().toISOString().slice(0, 7));
+    setShowModal(false);
+  };
+
+  const handleSubmit = async () => {
     if (files.length === 0 || !spending || !month) {
       toast.error('Preencha todos os campos e anexe pelo menos um comprovante');
       return;
@@ -109,7 +116,6 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
 
     setLoading(true);
     try {
-      // Upload todos os arquivos em paralelo
       const uploadResults = await Promise.all(
         files.map(({ file }) => base44.integrations.Core.UploadFile({ file }))
       );
@@ -124,10 +130,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
       });
 
       toast.success('Comprovante(s) enviado(s) para análise!');
-      setShowModal(false);
-      setFiles([]);
-      setSpending('');
-      setMonth(currentMonth);
+      resetForm();
       onUpdate?.();
     } catch (err) {
       toast.error('Erro ao enviar: ' + (err?.response?.data?.error || err?.message || 'tente novamente'));
@@ -215,7 +218,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
       {showModal && (
         <div className="dark-card rounded-2xl p-6 border-2 border-primary/20">
           <h4 className="font-bold text-foreground mb-4">Enviar Comprovante de Gasto</h4>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <label className="text-sm font-semibold text-foreground block mb-1.5">Mês de Referência</label>
               <input
@@ -223,7 +226,6 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
                 className="w-full px-3 py-2 rounded-lg border border-border bg-transparent text-sm"
-                required
               />
             </div>
 
@@ -241,7 +243,6 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
                   onChange={(e) => setSpending(e.target.value)}
                   placeholder="0.00"
                   className="flex-1 px-3 py-2 rounded-lg border border-border bg-transparent text-sm"
-                  required
                 />
               </div>
             </div>
@@ -298,20 +299,21 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => { setShowModal(false); setFiles([]); }}
+                onClick={resetForm}
                 className="flex-1"
               >
                 Cancelar
               </Button>
               <Button
-                type="submit"
-                disabled={loading || files.length === 0}
+                type="button"
+                disabled={loading || files.length === 0 || !spending}
+                onClick={handleSubmit}
                 className="flex-1 bg-primary hover:bg-primary/90"
               >
                 {loading ? 'Enviando...' : `Enviar ${files.length > 1 ? `${files.length} Arquivos` : 'Comprovante'}`}
               </Button>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </div>
