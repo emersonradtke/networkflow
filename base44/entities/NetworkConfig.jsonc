@@ -4,13 +4,11 @@
   "properties": {
     "max_levels": {
       "type": "number",
-      "default": 5,
-      "description": "N\u00famero m\u00e1ximo de n\u00edveis da rede"
+      "default": 5
     },
     "adhesion_price": {
       "type": "number",
-      "default": 100,
-      "description": "Valor da taxa de ades\u00e3o"
+      "default": 100
     },
     "adhesion_description": {
       "type": "string"
@@ -34,18 +32,15 @@
     },
     "store_page_size": {
       "type": "number",
-      "default": 24,
-      "description": "Quantidade de produtos por p\u00e1gina na loja"
+      "default": 24
     },
     "pontos_por_real": {
       "type": "number",
-      "default": 1,
-      "description": "Quantidade de pontos ganhos por real gasto"
+      "default": 1
     },
     "card_min_spending": {
       "type": "number",
-      "default": 500,
-      "description": "Valor m\u00ednimo de gasto mensal do cart\u00e3o BoldLife para ativa\u00e7\u00e3o"
+      "default": 500
     },
     "payment_gateway": {
       "type": "string",
@@ -55,8 +50,12 @@
         "cielo",
         "pagarme"
       ],
-      "default": "infinitepay",
-      "description": "Gateway de pagamento ativo"
+      "default": "infinitepay"
+    },
+    "monthly_activation_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Valor m\u00ednimo que o associado deve gastar mensalmente para manter ativa\u00e7\u00e3o"
     }
   },
   "required": []

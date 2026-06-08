@@ -8,6 +8,7 @@ import CommissionsModal from '@/components/CommissionsModal';
 import TopProductsWidget from '@/components/admin/TopProductsWidget';
 import CommissionManager from '@/components/admin/CommissionManager';
 import CommissionTransferManager from '@/components/admin/CommissionTransferManager';
+import AdminMonthlyActivationWidget from '@/components/admin/AdminMonthlyActivationWidget';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +19,7 @@ export default function AdminDashboard() {
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [ordersByStatus, setOrdersByStatus] = useState({ pending: [], paid: [], cancelled: [], refunded: [] });
   const [allCommissions, setAllCommissions] = useState([]);
+  const [networkConfig, setNetworkConfig] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [showCommissions, setShowCommissions] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,8 @@ export default function AdminDashboard() {
       const commissions = await base44.entities.Commission.list('-created_date', 100);
       const cardRequests = await base44.entities.CardRequest.filter({ status: 'pending' });
       const products = await base44.entities.Product.filter({ is_active: true });
+      const configs = await base44.entities.NetworkConfig.list();
+      setNetworkConfig(configs[0] || null);
 
       const totalCommissions = commissions.reduce((s, c) => s + (c.commission_amount || 0), 0);
       const cardCount = associates.filter(a => a.has_boldlife_card).length;
@@ -149,6 +153,9 @@ export default function AdminDashboard() {
           <p className="text-xs text-muted-foreground">Transações devolvidas</p>
         </button>
       </div>
+
+      {/* Ativação Mensal */}
+      <AdminMonthlyActivationWidget networkConfig={networkConfig} />
 
       {stats.pending > 0 && (
         <div className="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">

@@ -14,6 +14,7 @@ import AddressModal from '@/components/AddressModal';
 import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
 import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
 import BoldLifeCardSection from '@/components/BoldLifeCardSection';
+import MonthlyActivationCard from '@/components/MonthlyActivationCard';
 
 export default function Dashboard() {
   const { user, associate } = useOutletContext();
@@ -202,6 +203,9 @@ export default function Dashboard() {
           </a>
         </div>
       )}
+
+      {/* Ativação Mensal */}
+      <MonthlyActivationCard associate={associate} networkConfig={networkConfig} />
 
       {/* Cartão BoldLife */}
       <BoldLifeCardSection 
