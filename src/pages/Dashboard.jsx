@@ -39,7 +39,7 @@ export default function Dashboard() {
       };
       loadConfig();
     }
-  }, [associate]);
+  }, [associate?.id]);
 
   useEffect(() => {
     if (associate?.id && associate.status === 'pending') {
