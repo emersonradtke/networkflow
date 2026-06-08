@@ -20,6 +20,17 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
 
   // Customer info
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' });
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+
+  const applyPhoneMask = (raw) => {
+    const d = raw.replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '');
+    return d.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '');
+  };
+
+  const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  const isValidPhone = (v) => v.replace(/\D/g, '').length >= 10;
 
   // Shipping
   const [shippingMethods, setShippingMethods] = useState([]);
@@ -155,6 +166,16 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
     if (step === 'info') {
       if (!customerInfo.name || !customerInfo.email) {
         setError('Preencha seu nome e e-mail.');
+        return;
+      }
+      if (!isValidEmail(customerInfo.email)) {
+        setEmailError('E-mail inválido.');
+        setError('Verifique os campos destacados.');
+        return;
+      }
+      if (customerInfo.phone && !isValidPhone(customerInfo.phone)) {
+        setPhoneError('Telefone inválido. Use (XX) XXXXX-XXXX.');
+        setError('Verifique os campos destacados.');
         return;
       }
     }
@@ -353,11 +374,27 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
                 </div>
                 <div>
                   <Label className="text-xs font-bold text-slate-700">E-mail *</Label>
-                  <Input type="email" value={customerInfo.email} onChange={e => setCustomerInfo(p => ({ ...p, email: e.target.value }))} placeholder="seu@email.com" className="mt-1 rounded-xl" />
+                  <Input
+                    type="email"
+                    value={customerInfo.email}
+                    onChange={e => { setCustomerInfo(p => ({ ...p, email: e.target.value })); setEmailError(''); }}
+                    onBlur={e => { if (e.target.value && !isValidEmail(e.target.value)) setEmailError('E-mail inválido.'); }}
+                    placeholder="seu@email.com"
+                    className={`mt-1 rounded-xl ${emailError ? 'border-red-400' : ''}`}
+                  />
+                  {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
                 </div>
                 <div>
                   <Label className="text-xs font-bold text-slate-700">Telefone / WhatsApp</Label>
-                  <Input value={customerInfo.phone} onChange={e => setCustomerInfo(p => ({ ...p, phone: e.target.value }))} placeholder="(11) 99999-9999" className="mt-1 rounded-xl" />
+                  <Input
+                    value={customerInfo.phone}
+                    onChange={e => { const v = applyPhoneMask(e.target.value); setCustomerInfo(p => ({ ...p, phone: v })); setPhoneError(''); }}
+                    onBlur={e => { if (e.target.value && !isValidPhone(e.target.value)) setPhoneError('Telefone inválido. Use (XX) XXXXX-XXXX.'); }}
+                    placeholder="(11) 99999-9999"
+                    maxLength={15}
+                    className={`mt-1 rounded-xl ${phoneError ? 'border-red-400' : ''}`}
+                  />
+                  {phoneError && <p className="text-xs text-red-500 mt-1">{phoneError}</p>}
                 </div>
                 {error && <p className="text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2 flex items-center gap-1"><AlertCircle size={13} />{error}</p>}
               </div>
