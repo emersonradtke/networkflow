@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MapPin, CheckCircle2 } from 'lucide-react';
+import { MapPin, CheckCircle2, Loader2 } from 'lucide-react';
 
 const EMPTY_ADDR = {
   shipping_street: '', shipping_number: '', shipping_complement: '',
@@ -15,11 +15,58 @@ const EMPTY_ADDR = {
 };
 
 function AddressFields({ prefix, data, onChange, label }) {
+  const [loadingCep, setLoadingCep] = useState(false);
+  const [cepError, setCepError] = useState('');
+
+  const handleCepChange = async (raw) => {
+    const digits = raw.replace(/\D/g, '');
+    // Formata para 00000-000
+    const formatted = digits.length > 5 ? `${digits.slice(0,5)}-${digits.slice(5,8)}` : digits;
+    onChange(`${prefix}_zip`, formatted);
+    setCepError('');
+
+    if (digits.length === 8) {
+      setLoadingCep(true);
+      try {
+        const res = await base44.functions.invoke('searchCepAddress', { cep: digits });
+        const addr = res.data;
+        if (addr && !addr.erro) {
+          onChange(`${prefix}_street`, addr.logradouro || '');
+          onChange(`${prefix}_neighborhood`, addr.bairro || '');
+          onChange(`${prefix}_city`, addr.localidade || '');
+          onChange(`${prefix}_state`, addr.uf || '');
+        } else {
+          setCepError('CEP não encontrado.');
+        }
+      } catch {
+        setCepError('Erro ao buscar CEP.');
+      } finally {
+        setLoadingCep(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-3">
       <p className="text-sm font-bold text-foreground flex items-center gap-2">
         <MapPin size={14} className="text-primary" /> {label}
       </p>
+
+      {/* CEP primeiro — preenche o restante */}
+      <div>
+        <Label className="text-xs">CEP</Label>
+        <div className="relative mt-1">
+          <Input
+            placeholder="00000-000"
+            maxLength={9}
+            value={data[`${prefix}_zip`] || ''}
+            onChange={e => handleCepChange(e.target.value)}
+          />
+          {loadingCep && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
+        </div>
+        {cepError && <p className="text-xs text-destructive mt-1">{cepError}</p>}
+      </div>
+
       <div className="grid grid-cols-3 gap-2">
         <div className="col-span-2">
           <Label className="text-xs">Rua / Logradouro</Label>
@@ -40,11 +87,7 @@ function AddressFields({ prefix, data, onChange, label }) {
           <Input className="mt-1" placeholder="Centro" value={data[`${prefix}_neighborhood`] || ''} onChange={e => onChange(`${prefix}_neighborhood`, e.target.value)} />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div>
-          <Label className="text-xs">CEP</Label>
-          <Input className="mt-1" placeholder="00000-000" value={data[`${prefix}_zip`] || ''} onChange={e => onChange(`${prefix}_zip`, e.target.value)} />
-        </div>
+      <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">Cidade</Label>
           <Input className="mt-1" placeholder="São Paulo" value={data[`${prefix}_city`] || ''} onChange={e => onChange(`${prefix}_city`, e.target.value)} />
