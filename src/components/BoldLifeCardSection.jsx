@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Upload, CheckCircle, Clock, AlertCircle, Plus } from 'lucide-react';
@@ -11,7 +11,11 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
   const [file, setFile] = useState(null);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [requestLoading, setRequestLoading] = useState(false);
-  const [hasCardLocal, setHasCardLocal] = useState(associate.has_boldlife_card);
+  const [hasCardLocal, setHasCardLocal] = useState(!!associate?.has_boldlife_card);
+
+  useEffect(() => {
+    setHasCardLocal(!!associate?.has_boldlife_card);
+  }, [associate?.has_boldlife_card]);
 
   const minSpending = networkConfig?.card_min_spending || 500;
   const currentMonth = new Date().toISOString().slice(0, 7);

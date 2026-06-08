@@ -38,15 +38,17 @@ export default function PurchaseIntentsCard({ associateId }) {
       // Enriquecer dados com preço e comissão do produto/banner
       const enrichedData = await Promise.all(data.map(async (intent) => {
         if (intent.link_type === 'product' && intent.product_id) {
-          const product = await base44.entities.Product.get(intent.product_id);
+          const products = await base44.entities.Product.filter({ id: intent.product_id });
+          const product = products[0];
           return {
             ...intent,
             product_price: product?.price || 0,
             product_commission_percent: product?.commission_percent || 0,
-            managed_commission: product ? (product.price * product.commission_percent) / 100 : 0
+            managed_commission: product ? (product.price * (product.commission_percent || 0)) / 100 : 0
           };
         } else if (intent.link_type === 'banner' && intent.banner_id) {
-          const banner = await base44.entities.StoreBanner.get(intent.banner_id);
+          const banners = await base44.entities.StoreBanner.filter({ id: intent.banner_id });
+          const banner = banners[0];
           return {
             ...intent,
             banner_price: banner?.price || 0,

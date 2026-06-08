@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Upload } from 'lucide-react';
 
-export default function PurchaseProofModal({ clickId, isOpen, onClose, productName }) {
+export default function PurchaseProofModal({ clickId, isOpen, onClose, productName, onSubmitted }) {
   const [purchaseAmount, setPurchaseAmount] = useState('');
   const [proofFile, setProofFile] = useState(null);
   const [proofPreview, setProofPreview] = useState('');
@@ -47,6 +47,7 @@ export default function PurchaseProofModal({ clickId, isOpen, onClose, productNa
       setSuccess(true);
       setTimeout(() => {
         onClose();
+        onSubmitted?.();
         setPurchaseAmount('');
         setProofFile(null);
         setProofPreview('');
