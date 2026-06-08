@@ -26,31 +26,15 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
     setLoading(true);
     setError('');
     try {
-      const cartId = `pub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const res = await base44.functions.invoke('getNextOrderNumber', {});
-      const orderNumber = res.data?.next_number || 1;
+      // Cria pedidos via backend (service role) pois usuário é público (não autenticado)
+      const orderRes = await base44.functions.invoke('createPublicOrder', {
+        cart,
+        consultant_id: consultant.id,
+        consultant_name: consultant.full_name,
+        customer_info: customerInfo,
+      });
 
-      for (const item of cart) {
-         await base44.entities.Order.create({
-           order_number: orderNumber,
-           cart_id: cartId,
-           associate_id: consultant.id,
-           associate_name: consultant.full_name,
-           product_id: item.id,
-           product_name: item.name,
-           product_type: item.type || 'direct_sale',
-           quantity: item.qty,
-           unit_price: item.price,
-           amount: item.price * item.qty,
-           commission_percent: item.commission_associate || 0,
-           status: 'pending',
-           notes: `Venda pública via link do consultor. Cliente: ${customerInfo.name} (${customerInfo.email})${customerInfo.phone ? `, Tel: ${customerInfo.phone}` : ''}`,
-         });
-        if (item.type === 'direct_sale') {
-          await base44.entities.Product.update(item.id, { stock: Math.max(0, (item.stock || 0) - item.qty) });
-        }
-      }
-
+      const cartId = orderRes.data?.cart_id || `pub_${Date.now()}`;
       const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
         order_nsu: `PUB-${cartId}`,
         items: cart.map(item => ({ description: item.name, price: item.price, quantity: item.qty })),

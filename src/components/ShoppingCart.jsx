@@ -179,9 +179,12 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           notes: `Qtd: ${item.qty}`,
           ...shippingData,
         });
-        if (item.type === 'direct_sale') {
-          await base44.entities.Product.update(item.id, { stock: Math.max(0, (item.stock || 0) - item.qty) });
-        }
+      }
+
+      // Reduzir estoque via service role
+      const stockItems = cart.filter(i => i.type !== 'external_link').map(i => ({ id: i.id, stock: i.stock, qty: i.qty }));
+      if (stockItems.length > 0) {
+        await base44.functions.invoke('reduceProductStock', { items: stockItems });
       }
 
       // Calculate pontos after checkout
