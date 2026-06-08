@@ -17,7 +17,7 @@ import BoldLifeCardSection from '@/components/BoldLifeCardSection';
 import MonthlyActivationCard from '@/components/MonthlyActivationCard';
 
 export default function Dashboard() {
-  const { user, associate } = useOutletContext();
+  const { user, associate, reloadUser } = useOutletContext();
   const [recentCommissions, setRecentCommissions] = useState([]);
   const [networkCount, setNetworkCount] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -211,7 +211,7 @@ export default function Dashboard() {
       <BoldLifeCardSection 
         associate={associate} 
         networkConfig={networkConfig}
-        onUpdate={loadData}
+        onUpdate={() => { reloadUser?.(); loadData(); }}
       />
 
       {/* Solicitações de Colocação */}
