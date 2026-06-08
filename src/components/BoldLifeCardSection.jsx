@@ -1,34 +1,48 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Upload, CheckCircle, Clock, AlertCircle, Plus } from 'lucide-react';
+import { CreditCard, Upload, CheckCircle, Plus, FileText, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function BoldLifeCardSection({ associate, networkConfig, onUpdate }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [spending, setSpending] = useState('');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [requestLoading, setRequestLoading] = useState(false);
+  // Estado local independente do prop — persiste até que associate seja recarregado
   const [hasCardLocal, setHasCardLocal] = useState(!!associate?.has_boldlife_card);
+  const fileInputRef = useRef(null);
 
+  // Só atualiza hasCardLocal quando associate mudar E tiver dado concreto
   useEffect(() => {
-    setHasCardLocal(!!associate?.has_boldlife_card);
-  }, [associate?.has_boldlife_card]);
+    if (associate?.id) {
+      setHasCardLocal(!!associate.has_boldlife_card);
+    }
+  }, [associate?.id, associate?.has_boldlife_card]);
 
   const minSpending = networkConfig?.card_min_spending || 500;
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  const handleFileChange = (e) => {
-    const f = e.target.files?.[0];
-    if (f) {
-      if (f.size > 5 * 1024 * 1024) {
-        toast.error('Arquivo muito grande (máx 5MB)');
-        return;
-      }
-      setFile(f);
-    }
+  const handleFilesChange = (e) => {
+    const selected = Array.from(e.target.files || []);
+    const newFiles = selected.map(f => ({
+      file: f,
+      name: f.name,
+      preview: f.type.startsWith('image/') ? URL.createObjectURL(f) : null
+    }));
+    setFiles(prev => [...prev, ...newFiles]);
+    e.target.value = '';
+  };
+
+  const removeFile = (index) => {
+    setFiles(prev => {
+      const updated = [...prev];
+      if (updated[index].preview) URL.revokeObjectURL(updated[index].preview);
+      updated.splice(index, 1);
+      return updated;
+    });
   };
 
   const handleRequestCard = async () => {
@@ -41,8 +55,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
       });
       toast.success('Solicitação enviada! O administrador entrará em contato em breve.');
     } catch (err) {
-      console.error('Error:', err);
-      toast.error('Erro ao solicitar cartão');
+      toast.error('Erro ao solicitar cartão: ' + (err?.message || ''));
     } finally {
       setRequestLoading(false);
     }
@@ -51,17 +64,16 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
   const handleAlreadyHaveCard = async () => {
     setRequestLoading(true);
     try {
-      const now = new Date();
       await base44.entities.Associate.update(associate.id, {
         has_boldlife_card: true,
-        card_activation_month: now.toISOString().slice(0, 7)
+        card_activation_month: new Date().toISOString().slice(0, 7)
       });
+      // Atualiza local imediatamente antes do reload
       setHasCardLocal(true);
       toast.success('Cartão registrado com sucesso!');
       onUpdate?.();
     } catch (err) {
-      console.error('Error:', err);
-      toast.error('Erro ao registrar cartão');
+      toast.error('Erro ao registrar cartão: ' + (err?.message || ''));
     } finally {
       setRequestLoading(false);
     }
@@ -78,8 +90,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
       toast.success('Cartão removido com sucesso!');
       onUpdate?.();
     } catch (err) {
-      console.error('Error:', err);
-      toast.error('Erro ao remover cartão');
+      toast.error('Erro ao remover cartão: ' + (err?.message || ''));
     } finally {
       setRequestLoading(false);
     }
@@ -87,11 +98,10 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file || !spending || !month) {
-      toast.error('Preencha todos os campos');
+    if (files.length === 0 || !spending || !month) {
+      toast.error('Preencha todos os campos e anexe pelo menos um comprovante');
       return;
     }
-
     if (parseFloat(spending) < minSpending) {
       toast.error(`Valor mínimo é R$ ${minSpending.toFixed(2)}`);
       return;
@@ -99,26 +109,28 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
 
     setLoading(true);
     try {
-      const uploadRes = await base44.integrations.Core.UploadFile({ file });
-      
+      // Upload todos os arquivos em paralelo
+      const uploadResults = await Promise.all(
+        files.map(({ file }) => base44.integrations.Core.UploadFile({ file }))
+      );
+      const proofUrls = uploadResults.map(r => r.file_url);
+
       await base44.entities.CardSpendingProof.create({
         associate_id: associate.id,
-        associate_name: associate.full_name,
         month,
         spending_amount: parseFloat(spending),
-        proof_url: uploadRes.file_url,
+        proof_url: proofUrls[0],
         status: 'pending'
       });
 
-      toast.success('Comprovante enviado para análise!');
+      toast.success('Comprovante(s) enviado(s) para análise!');
       setShowModal(false);
-      setFile(null);
+      setFiles([]);
       setSpending('');
       setMonth(currentMonth);
       onUpdate?.();
     } catch (err) {
-      console.error('Error:', err);
-      toast.error('Erro ao enviar comprovante');
+      toast.error('Erro ao enviar: ' + (err?.response?.data?.error || err?.message || 'tente novamente'));
     } finally {
       setLoading(false);
     }
@@ -127,7 +139,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
   if (!hasCardLocal) {
     return (
       <div className="dark-card rounded-2xl p-5 border-l-4" style={{ borderLeftColor: '#3B9EE2' }}>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between flex-wrap gap-3">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg" style={{ background: '#3B9EE220' }}>
               <CreditCard size={20} className="text-primary" />
@@ -138,7 +150,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <Button 
+            <Button
               onClick={handleRequestCard}
               disabled={requestLoading}
               className="bg-primary hover:bg-primary/90 font-bold gap-2"
@@ -146,12 +158,12 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
               <Plus size={16} />
               Solicitar
             </Button>
-            <Button 
+            <Button
               onClick={handleAlreadyHaveCard}
               disabled={requestLoading}
               className="bg-green-600 hover:bg-green-700 text-white font-bold"
             >
-              Já Tenho
+              {requestLoading ? 'Salvando...' : 'Já Tenho'}
             </Button>
           </div>
         </div>
@@ -162,7 +174,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
   return (
     <div className="space-y-4">
       <div className="dark-card rounded-2xl p-5 border-l-4" style={{ borderLeftColor: '#10B981' }}>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between flex-wrap gap-3">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-lg" style={{ background: '#10B98120' }}>
               <CheckCircle size={20} className="text-green-600" />
@@ -170,30 +182,30 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
             <div>
               <h3 className="font-bold text-foreground">Cartão BoldLife Ativo</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Você possui o cartão BoldLife. Compartilhe seus gastos para ativar benefícios mensais.
+                Compartilhe seus gastos mensais para ativar benefícios.
               </p>
-              {associate.card_activation_month && (
-                <p className="text-xs text-muted-foreground mt-2">
+              {associate?.card_activation_month && (
+                <p className="text-xs text-muted-foreground mt-1">
                   Ativado desde: {new Date(associate.card_activation_month + '-01').toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                 </p>
               )}
             </div>
           </div>
           <div className="flex gap-2 shrink-0 items-center">
-            <Button 
+            <Button
               onClick={() => setShowModal(true)}
               className="bg-primary hover:bg-primary/90 font-bold gap-2"
             >
               <Upload size={16} />
               Enviar Comprovante
             </Button>
-            <Button 
+            <Button
               onClick={handleRemoveCard}
               disabled={requestLoading}
               size="sm"
               variant="ghost"
               className="text-xs text-muted-foreground hover:text-foreground"
-           >
+            >
               Não Tenho
             </Button>
           </div>
@@ -220,7 +232,7 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
                 Valor Gasto (mínimo R$ {minSpending.toFixed(2)})
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">R$</span>
+                <span className="text-muted-foreground text-sm">R$</span>
                 <input
                   type="number"
                   min="0"
@@ -235,46 +247,68 @@ export default function BoldLifeCardSection({ associate, networkConfig, onUpdate
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-foreground block mb-1.5">
-                Comprovante de Gasto
+              <label className="text-sm font-semibold text-foreground block mb-2">
+                Comprovantes ({files.length} anexado{files.length !== 1 ? 's' : ''})
               </label>
-              <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="proof-file"
-                  required
-                />
-                <label htmlFor="proof-file" className="cursor-pointer block">
-                  {file ? (
-                    <p className="text-sm text-primary font-medium">{file.name}</p>
-                  ) : (
-                    <>
-                      <p className="text-sm text-muted-foreground">Clique para selecionar ou arraste uma imagem/PDF</p>
-                      <p className="text-xs text-muted-foreground mt-1">Máx 5MB</p>
-                    </>
-                  )}
-                </label>
-              </div>
+
+              {/* Lista de arquivos */}
+              {files.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2 bg-secondary rounded-lg border border-border">
+                      {f.preview ? (
+                        <img src={f.preview} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
+                      ) : (
+                        <div className="w-9 h-9 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileText size={16} className="text-primary" />
+                        </div>
+                      )}
+                      <p className="text-xs text-foreground truncate flex-1">{f.name}</p>
+                      <button type="button" onClick={() => removeFile(i)} className="text-muted-foreground hover:text-destructive">
+                        <X size={15} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Área de upload */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center gap-1 hover:bg-secondary/50 transition"
+              >
+                <Upload size={20} className="text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {files.length === 0 ? 'Clique para adicionar arquivo(s)' : 'Adicionar mais arquivos'}
+                </p>
+                <p className="text-xs text-muted-foreground">Imagem, PDF ou qualquer formato</p>
+              </button>
+              {/* Sem restrict de accept para aceitar qualquer arquivo */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFilesChange}
+                className="hidden"
+              />
             </div>
 
             <div className="flex gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); setFiles([]); }}
                 className="flex-1"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || files.length === 0}
                 className="flex-1 bg-primary hover:bg-primary/90"
               >
-                {loading ? 'Enviando...' : 'Enviar Comprovante'}
+                {loading ? 'Enviando...' : `Enviar ${files.length > 1 ? `${files.length} Arquivos` : 'Comprovante'}`}
               </Button>
             </div>
           </form>

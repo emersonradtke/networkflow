@@ -28,8 +28,13 @@ export default function Layout() {
       const directUser = JSON.parse(directUserData);
       setUser(directUser);
       if (directUser._associate) {
-        // Usar diretamente o _associate do login (já tem todos os dados)
-        setAssociate(directUser._associate);
+        // Sempre buscar associate atualizado da API (não usar cache do sessionStorage)
+        try {
+          const freshAssociates = await base44.entities.Associate.filter({ id: directUser._associate.id });
+          setAssociate(freshAssociates[0] || directUser._associate);
+        } catch {
+          setAssociate(directUser._associate);
+        }
         try {
           const notifs = await base44.entities.Notification.filter({ associate_id: directUser._associate.id, is_read: false });
           setUnreadCount(notifs.length);
