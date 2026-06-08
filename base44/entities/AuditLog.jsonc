@@ -1,0 +1,100 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID do usu\u00e1rio que executou a a\u00e7\u00e3o (FK \u2192 User)"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Snapshot do email para auditoria"
+    },
+    "associate_id": {
+      "type": "string",
+      "description": "ID do associado envolvido (quando aplic\u00e1vel)"
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "login",
+        "logout",
+        "register",
+        "associate_update",
+        "associate_activate",
+        "associate_block",
+        "associate_delete",
+        "bank_data_update",
+        "wallet_credit",
+        "wallet_debit",
+        "withdrawal_request",
+        "withdrawal_approve",
+        "withdrawal_reject",
+        "order_create",
+        "order_cancel",
+        "order_refund",
+        "commission_credit",
+        "commission_approve",
+        "commission_reject",
+        "card_request",
+        "card_proof_submit",
+        "card_proof_approve",
+        "card_proof_reject",
+        "terms_accept",
+        "admin_action",
+        "password_change",
+        "password_reset"
+      ],
+      "description": "Tipo da a\u00e7\u00e3o auditada"
+    },
+    "entity_type": {
+      "type": "string",
+      "description": "Entidade afetada (ex: Associate, Order, Commission)"
+    },
+    "entity_id": {
+      "type": "string",
+      "description": "ID do registro afetado"
+    },
+    "before_data": {
+      "type": "string",
+      "description": "Dados anteriores \u00e0 a\u00e7\u00e3o (JSON serializado)"
+    },
+    "after_data": {
+      "type": "string",
+      "description": "Dados posteriores \u00e0 a\u00e7\u00e3o (JSON serializado)"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP do requisitante"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "User-Agent do navegador"
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "web",
+        "webhook",
+        "admin",
+        "system",
+        "api"
+      ],
+      "default": "web",
+      "description": "Origem da a\u00e7\u00e3o"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es adicionais"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora exata da a\u00e7\u00e3o"
+    }
+  },
+  "required": [
+    "action",
+    "occurred_at"
+  ]
+}
