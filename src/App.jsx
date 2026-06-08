@@ -51,6 +51,7 @@ import AdminShipping from './pages/admin/AdminShipping';
 import AdminExternalLinks from './pages/admin/AdminExternalLinks';
 import AdminSupportTickets from './pages/admin/AdminSupportTickets';
 import AdminRestrictedUsers from './pages/admin/AdminRestrictedUsers';
+import AdminCardProofs from './pages/admin/AdminCardProofs';
 import MyOrdersPage from './pages/MyOrders';
 import MyWithdrawals from './pages/MyWithdrawals';
 import BankData from './pages/BankData';
@@ -119,6 +120,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin/settings" element={<RequireAuth requiredRole="admin"><AdminSettings /></RequireAuth>} />
         <Route path="/admin/support-tickets" element={<RequireAuth requiredRole="admin"><AdminSupportTickets /></RequireAuth>} />
         <Route path="/admin/restricted-users" element={<RequireAuth requiredRole="admin"><AdminRestrictedUsers /></RequireAuth>} />
+        <Route path="/admin/card-proofs" element={<RequireAuth requiredRole="admin"><AdminCardProofs /></RequireAuth>} />
       </Route>
 
       <Route path="*" element={<PageNotFound />} />

@@ -25,6 +25,7 @@ export const ROLE_CONFIG = {
       { path: '/admin/network', label: 'Rede', icon: 'BarChart3' },
       { path: '/admin/suppliers', label: 'Fornecedores', icon: 'Building2' },
       { path: '/admin/shipping', label: 'Envio', icon: 'Truck' },
+      { path: '/admin/card-proofs', label: 'Comprov. Cartão', icon: 'CreditCard' },
       { path: '/admin/support-tickets', label: 'Chamados', icon: 'MessageSquare' },
       { path: '/admin/restricted-users', label: 'Usuários', icon: 'Shield' },
       { path: '/admin/settings', label: 'Configurações', icon: 'Settings' }
