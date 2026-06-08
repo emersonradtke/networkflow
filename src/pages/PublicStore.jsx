@@ -45,6 +45,10 @@ export default function PublicStore() {
     return () => clearInterval(timer);
   }, [banners, bannerIndex]);
 
+  useEffect(() => {
+    return () => setCart([]);
+  }, []);
+
   const loadData = async () => {
     const [associates, prods, bannersData, configs] = await Promise.all([
       base44.entities.Associate.filter({ invite_code, status: 'active' }),
@@ -185,7 +189,6 @@ export default function PublicStore() {
               onUpdate={updateCartQty}
               onRemove={removeFromCart}
               consultant={consultant}
-              onCheckoutDone={() => setCart([])}
             />
           </div>
         </div>
