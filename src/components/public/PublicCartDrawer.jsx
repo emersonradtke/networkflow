@@ -17,6 +17,7 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
   const [step, setStep] = useState('cart');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [orderData, setOrderData] = useState(null);
 
   // Customer info
   const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '' });
@@ -247,6 +248,24 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
         items: checkoutItems,
         customer: { name: customerInfo.name, email: customerInfo.email, phone_number: customerInfo.phone || '' },
         redirect_url: window.location.href,
+      });
+
+      setOrderData({
+        orderNumber: orderRes.data?.order_number || `PUB-${cartId}`,
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone,
+        items: cart,
+        subtotal: total,
+        shippingCost: isPickup ? 0 : shippingCost,
+        total: grandTotal,
+        shipping: {
+          type: isPickup ? 'pickup' : 'delivery',
+          method: isPickup ? pickupType : selectedShipping?.name,
+          cost: isPickup ? 0 : shippingCost,
+          estimatedDays: selectedShipping?.estimated_days,
+          address: isPickup ? (pickupType === 'franchise' ? selectedFranchise : null) : deliveryAddress,
+        }
       });
 
       if (checkoutRes.data?.url) {
@@ -664,21 +683,109 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
           )}
 
           {/* SUCCESS STEP */}
-          {step === 'success' && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 p-8">
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle2 size={40} className="text-green-500" />
+          {step === 'success' && orderData && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 size={32} className="text-green-500" />
+                  </div>
+                  <h3 className="text-lg font-black text-[#1B2A5E]">Pedido Confirmado!</h3>
+                  <p className="text-xs text-slate-500 mt-1">Confira os detalhes abaixo</p>
+                </div>
+
+                {/* Número do pedido */}
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                  <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Número do Pedido</p>
+                  <p className="text-sm font-bold text-[#1B2A5E]">{orderData.orderNumber}</p>
+                </div>
+
+                {/* Cliente */}
+                <div className="bg-slate-50 rounded-xl p-3">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Cliente</p>
+                  <p className="text-sm font-semibold text-slate-800">{orderData.customerName}</p>
+                  <p className="text-xs text-slate-500">{orderData.customerEmail}</p>
+                  {orderData.customerPhone && <p className="text-xs text-slate-500">{orderData.customerPhone}</p>}
+                </div>
+
+                {/* Produtos */}
+                <div className="bg-slate-50 rounded-xl p-3">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Produtos</p>
+                  <div className="space-y-1.5">
+                    {orderData.items.map(item => (
+                      <div key={item.id} className="flex justify-between text-xs">
+                        <span className="text-slate-700">{item.name} <span className="text-slate-500">x{item.qty}</span></span>
+                        <span className="font-semibold text-slate-800">R$ {(item.price * item.qty).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Entrega */}
+                <div className="bg-slate-50 rounded-xl p-3">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                    {orderData.shipping.type === 'pickup' ? <Store size={11} /> : <Truck size={11} />} 
+                    {orderData.shipping.type === 'pickup' ? 'Retirada' : 'Entrega'}
+                  </p>
+                  {orderData.shipping.type === 'pickup' ? (
+                    <>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {orderData.shipping.method === 'store' ? 'Retirada na Loja' : orderData.shipping.address?.trade_name || orderData.shipping.address?.name}
+                      </p>
+                      {orderData.shipping.address?.address_street && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          {[orderData.shipping.address.address_street, orderData.shipping.address.address_number].filter(Boolean).join(', ')}
+                          {orderData.shipping.address.address_city ? ` — ${orderData.shipping.address.address_city}/${orderData.shipping.address.address_state}` : ''}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-slate-800">{orderData.shipping.method}</p>
+                      {orderData.shipping.estimatedDays && (
+                        <p className="text-xs text-slate-500 mt-0.5">Prazo: {orderData.shipping.estimatedDays} dias úteis</p>
+                      )}
+                      <p className="text-xs text-slate-500 mt-1">
+                        {[orderData.shipping.address.street, orderData.shipping.address.number].filter(Boolean).join(', ')}
+                        {orderData.shipping.address.complement && ` - ${orderData.shipping.address.complement}`}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {[orderData.shipping.address.neighborhood, orderData.shipping.address.city, orderData.shipping.address.state].filter(Boolean).join(' / ')}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* Valores */}
+                <div className="bg-slate-50 rounded-xl p-3 space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-600">Subtotal</span>
+                    <span className="text-slate-800">R$ {orderData.subtotal.toFixed(2)}</span>
+                  </div>
+                  {orderData.shippingCost > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-600">Frete</span>
+                      <span className="text-slate-800">R$ {orderData.shippingCost.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between pt-1 border-t border-slate-200">
+                    <span className="font-bold text-slate-800">Total</span>
+                    <span className="font-bold text-[#1B2A5E]">R$ {orderData.total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Mensagem */}
+                <div className="text-center pt-2">
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Obrigado pela sua compra! O consultor <strong>{consultant?.full_name}</strong> entrará em contato em breve para confirmar a entrega.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-[#1B2A5E]">Pedido Realizado!</h3>
-                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                  Obrigado pela sua compra! O consultor <strong>{consultant?.full_name}</strong> entrará em contato em breve.
-                </p>
+              <div className="border-t border-slate-100 p-5">
+                <button onClick={handleClose} className="w-full bg-[#1B2A5E] text-white font-bold py-3 rounded-xl transition hover:bg-[#243a7a]">
+                  Fechar
+                </button>
               </div>
-              <img src={LOGO_URL} alt="Bold Life" className="h-8 opacity-60 mt-2" />
-              <button onClick={handleClose} className="w-full bg-[#1B2A5E] text-white font-bold py-3 rounded-xl transition hover:bg-[#243a7a]">
-                Fechar
-              </button>
             </div>
           )}
         </SheetContent>
