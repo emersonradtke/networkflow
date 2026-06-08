@@ -67,6 +67,11 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
       setStep('success');
       setOpen(true);
       localStorage.removeItem('pendingOrderData');
+      
+      // Limpar URL após 3 segundos
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 3000);
     }
   }, []);
 
