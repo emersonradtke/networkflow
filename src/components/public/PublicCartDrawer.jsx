@@ -141,10 +141,7 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
   const getNextStep = () => {
     if (step === 'cart') return 'info';
     if (step === 'info') return 'shipping';
-    if (step === 'shipping') {
-      if (isPickup || noShipping || selectedShipping?.requires_address === false) return 'confirm';
-      return 'address';
-    }
+    if (step === 'shipping') return 'address';
     if (step === 'address') return 'confirm';
     return null;
   };
@@ -153,13 +150,13 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
     if (step === 'info') return 'cart';
     if (step === 'shipping') return 'info';
     if (step === 'address') return 'shipping';
-    if (step === 'confirm') return needsAddress ? 'address' : 'shipping';
+    if (step === 'confirm') return 'address';
     return null;
   };
 
   const stepTitles = { cart: 'Carrinho', info: 'Seus dados', shipping: 'Entrega', address: 'Endereço', confirm: 'Confirmar Pedido' };
   const stepKeys = ['cart', 'info', 'shipping', 'address', 'confirm'];
-  const stepsToShow = needsAddress ? stepKeys : stepKeys.filter(s => s !== 'address');
+  const stepsToShow = stepKeys;
 
   const handleNextStep = () => {
     setError('');
@@ -190,7 +187,7 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
       }
     }
     if (step === 'address') {
-      if (!hasDeliveryAddress) {
+      if (!isPickup && !hasDeliveryAddress) {
         setError('Preencha o endereço de entrega.');
         return;
       }
@@ -518,6 +515,11 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
                 <p className="text-sm font-bold text-slate-800 flex items-center gap-2">
                   <MapPin size={14} className="text-[#3B9EE2]" /> Endereço de Entrega
                 </p>
+                {isPickup && (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                    <p className="text-xs text-[#1B2A5E] font-medium">Como selecionou retirada, você pode deixar os campos em branco.</p>
+                  </div>
+                )}
                 <div>
                   <Label className="text-xs font-bold text-slate-700">CEP *</Label>
                   <div className="relative mt-1">
