@@ -2,45 +2,57 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
-    const body = await req.json();
-    const { order_nsu, items, customer, address, redirect_url } = body;
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-    if (!order_nsu || !items || items.length === 0) {
-      return Response.json({ error: 'order_nsu e items são obrigatórios' }, { status: 400 });
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Webhook URL: será chamado pela InfinitePay quando pagamento for aprovado
-    // Usar a URL relativa sem webhook_url - InfinitePay retorna apenas para a redirect_url
-    // A confirmação virá via subscription do banco de dados (real-time)
+    const body = await req.json();
+    const { amount, order_nsu, description, customer_name, customer_email, customer_document, items } = body;
+
+    if (!amount || !order_nsu) {
+      return Response.json({ error: 'amount e order_nsu são obrigatórios' }, { status: 400 });
+    }
+
+    const apiKey = Deno.env.get('INFINITEPAY_API_KEY');
+    const handle = Deno.env.get('INFINITEPAY_HANDLE') || 'boldlife';
+
+    if (!apiKey) {
+      return Response.json({ error: 'Gateway de pagamento não configurado' }, { status: 500 });
+    }
 
     const payload = {
-      handle: 'boldlife',
+      handle,
+      amount: Math.round(amount * 100), // centavos
       order_nsu: String(order_nsu),
-      items: items.map(item => ({
-        description: item.description,
-        price: Math.round(item.price * 100), // converter para centavos
-        quantity: item.quantity || 1,
-      })),
+      description: description || 'Compra BoldLife',
+      customer: {
+        name: customer_name || '',
+        email: customer_email || '',
+        document: customer_document || '',
+      },
+      items: items || [],
     };
 
-    if (redirect_url) payload.redirect_url = redirect_url;
-    if (customer) payload.customer = customer;
-    if (address) payload.address = address;
-
-    const res = await fetch('https://api.infinitepay.io/invoices/public/checkout/links', {
+    const response = await fetch('https://api.infinitepay.io/invoices/public/checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
-      return Response.json({ error: 'Erro ao criar link InfinitePay', details: data }, { status: res.status });
+    if (!response.ok) {
+      return Response.json({ error: data.message || 'Erro ao criar checkout' }, { status: response.status });
     }
 
-    return Response.json({ url: data.url });
+    return Response.json({ success: true, checkout_url: data.checkout_url, checkout_id: data.id });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'Erro interno ao criar checkout' }, { status: 500 });
   }
 });

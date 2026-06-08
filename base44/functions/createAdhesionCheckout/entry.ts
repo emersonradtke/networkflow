@@ -1,60 +1,54 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// Endpoint público para criar checkout de adesão (não requer login)
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { associate_id, full_name, email, phone } = await req.json();
 
-    if (!associate_id) {
-      return Response.json({ error: 'associate_id é obrigatório' }, { status: 400 });
+    const body = await req.json();
+    const { associate_id, amount, customer_name, customer_email, customer_document } = body;
+
+    if (!associate_id || !amount) {
+      return Response.json({ error: 'associate_id e amount são obrigatórios' }, { status: 400 });
     }
 
-    // Buscar o associado para validar que existe
-    const associate = await base44.asServiceRole.entities.Associate.filter({ id: associate_id });
-    if (!associate || associate.length === 0) {
-      return Response.json({ error: 'Associado não encontrado' }, { status: 404 });
+    const apiKey = Deno.env.get('INFINITEPAY_API_KEY');
+    const handle = Deno.env.get('INFINITEPAY_HANDLE') || 'boldlife';
+
+    if (!apiKey) {
+      return Response.json({ error: 'Gateway de pagamento não configurado' }, { status: 500 });
     }
 
-    // Buscar configuração de adesão
-    const configs = await base44.asServiceRole.entities.NetworkConfig.list();
-    const config = configs[0];
-    const adhesionPrice = config?.adhesion_price || 197;
-    const adhesionDesc = config?.adhesion_description || 'Taxa de Adesão Bold Life';
+    const order_nsu = `ADES-${associate_id}`;
 
     const payload = {
-      handle: 'boldlife',
-      order_nsu: `ADES-${associate_id}`,
-      items: [{
-        description: adhesionDesc.slice(0, 128),
-        price: Math.round(adhesionPrice * 100),
-        quantity: 1,
-      }],
-      redirect_url: `${req.headers.get('origin') || 'https://app.boldlife.com.br'}/?adhesion_paid=true`,
+      handle,
+      amount: Math.round(amount * 100),
+      order_nsu,
+      description: 'Taxa de Adesão BoldLife',
+      customer: {
+        name: customer_name || '',
+        email: customer_email || '',
+        document: customer_document || '',
+      },
     };
 
-    if (full_name || email || phone) {
-      payload.customer = {
-        name: full_name,
-        email: email,
-        phone_number: phone?.replace(/\D/g, ''),
-      };
-    }
-
-    const res = await fetch('https://api.infinitepay.io/invoices/public/checkout/links', {
+    const response = await fetch('https://api.infinitepay.io/invoices/public/checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    const data = await response.json();
 
-    if (!res.ok) {
-      return Response.json({ error: 'Erro ao criar link InfinitePay', details: data }, { status: res.status });
+    if (!response.ok) {
+      return Response.json({ error: data.message || 'Erro ao criar checkout de adesão' }, { status: response.status });
     }
 
-    return Response.json({ url: data.url });
+    return Response.json({ success: true, checkout_url: data.checkout_url, order_nsu });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: 'Erro interno ao criar checkout de adesão' }, { status: 500 });
   }
 });
