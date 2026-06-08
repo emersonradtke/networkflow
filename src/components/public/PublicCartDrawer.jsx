@@ -114,15 +114,15 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
   const nearestFranchiseId = userCoords && sortedFranchises.length > 0 && sortedFranchises[0]._lat
     ? sortedFranchises[0].id : null;
 
-  // CEP lookup
+  // CEP lookup via ViaCEP (público, sem autenticação)
   const handleCepBlur = async () => {
     const cep = deliveryAddress.zip.replace(/\D/g, '');
     if (cep.length !== 8) return;
     setCepLoading(true);
     try {
-      const res = await base44.functions.invoke('searchCepAddress', { cep });
-      const d = res.data;
-      if (d && !d.error) {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const d = await res.json();
+      if (d && !d.erro) {
         setDeliveryAddress(prev => ({
           ...prev,
           street: d.logradouro || prev.street,
@@ -522,12 +522,16 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
                   <Label className="text-xs font-bold text-slate-700">CEP *</Label>
                   <div className="relative mt-1">
                     <Input
-                      value={deliveryAddress.zip}
-                      onChange={e => setDeliveryAddress(p => ({ ...p, zip: e.target.value }))}
-                      onBlur={handleCepBlur}
-                      placeholder="00000-000"
-                      className="rounded-xl"
-                      maxLength={9}
+                     value={deliveryAddress.zip}
+                     onChange={e => {
+                       const d = e.target.value.replace(/\D/g, '').slice(0, 8);
+                       const masked = d.length > 5 ? `${d.slice(0,5)}-${d.slice(5)}` : d;
+                       setDeliveryAddress(p => ({ ...p, zip: masked }));
+                     }}
+                     onBlur={handleCepBlur}
+                     placeholder="00000-000"
+                     className="rounded-xl"
+                     maxLength={9}
                     />
                     {cepLoading && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400" />}
                   </div>
