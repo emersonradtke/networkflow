@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Users, ChevronDown, ChevronRight, Crown, TrendingUp, ShoppingBag, CheckCircle, XCircle, Clock, Search } from 'lucide-react';
+import { Users, ChevronDown, ChevronRight, Crown, TrendingUp, ShoppingBag, CheckCircle, XCircle, Clock, Search, X, CreditCard } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import NetworkOrgChart from '@/components/NetworkOrgChart';
 
 export default function Network() {
@@ -15,35 +16,44 @@ export default function Network() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [view, setView] = useState('tree'); // 'tree' | 'list'
+  const [showConsumoModal, setShowConsumoModal] = useState(false);
+  const [cardProofs, setCardProofs] = useState([]);
 
   useEffect(() => {
     if (associate?.id) loadData();
   }, [associate]);
 
   const loadData = async () => {
-    const [allAssocs, allOrders, allComms, configs] = await Promise.all([
+    const [allAssocs, allOrders, allComms, configs, proofs] = await Promise.all([
       base44.entities.Associate.list(),
       base44.entities.Order.filter({ status: 'paid' }),
       base44.entities.Commission.filter({ beneficiary_id: associate.id }),
       base44.entities.NetworkConfig.list(),
+      base44.entities.CardSpendingProof.filter({ status: 'approved' }),
     ]);
     setNetwork(allAssocs);
     setOrders(allOrders);
     setCommissions(allComms);
+    setCardProofs(proofs);
     if (configs.length > 0) setConfig(configs[0]);
     setLoading(false);
   };
 
   const getDirects = (sponsorId) => network.filter(a => a.sponsor_id === sponsorId && a.status === 'active');
 
-  // Calcular consumo mensal de um associado
+  // Calcular consumo mensal de um associado (pedidos + comprovantes de cartão)
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
   const getMonthlyConsumption = (assocId) => {
     const now = new Date();
-    return orders
+    const orderTotal = orders
       .filter(o => o.associate_id === assocId &&
         new Date(o.created_date).getMonth() === now.getMonth() &&
         new Date(o.created_date).getFullYear() === now.getFullYear())
       .reduce((s, o) => s + (o.amount || 0), 0);
+    const cardTotal = cardProofs
+      .filter(p => p.associate_id === assocId && p.month === currentMonth)
+      .reduce((s, p) => s + (p.spending_amount || 0), 0);
+    return orderTotal + cardTotal;
   };
 
   // Comissão gerada por um associado para mim
@@ -161,6 +171,7 @@ export default function Network() {
   const totalMonthlyConsumption = activeMembers.reduce((s, m) => s + getMonthlyConsumption(m.id), 0);
 
   return (
+
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-black text-foreground">Minha Rede</h1>
@@ -177,10 +188,14 @@ export default function Network() {
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Ativos</p>
           <p className="text-2xl font-black text-green-600 mt-1">{loading ? '...' : activeMembers.length}</p>
         </div>
-        <div className="dark-card rounded-xl p-4">
+        <button
+          className="dark-card rounded-xl p-4 text-left hover:ring-2 hover:ring-primary/30 transition-all cursor-pointer w-full"
+          onClick={() => setShowConsumoModal(true)}
+        >
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Consumo / Mês</p>
           <p className="text-2xl font-black text-primary mt-1">R$ {totalMonthlyConsumption.toFixed(0)}</p>
-        </div>
+          <p className="text-xs text-muted-foreground mt-1">Ver detalhes →</p>
+        </button>
         <div className="dark-card rounded-xl p-4">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Níveis Configurados</p>
           <p className="text-2xl font-black text-foreground mt-1">{config?.max_levels || 5}</p>
@@ -301,6 +316,65 @@ export default function Network() {
           )}
         </div>
       )}
+      {/* Modal Consumo da Rede */}
+      <Dialog open={showConsumoModal} onOpenChange={setShowConsumoModal}>
+        <DialogContent className="max-w-lg bg-white max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 font-black">
+              <ShoppingBag size={18} className="text-primary" /> Consumo da Rede — {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Totalizador */}
+          <div className="grid grid-cols-2 gap-3 mb-2">
+            <div className="bg-blue-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Total da Rede</p>
+              <p className="text-xl font-black text-primary">R$ {totalMonthlyConsumption.toFixed(2)}</p>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Membros Ativos</p>
+              <p className="text-xl font-black text-foreground">{activeMembers.length}</p>
+            </div>
+          </div>
+
+          {/* Lista individual */}
+          <div className="overflow-y-auto flex-1 space-y-1.5 pr-1">
+            {activeMembers
+              .map(m => ({ ...m, consumption: getMonthlyConsumption(m.id) }))
+              .sort((a, b) => b.consumption - a.consumption)
+              .map(m => (
+                <div key={m.id} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm shrink-0"
+                    style={{ background: 'linear-gradient(135deg,#1B2A5E,#3B9EE2)' }}
+                  >
+                    {m.full_name?.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{m.full_name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">Nível {m.networkLevel}</span>
+                      {m.has_boldlife_card && (
+                        <span className="text-xs flex items-center gap-0.5 text-slate-500"><CreditCard size={10} /> Cartão</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`text-sm font-black ${m.consumption > 0 ? 'text-blue-600' : 'text-muted-foreground'}`}>
+                      R$ {m.consumption.toFixed(2)}
+                    </p>
+                    {m.consumption === 0 && (
+                      <p className="text-xs text-muted-foreground">Sem consumo</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            {activeMembers.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-8">Nenhum membro ativo na rede.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
