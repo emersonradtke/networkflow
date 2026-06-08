@@ -10,7 +10,10 @@ export default function PendingPlacements({ associateId, onAccepted }) {
   const [processing, setProcessing] = useState(null);
 
   useEffect(() => {
-    if (associateId) loadRequests();
+    if (associateId) {
+      setLoading(true);
+      loadRequests();
+    }
   }, [associateId]);
 
   const loadRequests = async () => {
