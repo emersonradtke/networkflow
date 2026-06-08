@@ -201,7 +201,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
         quantity: item.qty,
       }));
 
-      const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
+      const checkoutRes = await base44.functions.invoke('createCheckout', {
         order_nsu: `CART-${cartId}`,
         items: checkoutItems,
         customer: {

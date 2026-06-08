@@ -224,7 +224,7 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
         quantity: item.qty,
       }));
 
-      const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
+      const checkoutRes = await base44.functions.invoke('createCheckout', {
         order_nsu: `PUB-${cartId}`,
         items: checkoutItems,
         customer: { name: customerInfo.name, email: customerInfo.email, phone_number: customerInfo.phone || '' },
@@ -613,7 +613,7 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
                   className="w-full flex items-center justify-center gap-2 bg-[#1B2A5E] hover:bg-[#243a7a] disabled:opacity-60 text-white font-bold py-3 rounded-xl transition"
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
-                  {loading ? 'Processando...' : 'Pagar com InfinitePay'}
+                  {loading ? 'Processando...' : 'Ir para Pagamento'}
                 </button>
                 <p className="text-xs text-center text-slate-400">Você será redirecionado ao checkout seguro da InfinitePay</p>
               </div>

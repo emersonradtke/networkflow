@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Settings, Save, Plus, Minus, LayoutGrid, Gift, RefreshCw } from 'lucide-react';
+import { Settings, Save, Plus, Minus, LayoutGrid, Gift, RefreshCw, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -144,6 +144,36 @@ export default function AdminSettings() {
             <p className="text-xs text-muted-foreground mb-2">Quantos pontos o associado ganha a cada R$ 1,00 gasto</p>
             <Input className="mt-1.5 bg-secondary border-border text-foreground max-w-xs" type="number" step="0.01" min="0" value={form.pontos_por_real} onChange={e => setForm({...form, pontos_por_real: parseFloat(e.target.value) || 0})} />
             <p className="text-xs text-primary mt-2">Exemplo: Com valor 2, uma compra de R$ 100 = 200 pontos</p>
+          </div>
+        </div>
+
+        {/* Payment Gateway */}
+        <div className="dark-card rounded-2xl p-6 space-y-5">
+          <h3 className="font-bold text-foreground flex items-center gap-2">
+            <CreditCard size={16} className="text-primary" /> Gateway de Pagamento
+          </h3>
+          <div>
+            <Label className="text-foreground">Gateway Ativo</Label>
+            <p className="text-xs text-muted-foreground mb-2">Selecione qual plataforma de pagamento será utilizada no checkout</p>
+            <Select value={form.payment_gateway || 'infinitepay'} onValueChange={v => setForm({...form, payment_gateway: v})}>
+              <SelectTrigger className="mt-1.5 bg-secondary border-border text-foreground max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="infinitepay">InfinitePay</SelectItem>
+                <SelectItem value="mercadopago">Mercado Pago</SelectItem>
+                <SelectItem value="cielo">Cielo</SelectItem>
+                <SelectItem value="pagarme">Pagar.me</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-xl text-xs text-yellow-800 space-y-1">
+              <p className="font-semibold">Credenciais necessárias por gateway:</p>
+              <p>• <strong>InfinitePay:</strong> <code>INFINITEPAY_API_KEY</code></p>
+              <p>• <strong>Mercado Pago:</strong> <code>MERCADOPAGO_ACCESS_TOKEN</code></p>
+              <p>• <strong>Cielo:</strong> <code>CIELO_MERCHANT_ID</code> + <code>CIELO_MERCHANT_KEY</code></p>
+              <p>• <strong>Pagar.me:</strong> <code>PAGARME_SECRET_KEY</code></p>
+              <p className="text-yellow-700 mt-1">Configure as credenciais em Dashboard → Configurações → Variáveis de ambiente.</p>
+            </div>
           </div>
         </div>
 

@@ -89,7 +89,7 @@ export default function ConfirmStep({
       </div>
       <div className="border-t border-border p-5 space-y-2">
         <Button className="w-full font-bold text-white gap-2" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }} onClick={onConfirm} disabled={loading}>
-          {loading ? 'Preparando pagamento...' : <><CreditCard size={15} /> Pagar com InfinitePay</>}
+          {loading ? 'Preparando pagamento...' : <><CreditCard size={15} /> Ir para Pagamento</>}
         </Button>
         <p className="text-xs text-center text-muted-foreground">Você será redirecionado ao checkout seguro da InfinitePay</p>
       </div>
