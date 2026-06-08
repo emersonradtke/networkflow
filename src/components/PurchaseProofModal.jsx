@@ -17,9 +17,14 @@ export default function PurchaseProofModal({ clickId, isOpen, onClose, productNa
     const file = e.target.files[0];
     if (file) {
       setProofFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => setProofPreview(e.target.result);
-      reader.readAsDataURL(file);
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (ev) => setProofPreview(ev.target.result);
+        reader.readAsDataURL(file);
+      } else {
+        // PDF ou outro — apenas marca que tem arquivo
+        setProofPreview('non-image');
+      }
     }
   };
 
@@ -54,7 +59,7 @@ export default function PurchaseProofModal({ clickId, isOpen, onClose, productNa
         setSuccess(false);
       }, 2000);
     } catch (e) {
-      setError('Erro ao enviar comprovante. Tente novamente.');
+      setError(e?.response?.data?.error || e?.message || 'Erro ao enviar comprovante. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -100,7 +105,14 @@ export default function PurchaseProofModal({ clickId, isOpen, onClose, productNa
               <div className="border-2 border-dashed border-border rounded-lg p-4">
                 {proofPreview ? (
                   <div className="space-y-3">
-                    <img src={proofPreview} alt="Preview" className="w-full rounded" />
+                    {proofPreview === 'non-image' ? (
+                      <div className="flex items-center gap-3 p-3 bg-secondary rounded-lg">
+                        <Upload size={20} className="text-primary shrink-0" />
+                        <p className="text-sm font-medium text-foreground truncate">{proofFile?.name}</p>
+                      </div>
+                    ) : (
+                      <img src={proofPreview} alt="Preview" className="w-full rounded" />
+                    )}
                     <Button
                       variant="outline"
                       size="sm"

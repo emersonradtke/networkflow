@@ -17,8 +17,8 @@ Deno.serve(async (req) => {
     }
 
     // Buscar registro de clique
-    const clicks = await base44.asServiceRole.entities.ExternalLinkClick.filter({ id: click_id });
-    const click = clicks[0];
+    const allClicks = await base44.asServiceRole.entities.ExternalLinkClick.list();
+    const click = allClicks.find(c => c.id === click_id);
     if (!click) {
       return Response.json({ error: 'Click not found' }, { status: 404 });
     }
