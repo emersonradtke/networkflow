@@ -41,7 +41,14 @@
     },
     "purchase_proof_url": {
       "type": "string",
-      "description": "URL do comprovante de compra"
+      "description": "URL do primeiro comprovante de compra (compatibilidade)"
+    },
+    "purchase_proof_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs de todos os comprovantes de compra"
     },
     "purchase_amount": {
       "type": "number",

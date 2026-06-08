@@ -10,26 +10,37 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { click_id, purchase_proof_url, purchase_amount } = body;
+    const { click_id, purchase_proof_urls, purchase_amount } = body;
 
-    if (!click_id || !purchase_proof_url || !purchase_amount) {
+    if (!click_id || !purchase_amount) {
       return Response.json({ error: 'Dados obrigatórios ausentes' }, { status: 400 });
     }
 
-    // Buscar registro de clique
-    const allClicks = await base44.asServiceRole.entities.ExternalLinkClick.list();
-    const click = allClicks.find(c => c.id === click_id);
+    const proofUrls = purchase_proof_urls || [];
+    if (proofUrls.length === 0) {
+      return Response.json({ error: 'Pelo menos um comprovante é obrigatório' }, { status: 400 });
+    }
+
+    // Buscar associate do usuário logado
+    const associates = await base44.entities.Associate.filter({ user_id: user.id });
+    if (!associates || associates.length === 0) {
+      return Response.json({ error: 'Associate not found' }, { status: 404 });
+    }
+    const associate = associates[0];
+
+    // Buscar clique pelo associate_id (evita list() completo)
+    const clicks = await base44.asServiceRole.entities.ExternalLinkClick.filter({ associate_id: associate.id });
+    const click = clicks.find(c => c.id === click_id);
     if (!click) {
       return Response.json({ error: 'Click not found' }, { status: 404 });
     }
 
-    // Verificar se pertence ao usuário
-    const associates = await base44.entities.Associate.filter({ user_id: user.id });
-    if (!associates || associates.length === 0 || associates[0].id !== click.associate_id) {
+    // Verificar ownership
+    if (click.associate_id !== associate.id) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Calcular comissão baseado no tipo de link
+    // Calcular comissão
     let commission_amount = 0;
     if (click.link_type === 'product' && click.product_id) {
       const products = await base44.asServiceRole.entities.Product.filter({ id: click.product_id });
@@ -45,15 +56,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Atualizar clique com comprovante
+    // Salvar primeiro URL como campo principal, e todos no campo de array
     await base44.asServiceRole.entities.ExternalLinkClick.update(click_id, {
-      purchase_proof_url,
+      purchase_proof_url: proofUrls[0],
+      purchase_proof_urls: proofUrls,
       purchase_amount,
       commission_amount,
       status: 'submitted'
     });
 
-    // Notificar admins via User (role = 'admin')
+    // Notificar admins
     const adminUsers = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
     for (const adminUser of adminUsers) {
       const adminAssociates = await base44.asServiceRole.entities.Associate.filter({ user_id: adminUser.id });
@@ -61,7 +73,7 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.Notification.create({
           associate_id: adminAssociates[0].id,
           title: 'Compra Pendente de Confirmação',
-          message: `${click.associate_name || 'Associado'} enviou comprovante de compra de R$ ${Number(purchase_amount).toFixed(2)}`,
+          message: `${associate.full_name || 'Associado'} enviou ${proofUrls.length} comprovante(s) de compra no valor de R$ ${Number(purchase_amount).toFixed(2)}`,
           type: 'order',
           link: '/admin/external-links'
         });
