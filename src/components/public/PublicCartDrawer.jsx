@@ -59,6 +59,15 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
   useEffect(() => {
     base44.entities.ShippingMethod.filter({ is_active: true }).then(setShippingMethods);
     base44.entities.Supplier.filter({ type: 'franchise', is_active: true }, 'name').then(setFranchises);
+    
+    // Restaurar dados do pedido do localStorage ao retornar do pagamento
+    const savedOrderData = localStorage.getItem('pendingOrderData');
+    if (savedOrderData) {
+      setOrderData(JSON.parse(savedOrderData));
+      setStep('success');
+      setOpen(true);
+      localStorage.removeItem('pendingOrderData');
+    }
   }, []);
 
   // Geo helpers (same as ShoppingCart)
@@ -250,7 +259,7 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
         redirect_url: window.location.href,
       });
 
-      setOrderData({
+      const orderDataToSave = {
         orderNumber: orderRes.data?.order_number || `PUB-${cartId}`,
         customerName: customerInfo.name,
         customerEmail: customerInfo.email,
@@ -266,9 +275,12 @@ export default function PublicCartDrawer({ cart, onUpdate, onRemove, consultant,
           estimatedDays: selectedShipping?.estimated_days,
           address: isPickup ? (pickupType === 'franchise' ? selectedFranchise : null) : deliveryAddress,
         }
-      });
+      };
+      
+      setOrderData(orderDataToSave);
 
       if (checkoutRes.data?.url) {
+        localStorage.setItem('pendingOrderData', JSON.stringify(orderDataToSave));
         window.location.href = checkoutRes.data.url;
       } else {
         setStep('success');
