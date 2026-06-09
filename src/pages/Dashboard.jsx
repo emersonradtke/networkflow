@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard, ExternalLink } from 'lucide-react';
+import { Wallet, Users, ShoppingBag, TrendingUp, Copy, CheckCircle, Clock, Bell, Gift, CreditCard, ExternalLink, X } from 'lucide-react';
 import { formatDate } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,11 @@ export default function Dashboard() {
   const [networkCount, setNetworkCount] = useState(0);
   const [copied, setCopied] = useState(false);
   const [notifications, setNotifications] = useState([]);
+
+  const dismissNotification = async (id) => {
+    await base44.entities.Notification.update(id, { is_read: true });
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscription, setSubscription] = useState(null);
@@ -156,10 +161,17 @@ export default function Dashboard() {
           {notifications.map(n => (
             <div key={n.id} className="flex items-start gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
               <Bell size={16} className="text-primary mt-0.5 shrink-0" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-semibold text-foreground">{n.title}</p>
                 <p className="text-xs text-muted-foreground">{n.message}</p>
               </div>
+              <button
+                onClick={() => dismissNotification(n.id)}
+                className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 p-0.5"
+                title="Fechar"
+              >
+                <X size={14} />
+              </button>
             </div>
           ))}
         </div>
