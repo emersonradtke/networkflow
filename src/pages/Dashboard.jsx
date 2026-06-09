@@ -15,6 +15,7 @@ import PurchaseIntentsCard from '@/components/PurchaseIntentsCard';
 import SubscriptionPaymentModal from '@/components/SubscriptionPaymentModal';
 import BoldLifeCardSection from '@/components/BoldLifeCardSection';
 import MonthlyActivationCard from '@/components/MonthlyActivationCard';
+import HierarchyCard from '@/components/HierarchyCard';
 
 export default function Dashboard() {
   const { user, associate, reloadUser } = useOutletContext();
@@ -249,6 +250,9 @@ export default function Dashboard() {
         associate={associate}
         onClose={() => setStatModal(null)}
       />
+
+      {/* Hierarquia */}
+      <HierarchyCard associate={associate} />
 
       {/* Recent Commissions */}
       <div className="dark-card rounded-2xl p-5">
