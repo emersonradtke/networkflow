@@ -69,6 +69,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [detailOrder, setDetailOrder] = useState(null);
   const [deliveryOrder, setDeliveryOrder] = useState(null);
+  const [confirmingGroups, setConfirmingGroups] = useState(new Set());
 
   useEffect(() => { loadOrders(); }, []);
 
@@ -79,6 +80,8 @@ export default function AdminOrders() {
   };
 
   const confirmPayment = async (group) => {
+    if (confirmingGroups.has(group.cart_id)) return;
+    setConfirmingGroups(prev => new Set(prev).add(group.cart_id));
     // Confirma todos os itens do grupo
     for (const order of group.items) {
       await base44.entities.Order.update(order.id, { status: 'paid' });
@@ -134,6 +137,7 @@ export default function AdminOrders() {
         level++;
       }
     }
+    setConfirmingGroups(prev => { const s = new Set(prev); s.delete(group.cart_id); return s; });
     loadOrders();
   };
 
@@ -254,8 +258,9 @@ export default function AdminOrders() {
                       {group.status === 'pending' && (
                         <div className="flex gap-1">
                           <Button size="sm" className="h-7 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 gap-1"
-                            onClick={() => confirmPayment(group)}>
-                            <CheckCircle size={12} /> Confirmar
+                            onClick={() => confirmPayment(group)}
+                            disabled={confirmingGroups.has(group.cart_id)}>
+                            <CheckCircle size={12} /> {confirmingGroups.has(group.cart_id) ? 'Confirmando...' : 'Confirmar'}
                           </Button>
                           <Button size="sm" variant="ghost" className="h-7 text-red-400 hover:text-red-300"
                             onClick={() => cancelGroup(group)}>
