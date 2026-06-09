@@ -125,6 +125,15 @@ export default function Dashboard() {
     );
   }
 
+  const LEVEL_DISPLAY = {
+    lider:       { stars: '⭐', name: 'Líder' },
+    supervisor:  { stars: '⭐⭐', name: 'Supervisor' },
+    coordenador: { stars: '⭐⭐⭐', name: 'Coordenador' },
+    gerente:     { stars: '⭐⭐⭐⭐', name: 'Gerente' },
+    diretor:     { stars: '⭐⭐⭐⭐⭐', name: 'Diretor' },
+  };
+  const levelInfo = associate.hierarchy_level ? LEVEL_DISPLAY[associate.hierarchy_level] : null;
+
   return (
     <div className="space-y-6 animate-fade-up">
       {/* Header */}
@@ -133,6 +142,12 @@ export default function Dashboard() {
           Olá, {associate.full_name?.split(' ')[0]} 👋
         </h1>
         <p className="text-muted-foreground text-sm mt-1">Aqui está o resumo da sua rede e ganhos</p>
+        {levelInfo && (
+          <div className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+            <span className="text-sm">{levelInfo.stars}</span>
+            <span className="text-xs font-bold text-primary">Seu nível atual é {levelInfo.name}</span>
+          </div>
+        )}
       </div>
 
       {/* Notifications */}
