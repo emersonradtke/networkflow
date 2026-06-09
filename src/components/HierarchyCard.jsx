@@ -77,48 +77,32 @@ function getLevel(totalNetwork) {
   return { current, next };
 }
 
+// Mapa de hierarchy_level → índice em LEVELS
+const LEVEL_KEY_MAP = {
+  lider: 0, supervisor: 1, coordenador: 2, gerente: 3, diretor: 4,
+};
+
 export default function HierarchyCard({ associate }) {
-  const [totalNetwork, setTotalNetwork] = useState(0);
+  const [directCount, setDirectCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (!associate?.id) return;
-    loadNetworkCount();
+    // Apenas 1 chamada: busca diretos para exibir contagem mínima
+    base44.entities.Associate.filter({ sponsor_id: associate.id })
+      .then(members => setDirectCount(members.length))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [associate?.id]);
 
-  const loadNetworkCount = async () => {
-    try {
-      // Conta recursivamente toda a rede (diretos + indiretos)
-      let count = 0;
-      let queue = [associate.id];
-      const visited = new Set();
+  // Usa o nível salvo pelo backend (campo hierarchy_level) como fonte da verdade
+  const savedLevelIdx = associate.hierarchy_level != null ? LEVEL_KEY_MAP[associate.hierarchy_level] : -1;
+  const current = savedLevelIdx >= 0 ? LEVELS[savedLevelIdx] : null;
+  const next = savedLevelIdx >= 0 ? (LEVELS[savedLevelIdx + 1] || null) : LEVELS[0];
 
-      while (queue.length > 0) {
-        const batch = queue.splice(0, 10);
-        const results = await Promise.all(
-          batch.map(id => base44.entities.Associate.filter({ sponsor_id: id }))
-        );
-        for (const members of results) {
-          for (const m of members) {
-            if (!visited.has(m.id)) {
-              visited.add(m.id);
-              count++;
-              queue.push(m.id);
-            }
-          }
-        }
-      }
-
-      setTotalNetwork(count);
-    } catch (err) {
-      console.error('Erro ao carregar rede:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const { current, next } = getLevel(totalNetwork);
+  // Para o progresso, usa o próximo nível mínimo vs diretos (aproximação leve)
+  const totalNetwork = current ? current.minNetwork + directCount : directCount;
   const progressToNext = next
     ? Math.min(100, Math.round((totalNetwork / next.minNetwork) * 100))
     : 100;
