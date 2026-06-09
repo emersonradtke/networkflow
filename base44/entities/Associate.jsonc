@@ -209,6 +209,17 @@
     "card_activation_month": {
       "type": "string",
       "description": "M\u00eas/ano da ativa\u00e7\u00e3o do cart\u00e3o (YYYY-MM)"
+    },
+    "hierarchy_level": {
+      "type": "string",
+      "enum": [
+        "lider",
+        "supervisor",
+        "coordenador",
+        "gerente",
+        "diretor"
+      ],
+      "description": "Classifica\u00e7\u00e3o hier\u00e1rquica atual do associado"
     }
   },
   "required": [
