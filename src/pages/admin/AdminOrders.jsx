@@ -83,6 +83,10 @@ export default function AdminOrders() {
     for (const order of group.items) {
       await base44.entities.Order.update(order.id, { status: 'paid' });
 
+      // Evitar comissões duplicadas: pular se já existem comissões para este pedido
+      const existingCommissions = await base44.entities.Commission.filter({ order_id: order.id });
+      if (existingCommissions.length > 0) continue;
+
       const commissionAmount = (order.amount * (order.commission_percent / 100));
       const config = await base44.entities.NetworkConfig.list();
       const maxLevels = config[0]?.max_levels || 5;
