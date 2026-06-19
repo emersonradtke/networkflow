@@ -69,6 +69,7 @@ export default function Dashboard() {
       const notifs = await base44.entities.Notification.filter({ associate_id: associate.id, is_read: false }, '-created_date', 3);
       await new Promise(r => setTimeout(r, 100));
       
+      await new Promise(r => setTimeout(r, 100));
       const subs = await base44.entities.Subscription.filter({ associate_id: associate.id });
       
       setRecentCommissions(commissions);

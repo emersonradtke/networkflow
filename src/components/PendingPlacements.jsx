@@ -17,28 +17,36 @@ export default function PendingPlacements({ associateId, onAccepted }) {
   }, [associateId]);
 
   const loadRequests = async () => {
-    const data = await base44.entities.PlacementRequest.filter({
-      target_sponsor_id: associateId,
-      status: 'pending',
-    }, '-created_date');
-    setRequests(data);
-    setLoading(false);
-    return data;
+    try {
+      const data = await base44.entities.PlacementRequest.filter({
+        target_sponsor_id: associateId,
+        status: 'pending',
+      }, '-created_date');
+      setRequests(data);
+    } catch (err) {
+      console.error('PendingPlacements loadRequests:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const dismissPlacementNotifications = async (req) => {
-    const notifs = await base44.entities.Notification.filter({
-      associate_id: associateId,
-      is_read: false,
-    });
-    // Marcar como lida qualquer notificação de colocação relacionada a este associado
-    const toRead = notifs.filter(n =>
-      n.title?.toLowerCase().includes('colocação') ||
-      (n.message && req.associate_name && n.message.includes(req.associate_name))
-    );
-    await Promise.all(toRead.map(n =>
-      base44.entities.Notification.update(n.id, { is_read: true })
-    ));
+    try {
+      await new Promise(r => setTimeout(r, 300));
+      const notifs = await base44.entities.Notification.filter({
+        associate_id: associateId,
+        is_read: false,
+      });
+      const toRead = notifs.filter(n =>
+        n.title?.toLowerCase().includes('colocação') ||
+        (n.message && req.associate_name && n.message.includes(req.associate_name))
+      );
+      await Promise.all(toRead.map(n =>
+        base44.entities.Notification.update(n.id, { is_read: true })
+      ));
+    } catch (err) {
+      // silencia erro de rate limit em notificações secundárias
+    }
   };
 
   const accept = async (req) => {
