@@ -26,8 +26,7 @@ export default function Network() {
   const loadData = async () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const [allAssocs, allOrders, allComms, configs, proofs] = await Promise.all([
-      // Limitar a 500 registros — suficiente para redes grandes, evita timeout
-      base44.entities.Associate.list(null, 500),
+      base44.entities.Associate.list(null, 2000),
       // Apenas pedidos pagos do mês corrente (relevantes para consumo)
       base44.entities.Order.filter({ status: 'paid' }, '-created_date', 1000),
       base44.entities.Commission.filter({ beneficiary_id: associate.id }, '-created_date', 500),
