@@ -75,6 +75,9 @@ export default function Dashboard() {
       setNetworkCount(networkMembers.length);
       setNotifications(notifs);
       setSubscription(subs[0] || null);
+
+      // Verifica e atualiza nível hierárquico silenciosamente
+      base44.functions.invoke('checkHierarchyLevelUp', { associate_id: associate.id }).catch(() => {});
     } catch (err) {
       console.error('Error loading dashboard data:', err);
     }
