@@ -134,10 +134,18 @@ function layoutTree(member, isSelf, level, getDirects, maxLevel, collapsedSet) {
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export default function NetworkOrgChart({ associate, network, maxLevel = 5 }) {
-  const [collapsedSet, setCollapsedSet] = useState(() => new Set());
-
   const getDirects = (sponsorId) =>
     network.filter(a => a.sponsor_id === sponsorId && a.status === 'active');
+
+  // Colapsar por padrão todos os nós EXCETO o próprio usuário
+  // Assim o organograma mostra só os diretos inicialmente
+  const [collapsedSet, setCollapsedSet] = useState(() => {
+    const set = new Set();
+    // Colapsar todos os filhos diretos (nível 1) — clique para expandir
+    const directs = network.filter(a => a.sponsor_id === associate?.id && a.status === 'active');
+    directs.forEach(d => set.add(d.id));
+    return set;
+  });
 
   const toggleCollapse = (id) => {
     setCollapsedSet(prev => {
