@@ -14,6 +14,9 @@ const statusConfig = {
   paid:      { label: 'Pago',        icon: CheckCircle,  cls: 'bg-green-500/20 text-green-600 border-green-500/30' },
   cancelled: { label: 'Cancelado',   icon: XCircle,      cls: 'bg-red-500/20 text-red-600 border-red-500/30' },
   refunded:  { label: 'Reembolsado', icon: Package,      cls: 'bg-slate-500/20 text-slate-600 border-slate-500/30' },
+  submitted: { label: 'Aguardando Aprovação', icon: Clock, cls: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30' },
+  approved:  { label: 'Aprovado',    icon: CheckCircle,  cls: 'bg-green-500/20 text-green-600 border-green-500/30' },
+  rejected:  { label: 'Rejeitado',   icon: XCircle,      cls: 'bg-red-500/20 text-red-600 border-red-500/30' },
 };
 
 const deliveryStatusConfig = {
@@ -24,11 +27,11 @@ const deliveryStatusConfig = {
   returned:   { label: 'Em Disputa',  cls: 'bg-red-100 text-red-600' },
 };
 
-function OrderCard({ order, onView, onReview, onDeliveryAction }) {
+function OrderCard({ order, onView, onReview, onDeliveryAction, isExternalLink = false }) {
   const st = statusConfig[order.status] || statusConfig.pending;
   const Icon = st.icon;
-  const dSt = deliveryStatusConfig[order.delivery_status] || deliveryStatusConfig.pending;
-  const canAct = order.status === 'paid' && order.delivery_status === 'shipped';
+  const dSt = isExternalLink ? null : (deliveryStatusConfig[order.delivery_status] || deliveryStatusConfig.pending);
+  const canAct = !isExternalLink && order.status === 'paid' && order.delivery_status === 'shipped';
 
   return (
     <div className="border border-slate-200 rounded-xl p-4 bg-white flex items-center gap-3">
@@ -37,17 +40,17 @@ function OrderCard({ order, onView, onReview, onDeliveryAction }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          {order.order_number && (
-            <span className="text-xs font-black text-primary">#{order.order_number}</span>
-          )}
-          <span className="text-xs text-slate-500">{new Date(order.created_date).toLocaleDateString('pt-BR')}</span>
-          {order.delivery_status && order.delivery_status !== 'pending' && (
-            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${dSt.cls}`}>{dSt.label}</span>
-          )}
-        </div>
-        <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name}</p>
+            {order.order_number && (
+              <span className="text-xs font-black text-primary">#{order.order_number}</span>
+            )}
+            <span className="text-xs text-slate-500">{new Date(order.clicked_at || order.created_date).toLocaleDateString('pt-BR')}</span>
+            {dSt && order.delivery_status && order.delivery_status !== 'pending' && (
+              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${dSt.cls}`}>{dSt.label}</span>
+            )}
+          </div>
+        <p className="text-sm font-semibold text-slate-800 truncate">{order.product_name || order.banner_name}</p>
         <p className="text-xs text-slate-500">
-          R$ {order.amount?.toFixed(2)}
+          R$ {(order.amount || order.purchase_amount)?.toFixed(2)}
           {order.shipping_city && ` · ${order.shipping_city}`}
         </p>
       </div>
@@ -63,11 +66,11 @@ function OrderCard({ order, onView, onReview, onDeliveryAction }) {
             <Truck size={11} /> Entrega
           </Button>
         )}
-        {order.status === 'paid' && order.delivery_status !== 'shipped' && (
-          <Button size="sm" className="h-7 gap-1 text-xs bg-primary" onClick={() => onReview(order)}>
-            <Star size={11} /> Avaliar
-          </Button>
-        )}
+        {!isExternalLink && order.status === 'paid' && order.delivery_status !== 'shipped' && (
+           <Button size="sm" className="h-7 gap-1 text-xs bg-primary" onClick={() => onReview(order)}>
+             <Star size={11} /> Avaliar
+           </Button>
+         )}
       </div>
     </div>
   );
@@ -85,19 +88,36 @@ export default function MyOrdersPage() {
 
   useEffect(() => {
     if (associate?.id) {
-      base44.entities.Order.filter({ associate_id: associate.id }, '-created_date', 50)
-        .then(data => { setOrders(data); setLoading(false); });
+      Promise.all([
+        base44.entities.Order.filter({ associate_id: associate.id }, '-created_date', 50),
+        base44.entities.ExternalLinkClick.filter(
+          { associate_id: associate.id, status: { $in: ['submitted', 'approved'] } },
+          '-clicked_at',
+          50
+        ),
+      ]).then(([orders, externalLinks]) => {
+        // Combinar ambos os tipos, marcando os ExternalLinkClick
+        const combined = [
+          ...orders,
+          ...externalLinks.map(e => ({ ...e, _isExternalLink: true })),
+        ].sort((a, b) => new Date(b.clicked_at || b.created_date) - new Date(a.clicked_at || a.created_date));
+        setOrders(combined);
+        setLoading(false);
+      });
     }
   }, [associate]);
 
   const filtered = orders.filter(o => {
-    const matchSearch = !search || o.product_name?.toLowerCase().includes(search.toLowerCase());
+    const name = o.product_name || o.banner_name || '';
+    const matchSearch = !search || name.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all' || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
   const totalPaid = orders.filter(o => o.status === 'paid').reduce((s, o) => s + (o.amount || 0), 0);
-  const totalCommission = orders.filter(o => o.status === 'paid').reduce((s, o) => s + (o.total_commission || 0), 0);
+  const totalCommission = orders
+    .filter(o => o.status === 'paid' || o.status === 'approved')
+    .reduce((s, o) => s + (o.total_commission || o.commission_amount || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -128,19 +148,26 @@ export default function MyOrdersPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <div className="flex gap-2">
-          {['all', 'pending', 'paid', 'cancelled'].map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                statusFilter === s ? 'gold-gradient text-background' : 'bg-secondary text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {{ all: 'Todos', pending: 'Pendente', paid: 'Pago', cancelled: 'Cancelado' }[s]}
-            </button>
-          ))}
-        </div>
+        <div className="flex gap-2 flex-wrap">
+           {['all', 'pending', 'paid', 'submitted', 'approved', 'cancelled'].map(s => (
+             <button
+               key={s}
+               onClick={() => setStatusFilter(s)}
+               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                 statusFilter === s ? 'gold-gradient text-background' : 'bg-secondary text-muted-foreground hover:text-foreground'
+               }`}
+             >
+               {{ 
+                 all: 'Todos', 
+                 pending: 'Pendente', 
+                 paid: 'Pago', 
+                 submitted: 'Aguardando', 
+                 approved: 'Aprovado',
+                 cancelled: 'Cancelado' 
+               }[s]}
+             </button>
+           ))}
+         </div>
       </div>
 
       {/* Lista */}
@@ -153,8 +180,15 @@ export default function MyOrdersPage() {
             <p className="text-muted-foreground">Nenhum pedido encontrado.</p>
           </div>
         ) : (
-          filtered.map(o => <OrderCard key={o.id} order={o} onView={setSelectedOrder} onReview={setReviewOrder} onDeliveryAction={setDeliveryOrder} />)
-        )}
+           filtered.map(o => <OrderCard 
+             key={o.id} 
+             order={o} 
+             onView={setSelectedOrder} 
+             onReview={setReviewOrder} 
+             onDeliveryAction={setDeliveryOrder}
+             isExternalLink={o._isExternalLink}
+           />)
+         )}
         </div>
 
         <OrderDetailModal order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />
