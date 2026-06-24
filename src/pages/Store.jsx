@@ -45,7 +45,7 @@ export default function Store() {
   };
 
   const addToCart = (product) => {
-    const effectivePrice = product.on_special_offer && product.special_offer_price ? product.special_offer_price : product.price;
+    const effectivePrice = (product.type === 'direct_sale' && product.associate_price) ? product.associate_price : product.price;
     setCart(prev => {
       const existing = prev.find(i => i.id === product.id);
       if (existing) {
@@ -294,8 +294,8 @@ export default function Store() {
 function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick }) {
   const cartItem = cart.find(i => i.id === product.id);
   const outOfStock = product.type === 'direct_sale' && (product.stock == null || product.stock <= 0);
-  const displayPrice = product.on_special_offer && product.special_offer_price ? product.special_offer_price : product.price;
-  const hasDiscount = product.on_special_offer && product.special_offer_price && product.special_offer_price < product.price;
+  const displayPrice = (product.type === 'direct_sale' && product.associate_price) ? product.associate_price : product.price;
+  const hasDiscount = product.type === 'direct_sale' && product.associate_price && product.associate_price < product.price;
 
   if (compact) {
     return (
