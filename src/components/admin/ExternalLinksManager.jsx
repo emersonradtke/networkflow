@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, XCircle, Eye, Trash2, Search } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, Trash2, Search, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function ExternalLinksManager() {
@@ -12,6 +12,7 @@ export default function ExternalLinksManager() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('submitted');
   const [selectedClick, setSelectedClick] = useState(null);
+  const [selectedAssociate, setSelectedAssociate] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [search, setSearch] = useState('');
 
@@ -27,6 +28,18 @@ export default function ExternalLinksManager() {
       setClicks(data);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openDetails = async (click) => {
+    setSelectedClick(click);
+    setAdminNotes(click.admin_notes || '');
+    setSelectedAssociate(null);
+    if (click.associate_id) {
+      try {
+        const assoc = await base44.entities.Associate.get(click.associate_id);
+        setSelectedAssociate(assoc);
+      } catch (_) {}
     }
   };
 
@@ -149,10 +162,7 @@ export default function ExternalLinksManager() {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => {
-                      setSelectedClick(click);
-                      setAdminNotes(click.admin_notes || '');
-                    }}
+                    onClick={() => openDetails(click)}
                   >
                     <Eye size={16} />
                   </Button>
@@ -171,16 +181,28 @@ export default function ExternalLinksManager() {
         </div>
       )}
 
-      <Dialog open={!!selectedClick} onOpenChange={(open) => { if (!open) { setSelectedClick(null); setAdminNotes(''); } }}>
+      <Dialog open={!!selectedClick} onOpenChange={(open) => { if (!open) { setSelectedClick(null); setAdminNotes(''); setSelectedAssociate(null); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Detalhes da Intenção de Compra</DialogTitle>
           </DialogHeader>
           {selectedClick && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Associado</p>
-                <p className="text-sm font-medium text-foreground mt-1">{selectedClick.associate_name}</p>
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+              {/* Dados do Associado */}
+              <div className="p-3 rounded-lg bg-secondary/50 border border-border space-y-1">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Associado</p>
+                <p className="text-sm font-semibold text-foreground">{selectedClick.associate_name || '—'}</p>
+                {selectedAssociate ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">{selectedAssociate.email}</p>
+                    {selectedAssociate.phone && <p className="text-xs text-muted-foreground">📞 {selectedAssociate.phone}</p>}
+                    {selectedAssociate.cpf && <p className="text-xs text-muted-foreground">CPF: {selectedAssociate.cpf}</p>}
+                    {selectedAssociate.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {selectedAssociate.cnpj}</p>}
+                    <Badge variant="outline" className="text-xs mt-1">{selectedAssociate.status}</Badge>
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">Carregando dados...</p>
+                )}
               </div>
 
               <div>
@@ -220,12 +242,45 @@ export default function ExternalLinksManager() {
                 </p>
               </div>
 
-              {selectedClick.purchase_proof_url && (
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Comprovante de Compra</p>
-                  <img src={selectedClick.purchase_proof_url} alt="Comprovante" className="rounded-lg max-h-48 w-full object-cover border border-border" />
-                </div>
-              )}
+              {/* Comprovantes */}
+              {(() => {
+                const urls = selectedClick.purchase_proof_urls?.length
+                  ? selectedClick.purchase_proof_urls
+                  : selectedClick.purchase_proof_url
+                  ? [selectedClick.purchase_proof_url]
+                  : [];
+                if (urls.length === 0) return null;
+                return (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+                      Comprovante{urls.length > 1 ? 's' : ''} de Compra ({urls.length})
+                    </p>
+                    <div className="space-y-2">
+                      {urls.map((url, idx) => {
+                        const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url);
+                        return (
+                          <div key={idx} className="rounded-lg border border-border overflow-hidden">
+                            {isImage ? (
+                              <a href={url} target="_blank" rel="noopener noreferrer">
+                                <img src={url} alt={`Comprovante ${idx + 1}`} className="w-full max-h-48 object-cover hover:opacity-90 transition-opacity cursor-pointer" />
+                              </a>
+                            ) : null}
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 p-2 text-xs text-primary hover:underline bg-secondary/30"
+                            >
+                              <ExternalLink size={12} />
+                              {isImage ? 'Abrir imagem em nova aba' : `Abrir comprovante ${idx + 1}`}
+                            </a>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div>
                 <label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Notas Administrativas</label>
