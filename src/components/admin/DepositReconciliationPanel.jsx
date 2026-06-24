@@ -34,7 +34,7 @@ export default function DepositReconciliationPanel() {
     try {
       const [deps, links] = await Promise.all([
         base44.entities.CommissionDeposit.list('-deposited_at', 100),
-        base44.entities.ExternalLinkClick.filter({ status: { $in: ['submitted', 'approved'] } }, '-clicked_at', 100),
+        base44.entities.ExternalLinkClick.filter({ status: 'approved' }, '-clicked_at', 100),
       ]);
       setDeposits(deps);
       setExternalLinks(links);
