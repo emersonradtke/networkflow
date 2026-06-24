@@ -18,7 +18,7 @@ const emptyForm = {
   price: '', commission_percent: '', commission_operation: '', commission_associate: '', commission_organizer: '', image_url: '',
   type: 'direct_sale', external_url: '', category: '',
   is_active: true, stock: '', stock_min: '', stock_max: '',
-  visibility: 'public', on_special_offer: false, special_offer_price: '',
+  visibility: 'public', on_special_offer: false, special_offer_price: '', associate_price: '',
   color: '', weight: '', voltage: '', height: '', width: '', length: '',
 };
 
@@ -80,6 +80,7 @@ export default function AdminProducts() {
      visibility: p.visibility || 'public',
      on_special_offer: p.on_special_offer || false,
      special_offer_price: p.special_offer_price?.toString() ?? '',
+     associate_price: p.associate_price?.toString() ?? '',
      technical_info: p.technical_info || '',
      specifications: p.specifications || '',
      color: p.color || '',
@@ -133,7 +134,8 @@ export default function AdminProducts() {
       stock_min: isDirect ? parseInt(form.stock_min || 0) : null,
       stock_max: isDirect ? parseInt(form.stock_max || 0) : null,
       is_active: isActive,
-      special_offer_price: form.on_special_offer && form.special_offer_price ? parseFloat(form.special_offer_price) : null,
+      special_offer_price: form.special_offer_price ? parseFloat(form.special_offer_price) : null,
+      associate_price: form.associate_price ? parseFloat(form.associate_price) : null,
       color: form.color || null,
       voltage: form.voltage || null,
       weight: form.weight ? parseFloat(form.weight) : null,
@@ -582,7 +584,7 @@ export default function AdminProducts() {
               </div>
             )}
 
-            {/* Visibilidade + Oferta */}
+            {/* Visibilidade + Oferta Especial */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Visibilidade</Label>
@@ -597,15 +599,15 @@ export default function AdminProducts() {
               </div>
               <div className="flex items-end">
                 <div className="flex items-center gap-2 w-full">
-                  <Switch checked={form.on_special_offer} onCheckedChange={v => setForm({ ...form, on_special_offer: v, special_offer_price: v ? form.special_offer_price : '' })} />
-                  <Label className="m-0">Oferta Especial</Label>
+                  <Switch checked={form.on_special_offer} onCheckedChange={v => setForm({ ...form, on_special_offer: v })} />
+                  <Label className="m-0">Oferta Especial (destaque)</Label>
                 </div>
               </div>
             </div>
 
             {form.on_special_offer && (
               <div>
-                <Label>Preço de Oferta para Associados (R$)</Label>
+                <Label>Preço Promocional de Destaque (R$)</Label>
                 <Input
                   className="mt-1.5"
                   type="number"
@@ -615,9 +617,24 @@ export default function AdminProducts() {
                   value={form.special_offer_price}
                   onChange={e => setForm({ ...form, special_offer_price: e.target.value })}
                 />
-                <p className="text-xs text-muted-foreground mt-1">Deixe em branco para exibir apenas o badge de oferta sem desconto de preço.</p>
+                <p className="text-xs text-muted-foreground mt-1">Preço exibido no destaque de oferta especial. Deixe em branco para exibir apenas o badge.</p>
               </div>
             )}
+
+            {/* Preço para Associado */}
+            <div>
+              <Label>Preço para Associado (R$)</Label>
+              <Input
+                className="mt-1.5"
+                type="number"
+                step="0.01"
+                min="0.01"
+                placeholder={`Preço público: R$ ${form.price || '0,00'}`}
+                value={form.associate_price}
+                onChange={e => setForm({ ...form, associate_price: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Preço diferenciado exibido na loja do associado. Deixe em branco para usar o preço público.</p>
+            </div>
 
             {/* Aviso se não pode ativar */}
             {form.is_active && !canActivate(form) && (
