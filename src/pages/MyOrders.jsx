@@ -34,7 +34,11 @@ function OrderCard({ order, onView, onReview, onDeliveryAction, isExternalLink =
   const canAct = !isExternalLink && order.status === 'paid' && order.delivery_status === 'shipped';
 
   return (
-    <div className="border border-slate-200 rounded-xl p-4 bg-white flex items-center gap-3">
+    <div className={`border rounded-xl p-4 flex items-center gap-3 ${
+      isExternalLink 
+        ? 'border-cyan-300/50 bg-cyan-50/40' 
+        : 'border-slate-200 bg-white'
+    }`}>
       <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
         <ShoppingBag size={16} className="text-slate-500" />
       </div>
