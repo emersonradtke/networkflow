@@ -182,7 +182,7 @@ export default function Dashboard() {
       )}
 
       {/* Prompt de endereço */}
-      {!associate.addresses_completed && (
+      {!associate.addresses_completed && !associate.shipping_street && (
         <div className="flex items-start gap-3 p-4 rounded-xl border border-blue-200 bg-blue-50">
           <span className="text-xl">📍</span>
           <div className="flex-1">
@@ -318,7 +318,7 @@ export default function Dashboard() {
         associate={associate}
         open={showAddressModal}
         onClose={() => setShowAddressModal(false)}
-        onSaved={() => { setShowAddressModal(false); }}
+        onSaved={() => { setShowAddressModal(false); reloadUser?.(); }}
       />
 
       {/* Quick Actions */}
