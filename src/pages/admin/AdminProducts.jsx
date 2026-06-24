@@ -42,7 +42,11 @@ export default function AdminProducts() {
   const [maxLevels, setMaxLevels] = useState(5);
   const fileInputRef = useRef(null);
 
-  useEffect(() => { loadProducts(); loadSuppliers(); loadNetworkConfig(); }, []);
+  useEffect(() => {
+    loadProducts();
+    loadSuppliers();
+    setTimeout(() => loadNetworkConfig(), 300);
+  }, []);
 
   const loadProducts = async () => {
     const data = await base44.entities.Product.list('-created_date');
@@ -56,7 +60,7 @@ export default function AdminProducts() {
   };
 
   const loadNetworkConfig = async () => {
-    const config = await base44.entities.NetworkConfig.list();
+    const config = await base44.entities.NetworkConfig.list('created_date', 1);
     if (config.length > 0) setMaxLevels(config[0].max_levels || 5);
   };
 
