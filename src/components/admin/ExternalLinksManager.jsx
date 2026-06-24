@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { CheckCircle2, XCircle, Eye, Trash2, Search, ExternalLink } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, Trash2, Search, ExternalLink, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function ExternalLinksManager() {
@@ -29,6 +29,25 @@ export default function ExternalLinksManager() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRemoveProof = async (urlIndex) => {
+    if (!confirm('Deseja remover este comprovante?')) return;
+    const urls = selectedClick.purchase_proof_urls?.length
+      ? [...selectedClick.purchase_proof_urls]
+      : selectedClick.purchase_proof_url ? [selectedClick.purchase_proof_url] : [];
+    urls.splice(urlIndex, 1);
+    const update = {
+      purchase_proof_urls: urls,
+      purchase_proof_url: urls[0] || null,
+    };
+    if (urls.length === 0) {
+      update.status = 'intent';
+      update.purchase_amount = null;
+    }
+    await base44.entities.ExternalLinkClick.update(selectedClick.id, update);
+    setSelectedClick(prev => ({ ...prev, ...update }));
+    loadClicks();
   };
 
   const openDetails = async (click) => {
@@ -256,27 +275,36 @@ export default function ExternalLinksManager() {
                       Comprovante{urls.length > 1 ? 's' : ''} de Compra ({urls.length})
                     </p>
                     <div className="space-y-2">
-                      {urls.map((url, idx) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url);
-                        return (
-                          <div key={idx} className="rounded-lg border border-border overflow-hidden">
-                            {isImage ? (
-                              <a href={url} target="_blank" rel="noopener noreferrer">
-                                <img src={url} alt={`Comprovante ${idx + 1}`} className="w-full max-h-48 object-cover hover:opacity-90 transition-opacity cursor-pointer" />
-                              </a>
-                            ) : null}
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 p-2 text-xs text-primary hover:underline bg-secondary/30"
-                            >
-                              <ExternalLink size={12} />
-                              {isImage ? 'Abrir imagem em nova aba' : `Abrir comprovante ${idx + 1}`}
-                            </a>
-                          </div>
-                        );
-                      })}
+                     {urls.map((url, idx) => {
+                       const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url);
+                       return (
+                         <div key={idx} className="rounded-lg border border-border overflow-hidden">
+                           {isImage ? (
+                             <a href={url} target="_blank" rel="noopener noreferrer">
+                               <img src={url} alt={`Comprovante ${idx + 1}`} className="w-full max-h-48 object-cover hover:opacity-90 transition-opacity cursor-pointer" />
+                             </a>
+                           ) : null}
+                           <div className="flex items-center gap-2 p-2 bg-secondary/30">
+                             <a
+                               href={url}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="flex items-center gap-2 text-xs text-primary hover:underline flex-1"
+                             >
+                               <ExternalLink size={12} />
+                               {isImage ? 'Abrir imagem em nova aba' : `Abrir comprovante ${idx + 1}`}
+                             </a>
+                             <button
+                               onClick={() => handleRemoveProof(idx)}
+                               className="text-muted-foreground hover:text-destructive shrink-0"
+                               title="Remover comprovante"
+                             >
+                               <X size={14} />
+                             </button>
+                           </div>
+                         </div>
+                       );
+                     })}
                     </div>
                   </div>
                 );

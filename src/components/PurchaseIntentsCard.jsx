@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { ExternalLink, Zap, Trash2 } from 'lucide-react';
+import { ExternalLink, Zap, Trash2, X, FileText } from 'lucide-react';
 import { formatDateTime } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,10 +30,12 @@ export default function PurchaseIntentsCard({ associateId }) {
 
   const loadIntents = async () => {
     try {
-      const data = await base44.entities.ExternalLinkClick.filter(
-        { associate_id: associateId, status: 'intent' },
+      const allData = await base44.entities.ExternalLinkClick.filter(
+        { associate_id: associateId },
         '-created_date'
       );
+      // Mostrar apenas intent e submitted (não approved/rejected)
+      const data = allData.filter(d => d.status === 'intent' || d.status === 'submitted');
       
       // Enriquecer dados com preço e comissão do produto/banner
       const enrichedData = await Promise.all(data.map(async (intent) => {
@@ -84,6 +86,25 @@ export default function PurchaseIntentsCard({ associateId }) {
     loadIntents();
   };
 
+  const handleRemoveProof = async (intent, urlIndex) => {
+    if (!confirm('Deseja remover este comprovante?')) return;
+    const urls = intent.purchase_proof_urls?.length
+      ? [...intent.purchase_proof_urls]
+      : intent.purchase_proof_url ? [intent.purchase_proof_url] : [];
+    urls.splice(urlIndex, 1);
+    const update = {
+      purchase_proof_urls: urls,
+      purchase_proof_url: urls[0] || null,
+    };
+    // Se não sobrar nenhum comprovante, volta status para intent
+    if (urls.length === 0) {
+      update.status = 'intent';
+      update.purchase_amount = null;
+    }
+    await base44.entities.ExternalLinkClick.update(intent.id, update);
+    loadIntents();
+  };
+
   if (loading) {
     return (
       <div className="dark-card rounded-2xl p-5">
@@ -120,9 +141,14 @@ export default function PurchaseIntentsCard({ associateId }) {
           {intents.map(intent => (
             <div key={intent.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-secondary/50">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {intent.product_name || intent.banner_name}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {intent.product_name || intent.banner_name}
+                  </p>
+                  {intent.status === 'submitted' && (
+                    <Badge className="bg-yellow-100 text-yellow-800 text-xs shrink-0">Enviado</Badge>
+                  )}
+                </div>
                 <div className="flex items-center gap-3 mt-1 text-xs">
                   <span className="text-muted-foreground">
                     R$ {(intent.product_price || 0).toFixed(2)}
@@ -144,13 +170,15 @@ export default function PurchaseIntentsCard({ associateId }) {
                 >
                   Ver
                 </Button>
-                <Button
-                  size="sm"
-                  className="text-xs h-7 gold-gradient text-background font-bold"
-                  onClick={() => handleConfirm(intent)}
-                >
-                  Confirmar
-                </Button>
+                {intent.status === 'intent' && (
+                  <Button
+                    size="sm"
+                    className="text-xs h-7 gold-gradient text-background font-bold"
+                    onClick={() => handleConfirm(intent)}
+                  >
+                    Confirmar
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -205,6 +233,46 @@ export default function PurchaseIntentsCard({ associateId }) {
                  {formatDateTime(detailsModal.created_date)}
                </p>
              </div>
+
+             {/* Comprovantes enviados com opção de excluir */}
+             {(() => {
+               const urls = detailsModal.purchase_proof_urls?.length
+                 ? detailsModal.purchase_proof_urls
+                 : detailsModal.purchase_proof_url ? [detailsModal.purchase_proof_url] : [];
+               if (urls.length === 0) return null;
+               return (
+                 <div>
+                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">
+                     Comprovante{urls.length > 1 ? 's' : ''} enviados ({urls.length})
+                   </p>
+                   <div className="space-y-2">
+                     {urls.map((url, idx) => {
+                       const isImage = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url);
+                       return (
+                         <div key={idx} className="flex items-center gap-2 p-2 rounded-lg border border-border bg-secondary/30">
+                           {isImage
+                             ? <img src={url} alt="" className="w-10 h-10 rounded object-cover shrink-0" />
+                             : <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center shrink-0"><FileText size={16} className="text-primary" /></div>
+                           }
+                           <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex-1 truncate">
+                             Abrir comprovante {idx + 1}
+                           </a>
+                           <button
+                             onClick={() => { handleRemoveProof(detailsModal, idx); setDetailsModal(null); }}
+                             className="text-muted-foreground hover:text-destructive shrink-0"
+                             title="Remover comprovante"
+                           >
+                             <X size={15} />
+                           </button>
+                         </div>
+                       );
+                     })}
+                   </div>
+                 </div>
+               );
+             })()}
+
+             {detailsModal.status === 'intent' && (
               <Button
                 className="w-full gold-gradient text-background font-bold"
                 onClick={() => {
@@ -214,6 +282,7 @@ export default function PurchaseIntentsCard({ associateId }) {
               >
                 Confirmar Compra
               </Button>
+             )}
             </div>
           )}
         </DialogContent>
