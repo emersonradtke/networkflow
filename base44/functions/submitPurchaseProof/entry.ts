@@ -3,11 +3,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const body = await req.json();
     const { click_id, purchase_proof_urls, purchase_amount } = body;
@@ -29,27 +24,6 @@ Deno.serve(async (req) => {
       click = await base44.asServiceRole.entities.ExternalLinkClick.get(click_id);
     } catch (_) {
       return Response.json({ error: 'Intenção de compra não encontrada' }, { status: 404 });
-    }
-
-    // Buscar associate — tenta por user_id, fallback por email
-    let associate = null;
-    const byUserId = await base44.asServiceRole.entities.Associate.filter({ user_id: user.id });
-    if (byUserId && byUserId.length > 0) {
-      associate = byUserId[0];
-    } else {
-      const byEmail = await base44.asServiceRole.entities.Associate.filter({ email: user.email });
-      if (byEmail && byEmail.length > 0) {
-        associate = byEmail[0];
-      }
-    }
-
-    if (!associate) {
-      return Response.json({ error: 'Associado não encontrado' }, { status: 404 });
-    }
-
-    // Verificar que o clique pertence a este associate
-    if (click.associate_id !== associate.id) {
-      return Response.json({ error: 'Sem permissão para este registro' }, { status: 403 });
     }
 
     // Calcular comissão com base no produto ou banner
@@ -79,8 +53,9 @@ Deno.serve(async (req) => {
       status: 'submitted'
     });
 
-    // Notificar admins
+    // Notificar admins (best-effort)
     try {
+      const associate = await base44.asServiceRole.entities.Associate.get(click.associate_id);
       const adminUsers = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
       for (const adminUser of adminUsers) {
         const adminAssocs = await base44.asServiceRole.entities.Associate.filter({ user_id: adminUser.id });
@@ -88,13 +63,13 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.Notification.create({
             associate_id: adminAssocs[0].id,
             title: 'Compra Pendente de Confirmação',
-            message: `${associate.full_name} enviou comprovante(s) no valor de R$ ${Number(purchase_amount).toFixed(2)}`,
+            message: `${associate?.full_name || 'Associado'} enviou comprovante(s) no valor de R$ ${Number(purchase_amount).toFixed(2)}`,
             type: 'order',
             link: '/admin/external-links'
           });
         }
       }
-    } catch (_) { /* notificação é opcional, não bloqueia */ }
+    } catch (_) { /* notificação é opcional */ }
 
     return Response.json({ success: true, commission_amount });
   } catch (error) {
