@@ -202,17 +202,24 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       // Criar link de pagamento InfinitePay
       const grandTotal = isPickup ? total : total + shippingCost;
 
+      const hasShippingAddress = localAssociate.shipping_street && localAssociate.shipping_zip;
       const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
         order_nsu: `CART-${cartId}`,
         amount: grandTotal,
-        description: cart.map(i => `${i.name} x${i.qty}`).join(', '),
         customer_name: localAssociate.full_name,
         customer_email: localAssociate.email,
         items: cart.map(item => ({
           description: item.name,
-          price: Math.round(item.price * 100),
+          price: Math.round((item.effectivePrice ?? item.price) * 100),
           quantity: item.qty,
         })),
+        address: !isPickup && hasShippingAddress ? {
+          cep: localAssociate.shipping_zip,
+          street: localAssociate.shipping_street || '',
+          neighborhood: localAssociate.shipping_neighborhood || '',
+          number: localAssociate.shipping_number || '',
+          complement: localAssociate.shipping_complement || '',
+        } : undefined,
       });
 
       const paymentUrl = checkoutRes.data?.checkout_url;

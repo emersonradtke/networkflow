@@ -10,10 +10,10 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { amount, order_nsu, description, customer_name, customer_email, customer_document, items } = body;
+    const { amount, order_nsu, customer_name, customer_email, items, address } = body;
 
-    if (!amount || !order_nsu) {
-      return Response.json({ error: 'amount e order_nsu são obrigatórios' }, { status: 400 });
+    if (!items || items.length === 0) {
+      return Response.json({ error: 'items são obrigatórios' }, { status: 400 });
     }
 
     const apiKey = Deno.env.get('INFINITEPAY_API_KEY');
@@ -26,9 +26,9 @@ Deno.serve(async (req) => {
     const payload = {
       handle,
       order_nsu: order_nsu ? String(order_nsu) : undefined,
-      items: (items || []).map(i => ({
+      items: items.map(i => ({
         quantity: i.quantity,
-        price: i.price, // já em centavos
+        price: i.price, // em centavos
         description: i.description,
       })),
     };
@@ -37,6 +37,16 @@ Deno.serve(async (req) => {
       payload.customer = {
         name: customer_name || '',
         email: customer_email || '',
+      };
+    }
+
+    if (address && address.cep) {
+      payload.address = {
+        cep: (address.cep || '').replace(/\D/g, ''),
+        street: address.street || '',
+        neighborhood: address.neighborhood || '',
+        number: address.number || '',
+        complement: address.complement || '',
       };
     }
 
