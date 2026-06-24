@@ -127,8 +127,14 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       }
 
       const cartId = `cart_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const res = await base44.functions.invoke('getNextOrderNumber', {});
-      const orderNumber = res.data?.next_number || 1;
+      let orderNumber;
+      try {
+        const res = await base44.functions.invoke('getNextOrderNumber', {});
+        orderNumber = res.data?.next_number || 1;
+      } catch (e) {
+        console.error('[handleConfirm] getNextOrderNumber failed:', e);
+        throw new Error('[getNextOrderNumber] ' + (e?.response?.data?.error || e?.message));
+      }
 
       const pickupStreet = pickupType === 'franchise' && selectedFranchise
         ? selectedFranchise.address_street || ''
@@ -169,29 +175,36 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
       for (const item of cart) {
         const itemSubtotal = item.price * item.qty;
         const itemShipping = shippingCost / cart.length;
-        await base44.entities.Order.create({
-          order_number: orderNumber,
-          cart_id: cartId,
-          associate_id: localAssociate.id,
-          associate_name: localAssociate.full_name,
-          product_id: item.id,
-          product_name: item.name,
-          product_type: item.type,
-          quantity: item.qty,
-          unit_price: item.price,
-          amount: itemSubtotal + itemShipping,
-          commission_percent: item.commission_percent,
-          status: 'pending',
-          notes: `Qtd: ${item.qty}`,
-          ...shippingData,
-        });
+        try {
+          await base44.entities.Order.create({
+            order_number: orderNumber,
+            cart_id: cartId,
+            associate_id: localAssociate.id,
+            associate_name: localAssociate.full_name,
+            product_id: item.id,
+            product_name: item.name,
+            product_type: item.type || 'direct_sale',
+            quantity: item.qty,
+            unit_price: item.price,
+            amount: itemSubtotal + itemShipping,
+            commission_percent: item.commission_percent || 0,
+            status: 'pending',
+            notes: `Qtd: ${item.qty}`,
+            ...shippingData,
+          });
+        } catch (e) {
+          console.error('[handleConfirm] Order.create failed for', item.name, ':', e);
+          throw new Error('[Order.create] ' + (e?.response?.data?.error || e?.message));
+        }
       }
 
       // Criar link de pagamento InfinitePay
       const grandTotal = isPickup ? total : total + shippingCost;
-
       const hasShippingAddress = localAssociate.shipping_street && localAssociate.shipping_zip;
-      const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
+      
+      let checkoutRes;
+      try {
+        checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
         order_nsu: `CART-${cartId}`,
         amount: grandTotal,
         customer_name: localAssociate.full_name,
@@ -201,14 +214,18 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
           price: Math.round((item.effectivePrice ?? item.price) * 100),
           quantity: item.qty,
         })),
-        address: !isPickup && hasShippingAddress ? {
-          cep: localAssociate.shipping_zip,
-          street: localAssociate.shipping_street || '',
-          neighborhood: localAssociate.shipping_neighborhood || '',
-          number: localAssociate.shipping_number || '',
-          complement: localAssociate.shipping_complement || '',
-        } : undefined,
-      });
+          address: !isPickup && hasShippingAddress ? {
+            cep: localAssociate.shipping_zip,
+            street: localAssociate.shipping_street || '',
+            neighborhood: localAssociate.shipping_neighborhood || '',
+            number: localAssociate.shipping_number || '',
+            complement: localAssociate.shipping_complement || '',
+          } : undefined,
+        });
+      } catch (e) {
+        console.error('[handleConfirm] createInfinitePayCheckout failed:', e);
+        throw new Error('[createInfinitePayCheckout] ' + (e?.response?.data?.error || e?.message));
+      }
 
       const paymentUrl = checkoutRes.data?.checkout_url;
       if (paymentUrl) {
@@ -230,7 +247,9 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
         setError('Não foi possível gerar o link de pagamento.');
       }
     } catch (e) {
-      setError('Erro ao finalizar pedido: ' + (e?.message || 'Tente novamente.'));
+      const detail = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Tente novamente.';
+      setError('Erro ao finalizar pedido: ' + detail);
+      console.error('[handleConfirm] error:', e);
     } finally {
       setLoading(false);
     }
