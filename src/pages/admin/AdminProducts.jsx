@@ -9,10 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StockReplenishModal from '@/components/StockReplenishModal';
 
 const emptyForm = {
-  code: '', name: '', description: '', brand: '', supplier: '',
+  code: '', name: '', description: '', technical_info: '', specifications: '',
+  brand: '', supplier: '',
   price: '', commission_percent: '', commission_operation: '', commission_associate: '', commission_organizer: '', image_url: '',
   type: 'direct_sale', external_url: '', category: '',
   is_active: true, stock: '', stock_min: '', stock_max: '',
@@ -73,6 +75,8 @@ export default function AdminProducts() {
      visibility: p.visibility || 'public',
      on_special_offer: p.on_special_offer || false,
      special_offer_price: p.special_offer_price?.toString() ?? '',
+     technical_info: p.technical_info || '',
+     specifications: p.specifications || '',
    });
    setEditId(p.id);
    setDialogOpen(true);
@@ -357,6 +361,46 @@ export default function AdminProducts() {
             <DialogTitle className="font-black">{editId ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={save} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+            <Tabs defaultValue="geral">
+              <TabsList className="w-full">
+                <TabsTrigger value="geral" className="flex-1">Geral</TabsTrigger>
+                <TabsTrigger value="descricoes" className="flex-1">Descrições</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="descricoes" className="space-y-4 mt-4">
+                <div>
+                  <Label>Descrição</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    rows={5}
+                    placeholder="Descrição geral do produto..."
+                    value={form.description}
+                    onChange={e => setForm({ ...form, description: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Informações Técnicas</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    rows={5}
+                    placeholder="Ex: Composição, modo de uso, validade..."
+                    value={form.technical_info}
+                    onChange={e => setForm({ ...form, technical_info: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Especificações</Label>
+                  <Textarea
+                    className="mt-1.5"
+                    rows={5}
+                    placeholder="Ex: Peso, dimensões, cor, material..."
+                    value={form.specifications}
+                    onChange={e => setForm({ ...form, specifications: e.target.value })}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="geral" className="space-y-4 mt-4">
 
             {/* Código */}
             <div>
@@ -430,12 +474,6 @@ export default function AdminProducts() {
             <div>
               <Label>Nome do Produto</Label>
               <Input className="mt-1.5" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-            </div>
-
-            {/* Descrição */}
-            <div>
-              <Label>Descrição</Label>
-              <Textarea className="mt-1.5 resize-none" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             </div>
 
             {/* Preço */}
@@ -565,6 +603,9 @@ export default function AdminProducts() {
                 </div>
               </div>
             </div>
+
+              </TabsContent>
+            </Tabs>
 
             <Button type="submit" disabled={saving} className="w-full font-bold text-white" style={{ background: 'linear-gradient(90deg,#1B2A5E,#3B9EE2)' }}>
               {saving ? 'Salvando...' : editId ? 'Salvar Alterações' : 'Criar Produto'}

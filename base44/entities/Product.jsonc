@@ -10,7 +10,16 @@
       "type": "string"
     },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o geral do produto"
+    },
+    "technical_info": {
+      "type": "string",
+      "description": "Informa\u00e7\u00f5es t\u00e9cnicas do produto"
+    },
+    "specifications": {
+      "type": "string",
+      "description": "Especifica\u00e7\u00f5es detalhadas do produto"
     },
     "brand": {
       "type": "string",
