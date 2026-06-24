@@ -608,7 +608,7 @@ export default function AdminProducts() {
 
 
             {/* Preço para Associado */}
-            <div>
+            {form.type === 'direct_sale' && <div>
               <Label>Preço para Associado (R$)</Label>
               <Input
                 className="mt-1.5"
@@ -620,7 +620,7 @@ export default function AdminProducts() {
                 onChange={e => setForm({ ...form, associate_price: e.target.value })}
               />
               <p className="text-xs text-muted-foreground mt-1">Preço diferenciado exibido na loja do associado. Deixe em branco para usar o preço público.</p>
-            </div>
+            </div>}
 
             {/* Aviso se não pode ativar */}
             {form.is_active && !canActivate(form) && (
