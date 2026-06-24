@@ -78,6 +78,8 @@ export default function DepositReconciliationPanel() {
   const handleReconcile = async (depositId, linkId, reconcile = true) => {
     try {
       const deposit = deposits.find(d => d.id === depositId);
+      const externalLink = externalLinks.find(l => l.id === linkId);
+      
       let newItems = [...(deposit.reconciled_items || [])];
       if (reconcile && !newItems.includes(linkId)) {
         newItems.push(linkId);
@@ -85,7 +87,26 @@ export default function DepositReconciliationPanel() {
         newItems = newItems.filter(i => i !== linkId);
       }
 
-      // Calcular novo status
+      // Atualizar ExternalLinkClick com status de reconciliação
+      await base44.entities.ExternalLinkClick.update(linkId, {
+        reconciliation_status: reconcile ? 'reconciled' : 'pending',
+        deposit_id: reconcile ? depositId : null,
+        reconciled_at: reconcile ? new Date().toISOString() : null,
+      });
+
+      // Se está conciliando, creditar a comissão
+      if (reconcile && externalLink) {
+        try {
+          await base44.functions.invoke('creditReconciliationCommission', {
+            link_id: linkId,
+          });
+        } catch (e) {
+          console.error('Erro ao creditar comissão:', e);
+          toast({ variant: 'destructive', description: 'Comissão conciliada mas erro ao creditar' });
+        }
+      }
+
+      // Calcular novo status do depósito
       const totalApproved = externalLinks.filter(l => l.status === 'approved').length;
       const newStatus = newItems.length === 0 ? 'pending' : newItems.length === totalApproved ? 'complete' : 'partial';
 
@@ -93,9 +114,11 @@ export default function DepositReconciliationPanel() {
         reconciled_items: newItems,
         status: newStatus,
       });
+      
       await loadData();
-      toast({ description: reconcile ? 'Conciliação adicionada' : 'Conciliação removida' });
+      toast({ description: reconcile ? 'Comissão creditada e conciliação adicionada' : 'Conciliação removida' });
     } catch (e) {
+      console.error(e);
       toast({ variant: 'destructive', description: 'Erro ao conciliar' });
     }
   };

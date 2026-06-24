@@ -64,6 +64,24 @@
     "clicked_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "reconciliation_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "reconciled"
+      ],
+      "default": "pending",
+      "description": "pending = aguardando concilia\u00e7\u00e3o, reconciled = conciliada com dep\u00f3sito"
+    },
+    "deposit_id": {
+      "type": "string",
+      "description": "ID do CommissionDeposit que conciliou este item"
+    },
+    "reconciled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data/hora da concilia\u00e7\u00e3o"
     }
   },
   "required": [

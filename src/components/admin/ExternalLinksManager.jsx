@@ -26,7 +26,16 @@ export default function ExternalLinksManager() {
     loadingRef.current = true;
     setLoading(true);
     try {
-      const query = filter === 'all' ? {} : { status: filter };
+      let query = {};
+      if (filter === 'all') {
+        query = {};
+      } else if (filter === 'pending_reconciliation') {
+        query = { status: 'approved', reconciliation_status: 'pending' };
+      } else if (filter === 'reconciled') {
+        query = { reconciliation_status: 'reconciled' };
+      } else {
+        query = { status: filter };
+      }
       const data = await base44.entities.ExternalLinkClick.filter(query, '-created_date', 50);
       setClicks(data);
     } finally {
@@ -98,6 +107,11 @@ export default function ExternalLinksManager() {
     rejected: { label: 'Rejeitada', color: 'bg-red-100 text-red-800' }
   };
 
+  const reconciliationConfig = {
+    pending: { label: 'Aguardando Conciliação', color: 'text-yellow-600' },
+    reconciled: { label: 'Conciliado', color: 'text-green-600' }
+  };
+
   const filtered = clicks.filter(c =>
     !search || (c.associate_name || '').toLowerCase().includes(search.toLowerCase())
   );
@@ -115,18 +129,18 @@ export default function ExternalLinksManager() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {['submitted', 'approved', 'rejected', 'intent', 'all'].map((status) => (
-          <Button
-            key={status}
-            variant={filter === status ? 'default' : 'outline'}
-            onClick={() => setFilter(status)}
-            size="sm"
-          >
-            {status === 'all' ? 'Todos' : statusConfig[status]?.label}
-          </Button>
-        ))}
-      </div>
+      <div className="flex gap-2 overflow-x-auto pb-2 flex-wrap">
+         {['submitted', 'approved', 'rejected', 'intent', 'pending_reconciliation', 'reconciled', 'all'].map((status) => (
+           <Button
+             key={status}
+             variant={filter === status ? 'default' : 'outline'}
+             onClick={() => setFilter(status)}
+             size="sm"
+           >
+             {status === 'all' ? 'Todos' : status === 'pending_reconciliation' ? 'Aguardando Conciliação' : status === 'reconciled' ? 'Conciliado' : statusConfig[status]?.label}
+           </Button>
+         ))}
+       </div>
 
       {loading ? (
         <div className="text-center py-8">Carregando...</div>
@@ -138,12 +152,17 @@ export default function ExternalLinksManager() {
             <div key={click.id} className="p-4 rounded-lg border border-border bg-card hover:border-primary/40 transition-colors">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-foreground truncate">{click.associate_name}</h3>
-                    <Badge className={statusConfig[click.status].color} variant="outline">
-                      {statusConfig[click.status].label}
-                    </Badge>
-                  </div>
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                     <h3 className="font-semibold text-foreground truncate">{click.associate_name}</h3>
+                     <Badge className={statusConfig[click.status].color} variant="outline">
+                       {statusConfig[click.status].label}
+                     </Badge>
+                     {click.status === 'approved' && (
+                       <Badge variant="outline" className={`text-xs ${reconciliationConfig[click.reconciliation_status || 'pending'].color}`}>
+                         {reconciliationConfig[click.reconciliation_status || 'pending'].label}
+                       </Badge>
+                     )}
+                   </div>
                   <p className="text-sm text-muted-foreground mb-2">
                     {click.link_type === 'product' ? `📦 ${click.product_name}` : `🎨 ${click.banner_name}`}
                   </p>
@@ -346,8 +365,20 @@ export default function ExternalLinksManager() {
               )}
 
               {selectedClick.status === 'approved' && (
-                <div className="p-3 rounded-lg bg-green-100 text-green-800 text-xs font-medium">
-                  ✓ Aprovado - Comissão e pontuação foram creditadas
+                <div className="space-y-2">
+                  <div className="p-3 rounded-lg bg-green-100 text-green-800 text-xs font-medium">
+                    ✓ Aprovado
+                  </div>
+                  {selectedClick.reconciliation_status === 'pending' && (
+                    <div className="p-3 rounded-lg bg-yellow-100 text-yellow-800 text-xs font-medium">
+                      ⏳ Aguardando conciliação - Comissão será creditada após confirmação
+                    </div>
+                  )}
+                  {selectedClick.reconciliation_status === 'reconciled' && (
+                    <div className="p-3 rounded-lg bg-green-100 text-green-800 text-xs font-medium">
+                      ✓ Conciliado - Comissão e pontuação foram creditadas
+                    </div>
+                  )}
                 </div>
               )}
 
