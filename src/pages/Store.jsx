@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useCartStorage } from '@/hooks/useCartStorage';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
@@ -24,7 +25,7 @@ export default function Store() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useCartStorage();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
   const [selectedClickId, setSelectedClickId] = useState(null);
