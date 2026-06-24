@@ -19,6 +19,7 @@ const emptyForm = {
   type: 'direct_sale', external_url: '', category: '',
   is_active: true, stock: '', stock_min: '', stock_max: '',
   visibility: 'public', on_special_offer: false, special_offer_price: '',
+  color: '', weight: '', voltage: '', height: '', width: '', length: '',
 };
 
 const generateCode = () => {
@@ -81,6 +82,12 @@ export default function AdminProducts() {
      special_offer_price: p.special_offer_price?.toString() ?? '',
      technical_info: p.technical_info || '',
      specifications: p.specifications || '',
+     color: p.color || '',
+     weight: p.weight?.toString() ?? '',
+     voltage: p.voltage || '',
+     height: p.height?.toString() ?? '',
+     width: p.width?.toString() ?? '',
+     length: p.length?.toString() ?? '',
    });
    setEditId(p.id);
    setDialogOpen(true);
@@ -127,6 +134,12 @@ export default function AdminProducts() {
       stock_max: isDirect ? parseInt(form.stock_max || 0) : null,
       is_active: isActive,
       special_offer_price: form.on_special_offer && form.special_offer_price ? parseFloat(form.special_offer_price) : null,
+      color: form.color || null,
+      voltage: form.voltage || null,
+      weight: form.weight ? parseFloat(form.weight) : null,
+      height: form.height ? parseFloat(form.height) : null,
+      width: form.width ? parseFloat(form.width) : null,
+      length: form.length ? parseFloat(form.length) : null,
     };
     if (editId) await base44.entities.Product.update(editId, data);
     else await base44.entities.Product.create(data);
@@ -369,6 +382,7 @@ export default function AdminProducts() {
               <TabsList className="w-full">
                 <TabsTrigger value="geral" className="flex-1">Geral</TabsTrigger>
                 <TabsTrigger value="descricoes" className="flex-1">Descrições</TabsTrigger>
+                <TabsTrigger value="dimensoes" className="flex-1">Dimensões</TabsTrigger>
               </TabsList>
 
               <TabsContent value="descricoes" className="space-y-4 mt-4">
@@ -401,6 +415,37 @@ export default function AdminProducts() {
                     value={form.specifications}
                     onChange={e => setForm({ ...form, specifications: e.target.value })}
                   />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="dimensoes" className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Cor</Label>
+                    <Input className="mt-1.5" placeholder="Ex: Preto, Azul" value={form.color} onChange={e => setForm({ ...form, color: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Voltagem</Label>
+                    <Input className="mt-1.5" placeholder="Ex: 110V, 220V, Bivolt" value={form.voltage} onChange={e => setForm({ ...form, voltage: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <Label>Peso (kg)</Label>
+                  <Input className="mt-1.5" type="number" step="0.001" min="0" placeholder="Ex: 0.500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label>Altura (cm)</Label>
+                    <Input className="mt-1.5" type="number" step="0.1" min="0" placeholder="Ex: 10" value={form.height} onChange={e => setForm({ ...form, height: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Largura (cm)</Label>
+                    <Input className="mt-1.5" type="number" step="0.1" min="0" placeholder="Ex: 20" value={form.width} onChange={e => setForm({ ...form, width: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Comprimento (cm)</Label>
+                    <Input className="mt-1.5" type="number" step="0.1" min="0" placeholder="Ex: 30" value={form.length} onChange={e => setForm({ ...form, length: e.target.value })} />
+                  </div>
                 </div>
               </TabsContent>
 

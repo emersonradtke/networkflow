@@ -49,22 +49,19 @@
     },
     "commission_percent": {
       "type": "number",
-      "description": "Percentual de comiss\u00e3o (legado - usar os novos campos)"
+      "description": "Percentual de comiss\u00e3o (legado)"
     },
     "commission_operation": {
       "type": "number",
-      "default": 0,
-      "description": "Percentual de comiss\u00e3o para opera\u00e7\u00e3o"
+      "default": 0
     },
     "commission_associate": {
       "type": "number",
-      "default": 0,
-      "description": "Percentual de comiss\u00e3o para associado"
+      "default": 0
     },
     "commission_organizer": {
       "type": "number",
-      "default": 0,
-      "description": "Percentual de comiss\u00e3o para idealizador"
+      "default": 0
     },
     "is_active": {
       "type": "boolean",
@@ -75,18 +72,15 @@
     },
     "stock": {
       "type": "number",
-      "default": 0,
-      "description": "Quantidade em estoque"
+      "default": 0
     },
     "stock_min": {
       "type": "number",
-      "default": 0,
-      "description": "Quantidade m\u00ednima em estoque"
+      "default": 0
     },
     "stock_max": {
       "type": "number",
-      "default": 0,
-      "description": "Quantidade m\u00e1xima em estoque"
+      "default": 0
     },
     "visibility": {
       "type": "string",
@@ -95,17 +89,38 @@
         "associate_only",
         "hidden"
       ],
-      "default": "public",
-      "description": "Controla onde o produto aparece"
+      "default": "public"
     },
     "on_special_offer": {
       "type": "boolean",
-      "default": false,
-      "description": "Indica se o produto est\u00e1 em oferta especial"
+      "default": false
     },
     "special_offer_price": {
+      "type": "number"
+    },
+    "color": {
+      "type": "string",
+      "description": "Cor do produto"
+    },
+    "weight": {
       "type": "number",
-      "description": "Pre\u00e7o diferenciado para oferta especial (associados)"
+      "description": "Peso em kg"
+    },
+    "voltage": {
+      "type": "string",
+      "description": "Voltagem (ex: 110V, 220V, Bivolt)"
+    },
+    "height": {
+      "type": "number",
+      "description": "Altura em cm"
+    },
+    "width": {
+      "type": "number",
+      "description": "Largura em cm"
+    },
+    "length": {
+      "type": "number",
+      "description": "Comprimento em cm"
     }
   },
   "required": [
