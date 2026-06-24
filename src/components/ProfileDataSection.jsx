@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Mail, Phone, FileText } from 'lucide-react';
+import { User, Mail, MapPin } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import CepAddressInput from '@/components/CepAddressInput';
+import { AddressFields } from '@/components/AddressModal';
+import { saveAssociateAddress, addressFormFromAssociate } from '@/lib/saveAssociateAddress';
 
 export default function ProfileDataSection({ associate }) {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -19,13 +21,7 @@ export default function ProfileDataSection({ associate }) {
     cnpj: '',
     company_name: '',
     person_type: 'pf',
-    address: '',
-    city: '',
-    state: '',
-    cep: '',
-    neighborhood: '',
-    number: '',
-    complement: '',
+    ...addressFormFromAssociate({}),
   });
 
   useEffect(() => {
@@ -38,13 +34,7 @@ export default function ProfileDataSection({ associate }) {
         cnpj: associate.cnpj || '',
         company_name: associate.company_name || '',
         person_type: associate.person_type || 'pf',
-        address: associate.address || '',
-        city: associate.city || '',
-        state: associate.state || '',
-        cep: associate.shipping_zip || '',
-        neighborhood: associate.shipping_neighborhood || '',
-        number: associate.shipping_number || '',
-        complement: associate.shipping_complement || '',
+        ...addressFormFromAssociate(associate),
       });
     }
   }, [associate]);
@@ -63,25 +53,15 @@ export default function ProfileDataSection({ associate }) {
 
     setSaving(true);
     try {
-      const payload = {
+      // Salva dados pessoais
+      await base44.entities.Associate.update(associate.id, {
         full_name: form.full_name,
         email: form.email,
         phone: form.phone,
         company_name: form.company_name,
-        person_type: form.person_type,
-        address: form.address,
-        city: form.city,
-        state: form.state,
-        shipping_zip: form.cep,
-        shipping_street: form.address,
-        shipping_neighborhood: form.neighborhood,
-        shipping_number: form.number,
-        shipping_complement: form.complement,
-        shipping_city: form.city,
-        shipping_state: form.state,
-        addresses_completed: !!(form.cep && form.address),
-      };
-      await base44.entities.Associate.update(associate.id, payload);
+      });
+      // Salva endereço usando a função centralizada
+      await saveAssociateAddress(associate.id, form);
       toast({ title: 'Dados atualizados!', description: 'Suas informações foram salvas com sucesso.' });
     } catch (error) {
       toast({ title: 'Erro ao salvar', description: error.message || 'Tente novamente.', variant: 'destructive' });
@@ -116,11 +96,7 @@ export default function ProfileDataSection({ associate }) {
 
         <div className="space-y-1.5">
           <Label className="text-xs">Nome completo <span className="text-red-500">*</span></Label>
-          <Input
-            value={form.full_name}
-            onChange={e => set('full_name', e.target.value)}
-            placeholder="Seu nome completo"
-          />
+          <Input value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="Seu nome completo" />
         </div>
 
         <div className="space-y-1.5">
@@ -140,33 +116,19 @@ export default function ProfileDataSection({ associate }) {
         {form.person_type === 'pf' ? (
           <div className="space-y-1.5">
             <Label className="text-xs">CPF</Label>
-            <Input
-              value={form.cpf}
-              disabled
-              placeholder="CPF"
-              className="bg-muted"
-            />
+            <Input value={form.cpf} disabled placeholder="CPF" className="bg-muted" />
             <p className="text-xs text-muted-foreground">CPF não pode ser alterado.</p>
           </div>
         ) : (
           <>
             <div className="space-y-1.5">
               <Label className="text-xs">CNPJ</Label>
-              <Input
-                value={form.cnpj}
-                disabled
-                placeholder="CNPJ"
-                className="bg-muted"
-              />
+              <Input value={form.cnpj} disabled placeholder="CNPJ" className="bg-muted" />
               <p className="text-xs text-muted-foreground">CNPJ não pode ser alterado.</p>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Razão Social</Label>
-              <Input
-                value={form.company_name}
-                onChange={e => set('company_name', e.target.value)}
-                placeholder="Razão social da empresa"
-              />
+              <Input value={form.company_name} onChange={e => set('company_name', e.target.value)} placeholder="Razão social da empresa" />
             </div>
           </>
         )}
@@ -181,49 +143,40 @@ export default function ProfileDataSection({ associate }) {
 
         <div className="space-y-1.5">
           <Label className="text-xs">E-mail <span className="text-red-500">*</span></Label>
-          <Input
-            value={form.email}
-            onChange={e => set('email', e.target.value)}
-            placeholder="seu@email.com"
-            type="email"
-          />
+          <Input value={form.email} onChange={e => set('email', e.target.value)} placeholder="seu@email.com" type="email" />
         </div>
 
         <div className="space-y-1.5">
           <Label className="text-xs">Telefone</Label>
-          <Input
-            value={form.phone}
-            onChange={e => set('phone', e.target.value.replace(/\D/g, ''))}
-            placeholder="11999999999"
-            maxLength={11}
-          />
+          <Input value={form.phone} onChange={e => set('phone', e.target.value.replace(/\D/g, ''))} placeholder="11999999999" maxLength={11} />
         </div>
       </div>
 
-      {/* Endereço */}
+      {/* Endereço — usando o mesmo AddressFields do AddressModal */}
       <div className="dark-card rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2 mb-2">
-          <FileText size={16} className="text-primary" />
-          <h3 className="font-bold text-foreground text-sm">Localização</h3>
+          <MapPin size={16} className="text-primary" />
+          <h3 className="font-bold text-foreground text-sm">Endereço de Entrega</h3>
         </div>
 
-        <CepAddressInput
-          cep={form.cep}
-          setCep={v => set('cep', v)}
-          address={form.address}
-          setAddress={v => set('address', v)}
-          neighborhood={form.neighborhood}
-          setNeighborhood={v => set('neighborhood', v)}
-          city={form.city}
-          setCity={v => set('city', v)}
-          state={form.state}
-          setState={v => set('state', v)}
-          number={form.number}
-          setNumber={v => set('number', v)}
-          complement={form.complement}
-          setComplement={v => set('complement', v)}
-          label="Endereço"
-        />
+        <AddressFields prefix="shipping" data={form} onChange={set} label="" />
+
+        <div className="flex items-center gap-3 pt-2">
+          <input
+            type="checkbox"
+            id="billing_same_profile"
+            checked={form.billing_same_as_shipping}
+            onChange={e => set('billing_same_as_shipping', e.target.checked)}
+            className="w-4 h-4 accent-primary"
+          />
+          <label htmlFor="billing_same_profile" className="text-sm text-foreground cursor-pointer">
+            Endereço de faturamento igual ao de entrega
+          </label>
+        </div>
+
+        {!form.billing_same_as_shipping && (
+          <AddressFields prefix="billing" data={form} onChange={set} label="Endereço de Faturamento" />
+        )}
       </div>
 
       <Button onClick={handleSave} disabled={saving} className="w-full font-bold">

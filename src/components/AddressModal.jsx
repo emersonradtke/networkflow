@@ -5,22 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MapPin, CheckCircle2, Loader2 } from 'lucide-react';
+import { saveAssociateAddress, addressFormFromAssociate } from '@/lib/saveAssociateAddress';
 
-const EMPTY_ADDR = {
-  shipping_street: '', shipping_number: '', shipping_complement: '',
-  shipping_neighborhood: '', shipping_city: '', shipping_state: '', shipping_zip: '',
-  billing_same_as_shipping: true,
-  billing_street: '', billing_number: '', billing_complement: '',
-  billing_neighborhood: '', billing_city: '', billing_state: '', billing_zip: '',
-};
-
-function AddressFields({ prefix, data, onChange, label }) {
+// Campos de um endereço com busca de CEP automática
+export function AddressFields({ prefix, data, onChange, label }) {
   const [loadingCep, setLoadingCep] = useState(false);
   const [cepError, setCepError] = useState('');
 
   const handleCepChange = async (raw) => {
     const digits = raw.replace(/\D/g, '');
-    // Formata para 00000-000
     const formatted = digits.length > 5 ? `${digits.slice(0,5)}-${digits.slice(5,8)}` : digits;
     onChange(`${prefix}_zip`, formatted);
     setCepError('');
@@ -31,10 +24,10 @@ function AddressFields({ prefix, data, onChange, label }) {
         const res = await base44.functions.invoke('searchCepAddress', { cep: digits });
         const addr = res.data;
         if (addr && !addr.erro) {
-          onChange(`${prefix}_street`, addr.logradouro || '');
-          onChange(`${prefix}_neighborhood`, addr.bairro || '');
-          onChange(`${prefix}_city`, addr.localidade || '');
-          onChange(`${prefix}_state`, addr.uf || '');
+          onChange(`${prefix}_street`, addr.logradouro || addr.address || '');
+          onChange(`${prefix}_neighborhood`, addr.bairro || addr.neighborhood || '');
+          onChange(`${prefix}_city`, addr.localidade || addr.city || '');
+          onChange(`${prefix}_state`, addr.uf || addr.state || '');
         } else {
           setCepError('CEP não encontrado.');
         }
@@ -52,7 +45,6 @@ function AddressFields({ prefix, data, onChange, label }) {
         <MapPin size={14} className="text-primary" /> {label}
       </p>
 
-      {/* CEP primeiro — preenche o restante */}
       <div>
         <Label className="text-xs">CEP</Label>
         <div className="relative mt-1">
@@ -77,6 +69,7 @@ function AddressFields({ prefix, data, onChange, label }) {
           <Input className="mt-1" placeholder="123" value={data[`${prefix}_number`] || ''} onChange={e => onChange(`${prefix}_number`, e.target.value)} />
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">Complemento</Label>
@@ -87,6 +80,7 @@ function AddressFields({ prefix, data, onChange, label }) {
           <Input className="mt-1" placeholder="Centro" value={data[`${prefix}_neighborhood`] || ''} onChange={e => onChange(`${prefix}_neighborhood`, e.target.value)} />
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">Cidade</Label>
@@ -102,29 +96,11 @@ function AddressFields({ prefix, data, onChange, label }) {
 }
 
 export default function AddressModal({ associate, open, onClose, onSaved, forceOpen = false }) {
-  const [form, setForm] = useState(EMPTY_ADDR);
+  const [form, setForm] = useState(addressFormFromAssociate({}));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (associate) {
-      setForm({
-        shipping_street: associate.shipping_street || '',
-        shipping_number: associate.shipping_number || '',
-        shipping_complement: associate.shipping_complement || '',
-        shipping_neighborhood: associate.shipping_neighborhood || '',
-        shipping_city: associate.shipping_city || '',
-        shipping_state: associate.shipping_state || '',
-        shipping_zip: associate.shipping_zip || '',
-        billing_same_as_shipping: associate.billing_same_as_shipping !== false,
-        billing_street: associate.billing_street || '',
-        billing_number: associate.billing_number || '',
-        billing_complement: associate.billing_complement || '',
-        billing_neighborhood: associate.billing_neighborhood || '',
-        billing_city: associate.billing_city || '',
-        billing_state: associate.billing_state || '',
-        billing_zip: associate.billing_zip || '',
-      });
-    }
+    if (associate) setForm(addressFormFromAssociate(associate));
   }, [associate]);
 
   const setField = (key, value) => setForm(f => ({ ...f, [key]: value }));
@@ -132,19 +108,9 @@ export default function AddressModal({ associate, open, onClose, onSaved, forceO
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    const payload = { ...form, addresses_completed: true };
-    if (form.billing_same_as_shipping) {
-      payload.billing_street = form.shipping_street;
-      payload.billing_number = form.shipping_number;
-      payload.billing_complement = form.shipping_complement;
-      payload.billing_neighborhood = form.shipping_neighborhood;
-      payload.billing_city = form.shipping_city;
-      payload.billing_state = form.shipping_state;
-      payload.billing_zip = form.shipping_zip;
-    }
-    await base44.entities.Associate.update(associate.id, payload);
+    const saved = await saveAssociateAddress(associate.id, form);
     setSaving(false);
-    onSaved?.(payload);
+    onSaved?.(saved);
     onClose();
   };
 
