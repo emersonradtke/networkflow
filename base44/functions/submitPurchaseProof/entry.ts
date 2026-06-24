@@ -21,19 +21,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Pelo menos um comprovante é obrigatório' }, { status: 400 });
     }
 
-    // Buscar associate do usuário logado
-    const associates = await base44.entities.Associate.filter({ user_id: user.id });
+    // Buscar o clique primeiro
+    let click = null;
+    try {
+      const result = await base44.asServiceRole.entities.ExternalLinkClick.get(click_id);
+      click = result;
+    } catch (_) {
+      // ignore not found
+    }
+    if (!click) {
+      return Response.json({ error: 'Click not found' }, { status: 404 });
+    }
+
+    // Buscar associate do usuário logado — tenta por user_id e por email como fallback
+    let associates = await base44.entities.Associate.filter({ user_id: user.id });
+    if (!associates || associates.length === 0) {
+      associates = await base44.asServiceRole.entities.Associate.filter({ email: user.email });
+    }
     if (!associates || associates.length === 0) {
       return Response.json({ error: 'Associate not found' }, { status: 404 });
     }
     const associate = associates[0];
-
-    // Buscar clique pelo associate_id (evita list() completo)
-    const clicks = await base44.asServiceRole.entities.ExternalLinkClick.filter({ associate_id: associate.id });
-    const click = clicks.find(c => c.id === click_id);
-    if (!click) {
-      return Response.json({ error: 'Click not found' }, { status: 404 });
-    }
 
     // Verificar ownership
     if (click.associate_id !== associate.id) {
