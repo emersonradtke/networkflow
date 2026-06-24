@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,19 +15,23 @@ export default function ExternalLinksManager() {
   const [selectedAssociate, setSelectedAssociate] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [search, setSearch] = useState('');
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     loadClicks();
   }, [filter]);
 
   const loadClicks = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
       const query = filter === 'all' ? {} : { status: filter };
-      const data = await base44.entities.ExternalLinkClick.filter(query, '-created_date', 100);
+      const data = await base44.entities.ExternalLinkClick.filter(query, '-created_date', 50);
       setClicks(data);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   };
 
