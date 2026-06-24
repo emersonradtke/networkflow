@@ -18,12 +18,12 @@ Deno.serve(async (req) => {
     const pontos = Math.floor(total_amount * pontosPerReal);
 
     // Get associate and update total_pontos
-    const associate = await base44.asServiceRole.entities.Associate.filter({ id: associate_id });
-    if (!associate || associate.length === 0) {
+    const associate = await base44.asServiceRole.entities.Associate.get(associate_id);
+    if (!associate) {
       return Response.json({ error: 'Associate not found' }, { status: 404 });
     }
 
-    const currentPontos = associate[0].total_pontos || 0;
+    const currentPontos = associate.total_pontos || 0;
     await base44.asServiceRole.entities.Associate.update(associate_id, {
       total_pontos: currentPontos + pontos
     });

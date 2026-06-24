@@ -187,18 +187,6 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
         });
       }
 
-      // Reduzir estoque via service role
-      const stockItems = cart.filter(i => i.type !== 'external_link').map(i => ({ id: i.id, stock: i.stock, qty: i.qty }));
-      if (stockItems.length > 0) {
-        await base44.functions.invoke('reduceProductStock', { items: stockItems });
-      }
-
-      // Calculate pontos after checkout
-      await base44.functions.invoke('calculatePontosOnCheckout', {
-        associate_id: localAssociate.id,
-        total_amount: total
-      });
-
       // Criar link de pagamento InfinitePay
       const grandTotal = isPickup ? total : total + shippingCost;
 
@@ -224,6 +212,16 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
 
       const paymentUrl = checkoutRes.data?.checkout_url;
       if (paymentUrl) {
+        // Reduzir estoque e calcular pontos após pagamento iniciado
+        const stockItems = cart.filter(i => i.type !== 'external_link').map(i => ({ id: i.id, stock: i.stock, qty: i.qty }));
+        if (stockItems.length > 0) {
+          base44.functions.invoke('reduceProductStock', { items: stockItems }).catch(() => {});
+        }
+        base44.functions.invoke('calculatePontosOnCheckout', {
+          associate_id: localAssociate.id,
+          total_amount: total
+        }).catch(() => {});
+
         onCheckout();
         setPaymentUrl(paymentUrl);
         setPaymentCartId(cartId);
