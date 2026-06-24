@@ -1,0 +1,62 @@
+{
+  "name": "CommissionDeposit",
+  "type": "object",
+  "properties": {
+    "deposit_id": {
+      "type": "string",
+      "description": "Identificador \u00fanico do dep\u00f3sito (banco, lote, nota, etc)"
+    },
+    "deposited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora do dep\u00f3sito"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Valor total do dep\u00f3sito"
+    },
+    "bank_name": {
+      "type": "string",
+      "description": "Nome do banco"
+    },
+    "bank_code": {
+      "type": "string",
+      "description": "C\u00f3digo do banco"
+    },
+    "agency": {
+      "type": "string",
+      "description": "Ag\u00eancia banc\u00e1ria"
+    },
+    "account": {
+      "type": "string",
+      "description": "N\u00famero da conta"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es sobre o dep\u00f3sito"
+    },
+    "reconciled_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs das ExternalLinkClick conciliadas com este dep\u00f3sito",
+      "default": []
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "partial",
+        "complete"
+      ],
+      "default": "pending",
+      "description": "pending = nenhuma concilia\u00e7\u00e3o, partial = algumas conciliadas, complete = todas conciliadas"
+    }
+  },
+  "required": [
+    "deposit_id",
+    "deposited_at",
+    "amount"
+  ]
+}

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import ExternalLinksManager from '@/components/admin/ExternalLinksManager';
-import { Link } from 'lucide-react';
+import DepositReconciliationPanel from '@/components/admin/DepositReconciliationPanel';
+import { Link, DollarSign } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminExternalLinks() {
   return (
@@ -13,7 +15,18 @@ export default function AdminExternalLinks() {
         <p className="text-muted-foreground text-sm mt-1">Gerencie compras confirmadas de produtos de link externo e banners</p>
       </div>
 
-      <ExternalLinksManager />
+      <Tabs defaultValue="intentions" className="w-full">
+        <TabsList>
+          <TabsTrigger value="intentions">Intenções de Compra</TabsTrigger>
+          <TabsTrigger value="reconciliation">Conciliação de Depósitos</TabsTrigger>
+        </TabsList>
+        <TabsContent value="intentions">
+          <ExternalLinksManager />
+        </TabsContent>
+        <TabsContent value="reconciliation">
+          <DepositReconciliationPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
