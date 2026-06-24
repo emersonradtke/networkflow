@@ -605,21 +605,7 @@ export default function AdminProducts() {
               </div>
             </div>
 
-            {form.on_special_offer && (
-              <div>
-                <Label>Preço Promocional de Destaque (R$)</Label>
-                <Input
-                  className="mt-1.5"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder={`Preço normal: R$ ${form.price || '0,00'}`}
-                  value={form.special_offer_price}
-                  onChange={e => setForm({ ...form, special_offer_price: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground mt-1">Preço exibido no destaque de oferta especial. Deixe em branco para exibir apenas o badge.</p>
-              </div>
-            )}
+
 
             {/* Preço para Associado */}
             <div>
