@@ -201,24 +201,21 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
 
       // Criar link de pagamento InfinitePay
       const grandTotal = isPickup ? total : total + shippingCost;
-      const checkoutItems = cart.map(item => ({
-        description: item.name,
-        price: item.price + (shippingCost / cart.length),
-        quantity: item.qty,
-      }));
 
-      const checkoutRes = await base44.functions.invoke('createCheckout', {
+      const checkoutRes = await base44.functions.invoke('createInfinitePayCheckout', {
         order_nsu: `CART-${cartId}`,
-        items: checkoutItems,
-        customer: {
-          name: localAssociate.full_name,
-          email: localAssociate.email,
-          phone_number: localAssociate.phone || '',
-        },
-        redirect_url: `${window.location.origin}/orders`,
+        amount: grandTotal,
+        description: cart.map(i => `${i.name} x${i.qty}`).join(', '),
+        customer_name: localAssociate.full_name,
+        customer_email: localAssociate.email,
+        items: cart.map(item => ({
+          description: item.name,
+          price: Math.round(item.price * 100),
+          quantity: item.qty,
+        })),
       });
 
-      const paymentUrl = checkoutRes.data?.url;
+      const paymentUrl = checkoutRes.data?.checkout_url;
       if (paymentUrl) {
         onCheckout();
         setPaymentUrl(paymentUrl);
