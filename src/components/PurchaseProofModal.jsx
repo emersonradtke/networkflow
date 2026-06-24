@@ -69,7 +69,8 @@ export default function PurchaseProofModal({ clickId, isOpen, onClose, productNa
         handleClose();
       }, 2000);
     } catch (e) {
-      const msg = e?.response?.data?.error || e?.message || 'Erro ao enviar comprovante';
+      console.error('submitPurchaseProof error:', e);
+      const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Erro ao enviar comprovante';
       toast.error(msg);
     } finally {
       setLoading(false);

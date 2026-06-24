@@ -12,81 +12,89 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { click_id, purchase_proof_urls, purchase_amount } = body;
 
-    if (!click_id || !purchase_amount) {
-      return Response.json({ error: 'Dados obrigatórios ausentes' }, { status: 400 });
+    if (!click_id) {
+      return Response.json({ error: 'click_id é obrigatório' }, { status: 400 });
     }
-
+    if (!purchase_amount || isNaN(Number(purchase_amount))) {
+      return Response.json({ error: 'purchase_amount é obrigatório' }, { status: 400 });
+    }
     const proofUrls = purchase_proof_urls || [];
     if (proofUrls.length === 0) {
       return Response.json({ error: 'Pelo menos um comprovante é obrigatório' }, { status: 400 });
     }
 
-    // Buscar o clique primeiro
+    // Buscar o clique diretamente pelo ID
     let click = null;
     try {
-      const result = await base44.asServiceRole.entities.ExternalLinkClick.get(click_id);
-      click = result;
+      click = await base44.asServiceRole.entities.ExternalLinkClick.get(click_id);
     } catch (_) {
-      // ignore not found
-    }
-    if (!click) {
-      return Response.json({ error: 'Click not found' }, { status: 404 });
+      return Response.json({ error: 'Intenção de compra não encontrada' }, { status: 404 });
     }
 
-    // Buscar associate do usuário logado — tenta por user_id e por email como fallback
-    let associates = await base44.entities.Associate.filter({ user_id: user.id });
-    if (!associates || associates.length === 0) {
-      associates = await base44.asServiceRole.entities.Associate.filter({ email: user.email });
+    // Buscar associate — tenta por user_id, fallback por email
+    let associate = null;
+    const byUserId = await base44.asServiceRole.entities.Associate.filter({ user_id: user.id });
+    if (byUserId && byUserId.length > 0) {
+      associate = byUserId[0];
+    } else {
+      const byEmail = await base44.asServiceRole.entities.Associate.filter({ email: user.email });
+      if (byEmail && byEmail.length > 0) {
+        associate = byEmail[0];
+      }
     }
-    if (!associates || associates.length === 0) {
-      return Response.json({ error: 'Associate not found' }, { status: 404 });
-    }
-    const associate = associates[0];
 
-    // Verificar ownership
+    if (!associate) {
+      return Response.json({ error: 'Associado não encontrado' }, { status: 404 });
+    }
+
+    // Verificar que o clique pertence a este associate
     if (click.associate_id !== associate.id) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: 'Sem permissão para este registro' }, { status: 403 });
     }
 
-    // Calcular comissão
+    // Calcular comissão com base no produto ou banner
     let commission_amount = 0;
     if (click.link_type === 'product' && click.product_id) {
-      const products = await base44.asServiceRole.entities.Product.filter({ id: click.product_id });
-      const product = products[0];
-      if (product) {
-        commission_amount = (purchase_amount * (product.commission_percent || 0)) / 100;
-      }
+      try {
+        const product = await base44.asServiceRole.entities.Product.get(click.product_id);
+        if (product) {
+          commission_amount = (Number(purchase_amount) * (product.commission_percent || 0)) / 100;
+        }
+      } catch (_) { /* produto não encontrado, comissão fica 0 */ }
     } else if (click.link_type === 'banner' && click.banner_id) {
-      const banners = await base44.asServiceRole.entities.StoreBanner.filter({ id: click.banner_id });
-      const banner = banners[0];
-      if (banner) {
-        commission_amount = (purchase_amount * (banner.commission_percent || 0)) / 100;
-      }
+      try {
+        const banner = await base44.asServiceRole.entities.StoreBanner.get(click.banner_id);
+        if (banner) {
+          commission_amount = (Number(purchase_amount) * (banner.commission_percent || 0)) / 100;
+        }
+      } catch (_) { /* banner não encontrado, comissão fica 0 */ }
     }
 
-    // Salvar primeiro URL como campo principal, e todos no campo de array
+    // Atualizar o clique com os comprovantes e mudar status para submitted
     await base44.asServiceRole.entities.ExternalLinkClick.update(click_id, {
       purchase_proof_url: proofUrls[0],
       purchase_proof_urls: proofUrls,
-      purchase_amount,
+      purchase_amount: Number(purchase_amount),
       commission_amount,
       status: 'submitted'
     });
 
     // Notificar admins
-    const adminUsers = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
-    for (const adminUser of adminUsers) {
-      const adminAssociates = await base44.asServiceRole.entities.Associate.filter({ user_id: adminUser.id });
-      if (adminAssociates.length > 0) {
-        await base44.asServiceRole.entities.Notification.create({
-          associate_id: adminAssociates[0].id,
-          title: 'Compra Pendente de Confirmação',
-          message: `${associate.full_name || 'Associado'} enviou ${proofUrls.length} comprovante(s) de compra no valor de R$ ${Number(purchase_amount).toFixed(2)}`,
-          type: 'order',
-          link: '/admin/external-links'
-        });
+    try {
+      const adminUsers = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+      for (const adminUser of adminUsers) {
+        const adminAssocs = await base44.asServiceRole.entities.Associate.filter({ user_id: adminUser.id });
+        if (adminAssocs.length > 0) {
+          await base44.asServiceRole.entities.Notification.create({
+            associate_id: adminAssocs[0].id,
+            title: 'Compra Pendente de Confirmação',
+            message: `${associate.full_name} enviou comprovante(s) no valor de R$ ${Number(purchase_amount).toFixed(2)}`,
+            type: 'order',
+            link: '/admin/external-links'
+          });
+        }
       }
-    }
+    } catch (_) { /* notificação é opcional, não bloqueia */ }
 
     return Response.json({ success: true, commission_amount });
   } catch (error) {
