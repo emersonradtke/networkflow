@@ -87,12 +87,16 @@
         "hidden"
       ],
       "default": "public",
-      "description": "Controla onde o produto aparece (loja p\u00fablica, apenas associados, ou oculto)"
+      "description": "Controla onde o produto aparece"
     },
     "on_special_offer": {
       "type": "boolean",
       "default": false,
       "description": "Indica se o produto est\u00e1 em oferta especial"
+    },
+    "special_offer_price": {
+      "type": "number",
+      "description": "Pre\u00e7o diferenciado para oferta especial (associados)"
     }
   },
   "required": [

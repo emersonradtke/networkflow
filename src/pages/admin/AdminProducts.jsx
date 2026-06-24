@@ -16,7 +16,7 @@ const emptyForm = {
   price: '', commission_percent: '', commission_operation: '', commission_associate: '', commission_organizer: '', image_url: '',
   type: 'direct_sale', external_url: '', category: '',
   is_active: true, stock: '', stock_min: '', stock_max: '',
-  visibility: 'public', on_special_offer: false,
+  visibility: 'public', on_special_offer: false, special_offer_price: '',
 };
 
 const generateCode = () => {
@@ -72,6 +72,7 @@ export default function AdminProducts() {
      stock_max: p.stock_max?.toString() ?? '',
      visibility: p.visibility || 'public',
      on_special_offer: p.on_special_offer || false,
+     special_offer_price: p.special_offer_price?.toString() ?? '',
    });
    setEditId(p.id);
    setDialogOpen(true);
@@ -117,6 +118,7 @@ export default function AdminProducts() {
       stock_min: isDirect ? parseInt(form.stock_min || 0) : null,
       stock_max: isDirect ? parseInt(form.stock_max || 0) : null,
       is_active: isActive,
+      special_offer_price: form.on_special_offer && form.special_offer_price ? parseFloat(form.special_offer_price) : null,
     };
     if (editId) await base44.entities.Product.update(editId, data);
     else await base44.entities.Product.create(data);
@@ -307,7 +309,9 @@ export default function AdminProducts() {
                       {p.type === 'external_link' ? <><ExternalLink size={10} className="mr-1" />Externo</> : <><ShoppingBag size={10} className="mr-1" />Direto</>}
                     </Badge>
                     {p.on_special_offer && (
-                      <Badge className="bg-red-500/20 text-red-600 border-red-500/30 text-xs">⭐ Oferta</Badge>
+                      <Badge className="bg-red-500/20 text-red-600 border-red-500/30 text-xs">
+                        ⭐ Oferta{p.special_offer_price ? ` R$ ${p.special_offer_price.toFixed(2)}` : ''}
+                      </Badge>
                     )}
                     {p.type === 'direct_sale' && (
                       <Badge className={isLowStock ? 'bg-yellow-500/20 text-yellow-700 border-yellow-400/40 text-xs' : 'bg-secondary text-muted-foreground text-xs'}>
@@ -506,11 +510,27 @@ export default function AdminProducts() {
               </div>
               <div className="flex items-end">
                 <div className="flex items-center gap-2 w-full">
-                  <Switch checked={form.on_special_offer} onCheckedChange={v => setForm({ ...form, on_special_offer: v })} />
+                  <Switch checked={form.on_special_offer} onCheckedChange={v => setForm({ ...form, on_special_offer: v, special_offer_price: v ? form.special_offer_price : '' })} />
                   <Label className="m-0">Oferta Especial</Label>
                 </div>
               </div>
             </div>
+
+            {form.on_special_offer && (
+              <div>
+                <Label>Preço de Oferta para Associados (R$)</Label>
+                <Input
+                  className="mt-1.5"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder={`Preço normal: R$ ${form.price || '0,00'}`}
+                  value={form.special_offer_price}
+                  onChange={e => setForm({ ...form, special_offer_price: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Deixe em branco para exibir apenas o badge de oferta sem desconto de preço.</p>
+              </div>
+            )}
 
             {/* Aviso se não pode ativar */}
             {form.is_active && !canActivate(form) && (

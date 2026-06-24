@@ -45,12 +45,13 @@ export default function Store() {
   };
 
   const addToCart = (product) => {
+    const effectivePrice = product.on_special_offer && product.special_offer_price ? product.special_offer_price : product.price;
     setCart(prev => {
       const existing = prev.find(i => i.id === product.id);
       if (existing) {
         return prev.map(i => i.id === product.id ? { ...i, qty: Math.min(i.qty + 1, product.stock || 999) } : i);
       }
-      return [...prev, { ...product, qty: 1 }];
+      return [...prev, { ...product, price: effectivePrice, qty: 1 }];
     });
   };
 
@@ -293,6 +294,8 @@ export default function Store() {
 function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick }) {
   const cartItem = cart.find(i => i.id === product.id);
   const outOfStock = product.type === 'direct_sale' && (product.stock == null || product.stock <= 0);
+  const displayPrice = product.on_special_offer && product.special_offer_price ? product.special_offer_price : product.price;
+  const hasDiscount = product.on_special_offer && product.special_offer_price && product.special_offer_price < product.price;
 
   if (compact) {
     return (
@@ -322,7 +325,10 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
         </div>
         <div className="p-2 flex flex-col gap-1">
           <p className="font-bold text-foreground text-xs leading-tight line-clamp-2">{product.name}</p>
-          <p className="text-sm font-black text-primary">R$ {product.price?.toFixed(2)}</p>
+          <div>
+            <p className="text-sm font-black text-primary">R$ {displayPrice?.toFixed(2)}</p>
+            {hasDiscount && <p className="text-xs text-muted-foreground line-through">R$ {product.price?.toFixed(2)}</p>}
+          </div>
           {product.type === 'external_link' ? (
             <Button size="sm" className="w-full text-xs h-7 gold-gradient text-background font-bold gap-1" onClick={() => onExternalLinkClick(product)}>
               <ExternalLink size={10} /> Ver
@@ -393,7 +399,10 @@ function ProductCard({ product, onAddToCart, cart, compact, onExternalLinkClick 
           </p>
         )}
         <div className="mt-3">
-          <p className="text-lg font-black text-primary">R$ {product.price?.toFixed(2)}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-lg font-black text-primary">R$ {displayPrice?.toFixed(2)}</p>
+            {hasDiscount && <p className="text-sm text-muted-foreground line-through">R$ {product.price?.toFixed(2)}</p>}
+          </div>
           {product.type === 'external_link' ? (
             <Button size="sm" className="w-full mt-2 gold-gradient text-background font-bold gap-1.5" onClick={() => onExternalLinkClick(product)}>
               <ExternalLink size={13} /> Ver Produto
