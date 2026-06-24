@@ -25,22 +25,27 @@ Deno.serve(async (req) => {
 
     const payload = {
       handle,
-      amount: Math.round(amount * 100), // centavos
-      order_nsu: String(order_nsu),
-      description: description || 'Compra BoldLife',
-      customer: {
-        name: customer_name || '',
-        email: customer_email || '',
-        document: customer_document || '',
-      },
-      items: items || [],
+      order_nsu: order_nsu ? String(order_nsu) : undefined,
+      items: (items || []).map(i => ({
+        quantity: i.quantity,
+        price: i.price, // já em centavos
+        description: i.description,
+      })),
     };
 
-    const response = await fetch('https://api.infinitepay.io/invoices/public/checkout', {
+    if (customer_name || customer_email) {
+      payload.customer = {
+        name: customer_name || '',
+        email: customer_email || '',
+      };
+    }
+
+    console.log('[InfinitePay] Sending payload:', JSON.stringify(payload));
+
+    const response = await fetch('https://api.checkout.infinitepay.io/links', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify(payload),
     });
@@ -48,11 +53,15 @@ Deno.serve(async (req) => {
     const data = await response.json();
 
     if (!response.ok) {
-      return Response.json({ error: data.message || 'Erro ao criar checkout' }, { status: response.status });
+      console.error('[InfinitePay] Error response:', JSON.stringify(data));
+      return Response.json({ error: data.message || data.error || JSON.stringify(data) }, { status: response.status });
     }
 
-    return Response.json({ success: true, checkout_url: data.checkout_url, checkout_id: data.id });
+    console.log('[InfinitePay] Success response:', JSON.stringify(data));
+    const checkout_url = data.checkout_url || data.url || data.link || data.payment_link || data.payment_url;
+    return Response.json({ success: true, checkout_url, checkout_id: data.id || data.slug });
   } catch (error) {
-    return Response.json({ error: 'Erro interno ao criar checkout' }, { status: 500 });
+    console.error('[InfinitePay] Exception:', error.message);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
