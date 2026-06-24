@@ -111,6 +111,12 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
     setLoading(true);
     setError('');
     try {
+      if (!localAssociate) {
+        setError('Dados do associado não carregados. Recarregue a página.');
+        setLoading(false);
+        return;
+      }
+
       // Validar estoque disponível
       for (const item of cart) {
         if (item.type === 'direct_sale' && (item.stock || 0) < item.qty) {
@@ -222,7 +228,7 @@ export default function CartDrawer({ cart, onUpdate, onRemove, onCheckout, assoc
         setError('Não foi possível gerar o link de pagamento.');
       }
     } catch (e) {
-      setError('Erro ao finalizar pedido. Tente novamente.');
+      setError('Erro ao finalizar pedido: ' + (e?.message || 'Tente novamente.'));
     } finally {
       setLoading(false);
     }
