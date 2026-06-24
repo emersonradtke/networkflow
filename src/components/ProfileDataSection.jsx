@@ -63,7 +63,25 @@ export default function ProfileDataSection({ associate }) {
 
     setSaving(true);
     try {
-      await base44.entities.Associate.update(associate.id, form);
+      const payload = {
+        full_name: form.full_name,
+        email: form.email,
+        phone: form.phone,
+        company_name: form.company_name,
+        person_type: form.person_type,
+        address: form.address,
+        city: form.city,
+        state: form.state,
+        shipping_zip: form.cep,
+        shipping_street: form.address,
+        shipping_neighborhood: form.neighborhood,
+        shipping_number: form.number,
+        shipping_complement: form.complement,
+        shipping_city: form.city,
+        shipping_state: form.state,
+        addresses_completed: !!(form.cep && form.address),
+      };
+      await base44.entities.Associate.update(associate.id, payload);
       toast({ title: 'Dados atualizados!', description: 'Suas informações foram salvas com sucesso.' });
     } catch (error) {
       toast({ title: 'Erro ao salvar', description: error.message || 'Tente novamente.', variant: 'destructive' });
