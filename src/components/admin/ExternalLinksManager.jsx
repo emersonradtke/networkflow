@@ -18,7 +18,8 @@ export default function ExternalLinksManager() {
   const loadingRef = useRef(false);
 
   useEffect(() => {
-    loadClicks();
+    const timer = setTimeout(() => loadClicks(), 400);
+    return () => clearTimeout(timer);
   }, [filter]);
 
   const loadClicks = async () => {
