@@ -109,9 +109,17 @@ export default function DepositReconciliationPanel() {
         }
       }
 
-      // Calcular novo status do depósito
-      const totalApproved = externalLinks.filter(l => l.status === 'approved').length;
-      const newStatus = newItems.length === 0 ? 'pending' : newItems.length === totalApproved ? 'complete' : 'partial';
+      // Calcular novo status do depósito baseado no valor conciliado vs valor do depósito
+      const reconciledAmount = newItems.reduce((sum, id) => {
+        const l = externalLinks.find(x => x.id === id);
+        return sum + (l?.commission_amount || 0);
+      }, 0);
+      const depositAmount = deposit.amount || 0;
+      const newStatus = newItems.length === 0
+        ? 'pending'
+        : Math.abs(reconciledAmount - depositAmount) < 0.01
+          ? 'complete'
+          : 'partial';
 
       await base44.entities.CommissionDeposit.update(depositId, {
         reconciled_items: newItems,
