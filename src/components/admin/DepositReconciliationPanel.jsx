@@ -18,12 +18,14 @@ export default function DepositReconciliationPanel() {
     deposit_id: '',
     deposited_at: '',
     amount: '',
+    origem: '',
     bank_name: '',
     bank_code: '',
     agency: '',
     account: '',
     notes: '',
   });
+  const [origemFilter, setOrigemFilter] = useState('');
 
   useEffect(() => {
     loadData();
@@ -61,6 +63,7 @@ export default function DepositReconciliationPanel() {
         deposit_id: '',
         deposited_at: '',
         amount: '',
+        origem: '',
         bank_name: '',
         bank_code: '',
         agency: '',
@@ -142,6 +145,10 @@ export default function DepositReconciliationPanel() {
   };
 
   const approvedLinks = externalLinks.filter(l => l.status === 'approved');
+  const origens = [...new Set(externalLinks.map(l => l.product_name || l.banner_name).filter(Boolean))];
+  const filteredLinks = origemFilter
+    ? approvedLinks.filter(l => (l.product_name || l.banner_name) === origemFilter)
+    : approvedLinks;
 
   return (
     <div className="space-y-4">
@@ -159,6 +166,14 @@ export default function DepositReconciliationPanel() {
             <DialogTitle>Registrar Novo Depósito</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground">Origem do Depósito</label>
+              <Input
+                placeholder="Ex: Shopee, Magazine Luiza, Amazon"
+                value={formData.origem}
+                onChange={e => setFormData({ ...formData, origem: e.target.value })}
+              />
+            </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground">ID do Depósito *</label>
               <Input
@@ -255,6 +270,7 @@ export default function DepositReconciliationPanel() {
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
                   {new Date(deposit.deposited_at).toLocaleString('pt-BR')} · R$ {deposit.amount.toFixed(2)}
+                  {deposit.origem && <span className="ml-2 font-medium text-foreground">· {deposit.origem}</span>}
                 </div>
                 {deposit.bank_name && (
                   <div className="text-xs text-muted-foreground">
@@ -272,12 +288,25 @@ export default function DepositReconciliationPanel() {
 
             {/* Intenções de Compra Aprovadas para Conciliação */}
             {expandedDeposit === deposit.id && (
-              <div className="mt-3 pt-3 border-t space-y-1 max-h-64 overflow-y-auto">
-                <p className="text-xs font-semibold text-muted-foreground">Intenções de Compra Aprovadas</p>
-                {approvedLinks.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Nenhuma intenção aprovada disponível</p>
+              <div className="mt-3 pt-3 border-t space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-muted-foreground">Intenções de Compra Aprovadas</p>
+                  <select
+                    className="text-xs border rounded px-2 py-1 bg-background"
+                    value={origemFilter}
+                    onChange={e => setOrigemFilter(e.target.value)}
+                  >
+                    <option value="">Todas as origens</option>
+                    {origens.map(o => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1 max-h-64 overflow-y-auto">
+                {filteredLinks.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhuma intenção encontrada</p>
                 ) : (
-                  approvedLinks.map(link => {
+                  filteredLinks.map(link => {
                     const isReconciled = deposit.reconciled_items?.includes(link.id);
                     return (
                       <div
@@ -302,6 +331,7 @@ export default function DepositReconciliationPanel() {
                     );
                   })
                 )}
+                </div>
               </div>
             )}
           </div>

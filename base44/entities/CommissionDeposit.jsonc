@@ -15,6 +15,10 @@
       "type": "number",
       "description": "Valor total do dep\u00f3sito"
     },
+    "origem": {
+      "type": "string",
+      "description": "Origem do dep\u00f3sito (ex: Shopee, Magazine Luiza, Amazon)"
+    },
     "bank_name": {
       "type": "string",
       "description": "Nome do banco"
